@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head(${product.name + ' | KOSIS'}, 'shop')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: header}"></th:block>
+
+<main id="main">
+<div class="container container--content">
+
+    <div hidden data-flash="error" th:if="${cartError != null}" th:text="${cartError}"></div>
+
+    <div class="pd">
+        <!-- Gallery -->
+        <div class="pd-gallery" th:classappend="${product.images.size() <= 1} ? 'pd-gallery--single'">
+            <div class="pd-thumbs" th:if="${product.images.size() > 1}">
+                <button type="button" class="pd-thumb" th:each="img, st : ${product.images}" th:classappend="${st.first} ? 'is-on'"
+                        th:data-thumb="${img}" th:aria-label="'Ảnh ' + ${st.count}"><img th:src="${img}" alt=""></button>
+            </div>
+            <div class="pd-main" data-zoom>
+                <img id="detailMain" th:src="@{${(!product.colorList.isEmpty() and product.defaultColor.image != null) ? product.defaultColor.image : (product.images.isEmpty() ? '/images/products/placeholder.svg' : product.images[0])}}" th:alt="${product.name}"
+                     onerror="this.onerror=null;this.src='/images/products/placeholder.svg'">
+                <span class="p-card__badge" th:if="${product.displayDiscount > 0}" th:text="'-' + ${product.displayDiscount} + '%'">-20%</span>
+                <span class="p-card__badge p-card__badge--new" th:if="${product.displayDiscount <= 0 and product.new}">MỚI</span>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="pd-info">
+            <p class="pd-cat" th:if="${product.category != null}" th:text="${product.category}">Category</p>
+            <h1 class="pd-title" th:text="${product.name}">Product name</h1>
+            <div class="pd-rate" th:with="avg=${reviewCount > 0 ? reviewAvg : product.rating}">
+                <span class="stars" aria-hidden="true"><i th:each="i : ${#numbers.sequence(1,5)}"
+                      th:class="${avg >= i ? 'bi bi-star-fill' : (avg >= i - 0.5 ? 'bi bi-star-half' : 'bi bi-star')}"></i></span>
+                <span th:text="${#numbers.formatDecimal(avg, 1, 1)} + ' / 5'">4.8 / 5</span>
+                <a href="#danh-gia" th:if="${reviewCount > 0}" th:text="'(' + ${reviewCount} + ' đánh giá)'">(12 đánh giá)</a>
+                <span>·</span><span th:text="'Mã: ' + ${product.code}">Ref. KS101</span>
+            </div>
+            <div class="pd-price">
+                <span th:text="${#numbers.formatInteger(product.price, 0, 'POINT')} + ' ₫'">1.290.000 ₫</span>
+                <s th:if="${product.oldPrice > product.price}" th:text="${#numbers.formatInteger(product.oldPrice, 0, 'POINT')} + ' ₫'">1.590.000 ₫</s>
+                <span class="off" th:if="${product.displayDiscount > 0}" th:text="'-' + ${product.displayDiscount} + '%'">-20%</span>
+            </div>
+            <p class="pd-stock" th:if="${product.stock > 10}"><i class="bi bi-check-circle-fill"></i> Còn hàng</p>
+            <p class="pd-stock low" th:if="${product.stock > 0 and product.stock <= 10}" th:text="'Chỉ còn ' + ${product.stock} + ' sản phẩm'">Only 5 left</p>
+            <p class="pd-stock out" th:if="${product.stock <= 0}">Hết hàng</p>
+
+            <p class="pd-desc" th:if="${!#strings.isEmpty(product.description)}" th:text="${product.description}">Description</p>
+
+            <form th:action="@{/gio-hang/them/{id}(id=${product.id})}" method="post" class="js-add-cart" data-pd-form
+                  th:attr="data-matrix=${product.perColorStock ? product.sizeStock : ''}">
+                <div class="pd-field" th:if="${!product.colorList.isEmpty()}">
+                    <input type="hidden" name="color" data-color-input th:value="${product.defaultColor.name}">
+                    <div class="pd-label"><span>Màu sắc</span><b data-color-name th:text="${product.defaultColor.name}">Olive</b></div>
+                    <div class="colors" role="radiogroup" aria-label="Màu sắc">
+                        <button type="button" class="color-dot" th:each="c, st : ${product.colorList}" th:classappend="${(c.name == product.defaultColor.name ? 'is-on' : '') + (product.getStockOfColor(c.name) <= 0 ? ' is-out' : '')}"
+                                th:style="'--c:' + ${c.hex}" th:data-color="${c.name}" th:data-img="${c.image}" th:title="${product.getStockOfColor(c.name) <= 0 ? c.name + ' (hết hàng)' : c.name}" role="radio" th:attr="aria-checked=${c.name == product.defaultColor.name}" th:aria-label="${c.name}"></button>
+                    </div>
+                </div>
+
+                <div class="pd-field" th:if="${product.stock > 0 and product.hasSizes}">
+                    <div class="pd-label"><span>Kích cỡ</span><span class="msg" id="pdSizeMsg" aria-live="polite"></span></div>
+                    <div class="size-list" role="radiogroup" aria-label="Kích cỡ">
+                        <label class="size-opt" th:each="sz : ${product.sizeList}">
+                            <input type="radio" name="size" th:value="${sz}" th:disabled="${product.getStockOf(sz, product.hasColors ? product.defaultColor.name : '') <= 0}" th:attr="data-stock=${product.getStockOf(sz, product.hasColors ? product.defaultColor.name : '')}">
+                            <span th:text="${sz}">M</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pd-field pd-qty-row" th:if="${product.stock > 0}">
+                    <div class="qty">
+                        <button type="button" id="qtyMinus" aria-label="Giảm số lượng">−</button>
+                        <input type="number" id="detailQty" name="quantity" value="1" min="1" th:max="${product.stock < 99 ? product.stock : 99}" th:data-price="${product.price}" aria-label="Số lượng">
+                        <button type="button" id="qtyPlus" aria-label="Tăng số lượng">+</button>
+                    </div>
+                    <span class="pd-total">Tạm tính <b id="pdTotal" th:text="${#numbers.formatInteger(product.price, 0, 'POINT')} + ' ₫'">1.290.000 ₫</b></span>
+                </div>
+
+                <div class="pd-actions">
+                    <button type="submit" class="btn btn--dark" th:disabled="${product.stock <= 0}"><i class="bi bi-bag-plus"></i> Thêm vào giỏ</button>
+                    <button type="submit" name="buyNow" value="true" class="btn btn--outline" th:disabled="${product.stock <= 0}">Mua ngay</button>
+                    <button type="button" class="fav" data-wishlist-toggle th:data-id="${product.id}" aria-pressed="false" aria-label="Thêm vào yêu thích"><i class="bi bi-heart"></i></button>
+                </div>
+            </form>
+
+            <div class="acc">
+                <details open>
+                    <summary>Chi tiết sản phẩm <i class="bi bi-chevron-down"></i></summary>
+                    <div class="acc__body">
+                        <table class="spec">
+                            <tr><th>Mã sản phẩm</th><td th:text="${product.code}">KS101</td></tr>
+                            <tr th:if="${product.category != null}"><th>Danh mục</th><td th:text="${product.category}">Tops</td></tr>
+                            <tr th:if="${product.gender != null}"><th>Dành cho</th><td th:text="${product.gender == 'MEN' ? 'Nam' : (product.gender == 'WOMEN' ? 'Nữ' : (product.gender == 'KIDS' ? 'Trẻ em' : 'Unisex'))}">Nam</td></tr>
+                            <tr th:if="${product.hasSizes}"><th>Kích cỡ</th><td th:text="${#strings.listJoin(product.sizeList, ', ')}">S, M, L</td></tr>
+                            <tr th:if="${!product.colorList.isEmpty()}"><th>Màu sắc</th>
+                                <td><span th:each="c, st : ${product.colorList}" th:text="${c.name} + (${st.last} ? '' : ', ')">Olive</span></td></tr>
+                        </table>
+                    </div>
+                </details>
+                <details>
+                    <summary>Vận chuyển &amp; đổi trả <i class="bi bi-chevron-down"></i></summary>
+                    <div class="acc__body">
+                        <div class="perk"><i class="bi bi-truck"></i><span><b th:text="${pricing.shippingFee > 0 and pricing.freeThreshold > 0} ? 'Miễn phí giao hàng cho đơn từ ' + ${#numbers.formatInteger(pricing.freeThreshold, 0, 'POINT')} + ' ₫' : (${pricing.shippingFee == 0} ? 'Miễn phí giao hàng' : 'Giao hàng toàn quốc')">Miễn phí giao hàng</b><br>Nhận hàng sau 2–4 ngày làm việc.</span></div>
+                        <div class="perk"><i class="bi bi-arrow-repeat"></i><span><b>Đổi trả trong <th:block th:text="${returnWindowDays}">7</th:block> ngày</b><br>Sản phẩm chưa sử dụng, còn nguyên tem mác. <a th:href="@{/returns}" style="text-decoration:underline">Xem chính sách</a></span></div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đánh giá của khách (chỉ khách đã nhận hàng mới gửi được; nhân viên ẩn được nội dung không phù hợp) -->
+    <section class="reviews" id="danh-gia" aria-labelledby="rv-title">
+        <h2 class="display" id="rv-title">Đánh giá từ khách hàng</h2>
+        <div hidden data-flash="success" th:if="${reviewMessage != null}" th:text="${reviewMessage}"></div>
+        <div hidden data-flash="error" th:if="${reviewError != null}" th:text="${reviewError}"></div>
+
+        <div class="rv-summary" th:if="${reviewCount > 0}">
+            <div class="rv-avg" th:text="${#numbers.formatDecimal(reviewAvg, 1, 1)}">4.8</div>
+            <div>
+                <span class="stars" aria-hidden="true"><i th:each="i : ${#numbers.sequence(1,5)}"
+                      th:class="${reviewAvg >= i ? 'bi bi-star-fill' : (reviewAvg >= i - 0.5 ? 'bi bi-star-half' : 'bi bi-star')}"></i></span>
+                <div class="rv-count" th:text="${reviewCount} + ' đánh giá'">12 đánh giá</div>
+            </div>
+        </div>
+        <p class="rv-empty" th:if="${reviewCount == 0}">Chưa có đánh giá nào cho sản phẩm này.</p>
+
+        <!-- Form gửi / sửa đánh giá -->
+        <form class="rv-form" th:if="${canReview}" th:action="@{/san-pham/{id}/danh-gia(id=${product.id})}" method="post">
+            <h3 th:text="${myReview != null} ? 'Đánh giá của bạn (bấm gửi để sửa)' : 'Viết đánh giá của bạn'">Viết đánh giá của bạn</h3>
+            <div class="rv-pick" role="radiogroup" aria-label="Số sao">
+                <th:block th:each="i : ${#numbers.sequence(5,1)}">
+                    <input type="radio" name="rating" th:id="'rv-star-' + ${i}" th:value="${i}" required
+                           th:checked="${myReview != null and myReview.rating == i}">
+                    <label th:for="'rv-star-' + ${i}" th:title="${i} + ' sao'"><i class="bi bi-star-fill"></i></label>
+                </th:block>
+            </div>
+            <textarea name="comment" rows="3" maxlength="1000" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm (không bắt buộc)"
+                      th:text="${myReview != null ? myReview.comment : ''}"></textarea>
+            <button type="submit" class="btn btn--dark" th:text="${myReview != null} ? 'Cập nhật đánh giá' : 'Gửi đánh giá'">Gửi đánh giá</button>
+        </form>
+        <p class="rv-note" th:if="${!canReview}">
+            <span sec:authorize="isAnonymous()"><a th:href="@{/login}" style="text-decoration:underline">Đăng nhập</a> để đánh giá sau khi bạn đã nhận hàng.</span>
+            <span sec:authorize="isAuthenticated()">Chỉ khách đã nhận sản phẩm này mới đánh giá được.</span>
+        </p>
+
+        <ul class="rv-list" th:if="${reviewCount > 0}">
+            <li th:each="r : ${reviews}">
+                <div class="rv-head">
+                    <b th:text="${r.maskedName}">kh***</b>
+                    <span class="stars" aria-hidden="true"><i th:each="i : ${#numbers.sequence(1,5)}"
+                          th:class="${r.rating >= i} ? 'bi bi-star-fill' : 'bi bi-star'"></i></span>
+                    <span class="rv-date" th:text="${r.createdAtText}">04/11/2026</span>
+                </div>
+                <p th:if="${!#strings.isEmpty(r.comment)}" th:text="${r.comment}">Nhận xét</p>
+            </li>
+        </ul>
+    </section>
+
+    <section class="related" th:if="${!#lists.isEmpty(related)}" aria-labelledby="rel-title">
+        <h2 class="display" id="rel-title">Có thể bạn cũng thích</h2>
+        <div class="grid">
+            <th:block th:each="p : ${related}">
+                <th:block th:replace="~{fragments/layout :: productCard(${p}, 'tile')}"></th:block>
+            </th:block>
+        </div>
+    </section>
+</div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: footer}"></th:block>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

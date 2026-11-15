@@ -1,0 +1,86 @@
+<!-- ============================================================
+     FRAGMENT: sidebar(active, username, role)
+     Sidebar dùng chung cho mọi trang trong /dashboard (kiểu Editorial: nền kem, chữ serif, menu chia nhóm).
+     Tham số "active": "overview" | "inventory" | "stock" | "imports" | "orders" | "shipping" | "returns" | "reports" | "customers" | "contacts" | "reviews" | "vouchers" | "staff" | "settings" | "menu" - để tô sáng menu đang chọn
+     ============================================================ -->
+<aside th:fragment="sidebar(active, username, role)" class="dashboard-sidebar">
+
+    <a class="sidebar-brand" href="/dashboard" aria-label="KOSIS - Quản trị">
+        <span class="logo">KOSIS</span><small>Quản trị</small>
+    </a>
+
+    <nav class="sidebar-nav" aria-label="Menu quản trị">
+        <div class="sidebar-group">Bán hàng</div>
+        <a href="/dashboard" th:classappend="${active == 'overview'} ? 'active' : ''" th:attr="aria-current=${active == 'overview'} ? 'page' : null">
+            <i class="bi bi-grid-1x2"></i> <span>Tổng quan</span>
+        </a>
+        <a href="/dashboard/don-hang" th:classappend="${active == 'orders'} ? 'active' : ''" th:attr="aria-current=${active == 'orders'} ? 'page' : null">
+            <i class="bi bi-bag-check"></i> <span>Đơn hàng</span>
+            <span class="nav-badge" th:if="${pendingOrderCount > 0}" th:text="${pendingOrderCount}">0</span>
+        </a>
+        <a href="/dashboard/giao-hang" th:classappend="${active == 'shipping'} ? 'active' : ''" th:attr="aria-current=${active == 'shipping'} ? 'page' : null">
+            <i class="bi bi-truck"></i> <span>Giao hàng</span>
+            <span class="nav-badge" th:if="${pendingShipCount != null and pendingShipCount > 0}" th:text="${pendingShipCount}">0</span>
+        </a>
+        <a href="/dashboard/tra-hang" th:classappend="${active == 'returns'} ? 'active' : ''" th:attr="aria-current=${active == 'returns'} ? 'page' : null">
+            <i class="bi bi-arrow-return-left"></i> <span>Trả hàng</span>
+            <span class="nav-badge" th:if="${pendingReturnCount != null and pendingReturnCount > 0}" th:text="${pendingReturnCount}">0</span>
+        </a>
+
+        <div class="sidebar-group">Sản phẩm</div>
+        <a href="/dashboard/kho-hang" th:classappend="${active == 'inventory'} ? 'active' : ''" th:attr="aria-current=${active == 'inventory'} ? 'page' : null">
+            <i class="bi bi-box-seam"></i> <span>Kho hàng</span>
+        </a>
+        <a href="/dashboard/ton-kho" th:classappend="${active == 'stock'} ? 'active' : ''" th:attr="aria-current=${active == 'stock'} ? 'page' : null">
+            <i class="bi bi-clipboard-data"></i> <span>Tồn kho</span>
+        </a>
+        <a href="/dashboard/nhap-hang" th:classappend="${active == 'imports'} ? 'active' : ''" th:attr="aria-current=${active == 'imports'} ? 'page' : null">
+            <i class="bi bi-truck-flatbed"></i> <span>Nhập hàng</span>
+        </a>
+        <!-- Chỉ ADMIN thấy (server cũng chặn ở SecurityConfig) -->
+        <a href="/dashboard/voucher" sec:authorize="hasRole('ADMIN')" th:classappend="${active == 'vouchers'} ? 'active' : ''" th:attr="aria-current=${active == 'vouchers'} ? 'page' : null">
+            <i class="bi bi-ticket-perforated"></i> <span>Mã giảm giá</span>
+        </a>
+        <a href="/dashboard/cai-dat/menu" sec:authorize="hasRole('ADMIN')" th:classappend="${active == 'menu'} ? 'active' : ''" th:attr="aria-current=${active == 'menu'} ? 'page' : null">
+            <i class="bi bi-tags"></i> <span>Danh mục &amp; menu</span>
+        </a>
+
+        <div class="sidebar-group">Khách hàng</div>
+        <a href="/dashboard/khach-hang" th:classappend="${active == 'customers'} ? 'active' : ''" th:attr="aria-current=${active == 'customers'} ? 'page' : null">
+            <i class="bi bi-people"></i> <span>Khách hàng</span>
+        </a>
+        <a href="/dashboard/lien-he" th:classappend="${active == 'contacts'} ? 'active' : ''" th:attr="aria-current=${active == 'contacts'} ? 'page' : null">
+            <i class="bi bi-chat-left-text"></i> <span>Liên hệ</span>
+            <span class="nav-badge" th:if="${openContactCount != null and openContactCount > 0}" th:text="${openContactCount}">0</span>
+        </a>
+        <a href="/dashboard/danh-gia" th:classappend="${active == 'reviews'} ? 'active' : ''" th:attr="aria-current=${active == 'reviews'} ? 'page' : null">
+            <i class="bi bi-star"></i> <span>Đánh giá</span>
+        </a>
+
+        <div class="sidebar-group">Quản trị</div>
+        <a href="/dashboard/bao-cao" th:classappend="${active == 'reports'} ? 'active' : ''" th:attr="aria-current=${active == 'reports'} ? 'page' : null">
+            <i class="bi bi-graph-up-arrow"></i> <span>Báo cáo</span>
+        </a>
+        <a href="/dashboard/nhan-vien" sec:authorize="hasRole('ADMIN')" th:classappend="${active == 'staff'} ? 'active' : ''" th:attr="aria-current=${active == 'staff'} ? 'page' : null">
+            <i class="bi bi-person-badge"></i> <span>Nhân viên</span>
+        </a>
+        <a href="/dashboard/cai-dat" sec:authorize="hasRole('ADMIN')" th:classappend="${active == 'settings'} ? 'active' : ''" th:attr="aria-current=${active == 'settings'} ? 'page' : null">
+            <i class="bi bi-gear"></i> <span>Cài đặt</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="view-shop" href="/"><span>Xem cửa hàng</span> <i class="bi bi-arrow-up-right"></i></a>
+        <div class="sidebar-me">
+            <span class="av" th:text="${#strings.isEmpty(username) ? '?' : #strings.toUpperCase(#strings.substring(username, 0, 1))}">M</span>
+            <div class="info">
+                <strong th:text="${username}">admin</strong>
+                <span th:text="${role}">ADMIN</span>
+            </div>
+            <!-- Nút đăng xuất: submit POST /logout do Spring Security xử lý -->
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" title="Đăng xuất" aria-label="Đăng xuất"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+        </div>
+    </div>
+</aside>

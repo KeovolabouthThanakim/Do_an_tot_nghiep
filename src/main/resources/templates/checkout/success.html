@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head('Đặt hàng thành công | KOSIS', 'checkout')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: header}"></th:block>
+<main id="main">
+<section class="co-section">
+    <div class="container container--content">
+        <div class="success-card">
+            <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+            <h1 th:text="${order.hasTransfer} ? 'Chúng tôi đã nhận đơn hàng và ảnh bill của bạn' : 'Cảm ơn bạn, đơn hàng đã được đặt'">Thank you</h1>
+            <p th:if="${order.codDeposit and order.awaitingReview}">Nhân viên sẽ <b>kiểm tra ảnh bill tiền cọc</b> rồi xác nhận đơn. Bạn đã đặt cọc <b th:text="${#numbers.formatInteger(order.depositAmount, 0, 'POINT')} + ' ₫'">0 ₫</b>, phần còn lại <b th:text="${#numbers.formatInteger(order.codDue, 0, 'POINT')} + ' ₫'">0 ₫</b> thanh toán khi nhận hàng.</p>
+            <p th:if="${order.bank and order.awaitingReview}">Nhân viên sẽ <b>kiểm tra ảnh bill và xác nhận thanh toán</b> trước khi chuẩn bị đơn hàng. Chúng tôi sẽ liên hệ theo số điện thoại bạn đã cung cấp.</p>
+            <p th:if="${!order.hasTransfer and order.awaitingReview}">Nhân viên sẽ sớm xác nhận đơn hàng và liên hệ theo số điện thoại bạn đã cung cấp.</p>
+            <p th:if="${order.confirmed}">Đơn hàng của bạn đã được xác nhận.</p>
+            <p th:if="${order.rejected}" style="color:var(--danger)">Rất tiếc, đơn hàng của bạn chưa thể được xác nhận.
+                <b th:if="${order.rejectReason != null}" th:text="'Lý do: ' + ${order.rejectReason}">Reason</b></p>
+            <div class="order-box">
+                <dl class="order-meta">
+                    <div><dt>Mã đơn hàng</dt><dd th:text="${order.orderCode}">KS000001</dd></div>
+                    <div><dt>Ngày đặt</dt><dd th:text="${order.createdAtText}">29/10/2026 14:30</dd></div>
+                    <div><dt>Người nhận</dt><dd th:text="${order.receiverName} + ' · ' + ${order.phone}">Name</dd></div>
+                    <div><dt>Thanh toán</dt><dd th:text="${order.paymentLabel}">COD</dd></div>
+                    <div class="full"><dt>Địa chỉ giao hàng</dt><dd th:text="${order.address}">Address</dd></div>
+                    <div class="full" th:if="${order.note != null}"><dt>Ghi chú</dt><dd th:text="${order.note}">Note</dd></div>
+                    <div><dt>Trạng thái</dt><dd th:text="${order.statusLabel}">Pending</dd></div>
+                    <div th:if="${order.hasSlip}"><dt>Ảnh bill</dt><dd><a th:href="@{/thanh-toan/slip/{id}(id=${order.id})}" target="_blank" rel="noopener">Xem ảnh bill đã tải lên</a></dd></div>
+                </dl>
+                <div class="mini-item" th:each="it : ${order.items}">
+                    <img th:src="@{${#strings.isEmpty(it.image) ? '/images/products/placeholder.svg' : it.image}}" th:alt="${it.productName}" onerror="this.onerror=null;this.src='/images/products/placeholder.svg'">
+                    <div>
+                        <div class="mi-name" th:text="${it.productName}">Product</div>
+                        <div class="mi-qty" th:text="(${#strings.isEmpty(it.variantText)} ? '' : ${it.variantText} + ' · ') + 'SL ' + ${it.quantity} + ' × ' + ${#numbers.formatInteger(it.unitPrice, 0, 'POINT')} + ' ₫'">Qty 1</div>
+                    </div>
+                    <div class="mi-total" th:text="${#numbers.formatInteger(it.lineTotal, 0, 'POINT')} + ' ₫'">1.290.000 ₫</div>
+                </div>
+                <div class="summary-total" th:if="${order.discountAmount > 0}"><span th:text="'Mã giảm giá (' + ${order.voucherCode} + ')'">Mã giảm giá</span><span th:text="'-' + ${#numbers.formatInteger(order.discountAmount, 0, 'POINT')} + ' ₫'">-0 ₫</span></div>
+                <div class="summary-total"><span>Phí vận chuyển</span><span th:text="${order.shippingFee == 0} ? 'Miễn phí' : ${#numbers.formatInteger(order.shippingFee, 0, 'POINT')} + ' ₫'">Miễn phí</span></div>
+                <div class="summary-total"><span>Tổng thanh toán</span><span class="amount" th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT')} + ' ₫'">2.670.000 ₫</span></div>
+                <div class="summary-total" th:if="${order.codDeposit}"><span>Đã đặt cọc</span><span th:text="'-' + ${#numbers.formatInteger(order.depositAmount, 0, 'POINT')} + ' ₫'">-0 ₫</span></div>
+                <div class="summary-total" th:if="${order.codDeposit}"><span>Thanh toán khi nhận hàng</span><span class="amount" th:text="${#numbers.formatInteger(order.codDue, 0, 'POINT')} + ' ₫'">0 ₫</span></div>
+            </div>
+            <div class="success-actions">
+                <a th:href="@{/collections}" class="btn-checkout"><i class="bi bi-bag"></i> Tiếp tục mua sắm</a>
+                <a th:href="@{/thanh-toan/hoa-don/{id}(id=${order.id})}" class="btn-outline"><i class="bi bi-receipt"></i>&nbsp;Xem hóa đơn</a>
+                <a th:href="@{/don-hang-cua-toi}" class="btn-outline">Đơn hàng của tôi</a>
+            </div>
+        </div>
+    </div>
+</section>
+</main>
+<th:block th:replace="~{fragments/layout :: footer}"></th:block>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

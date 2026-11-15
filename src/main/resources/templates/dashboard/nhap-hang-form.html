@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo phiếu nhập - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('imports', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/nhap-hang" class="back-link"><i class="bi bi-arrow-left"></i> Nhập hàng</a>
+                <h1>Tạo phiếu nhập hàng</h1>
+                <p>Chọn <b>nguồn hàng</b>, thêm các sản phẩm đã nhập kèm <b>số lượng</b> và <b>giá nhập</b>. Khi lưu, tồn kho được cộng thêm ngay.</p>
+            </div>
+        </div>
+
+        <div class="auth-alert error" role="alert" th:if="${errorMessage}" th:text="${errorMessage}" style="margin-bottom:16px"></div>
+        <div hidden data-flash="info" th:if="${importInfo != null}" th:text="${importInfo}"></div>
+
+        <form class="product-form-layout" th:action="@{/dashboard/nhap-hang/them}" method="post" id="importForm" autocomplete="off">
+            <input type="hidden" name="formToken" th:value="${formToken}">
+
+            <!-- ============ CỘT TRÁI: NGUỒN + CÁC DÒNG HÀNG ============ -->
+            <div class="form-col">
+
+                <section class="form-card">
+                    <h2 class="form-card-title">Nguồn hàng</h2>
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="supplier">Tên nguồn hàng <small>— nhà cung cấp, xưởng, chợ, shop...</small></label>
+                            <input type="text" id="supplier" name="supplier" th:value="${f_supplier}" list="supplierList"
+                                   maxlength="150" placeholder="VD: Xưởng may Hoàng Gia" required>
+                            <datalist id="supplierList">
+                                <option th:each="n : ${supplierNames}" th:value="${n}"></option>
+                            </datalist>
+                        </div>
+                        <div class="form-field">
+                            <label for="supplierContact">Liên hệ <small>— SĐT, địa chỉ, link</small></label>
+                            <input type="text" id="supplierContact" name="supplierContact" th:value="${f_contact}" maxlength="200" placeholder="VD: 0909 123 456">
+                        </div>
+                        <div class="form-field">
+                            <label for="reference">Số hoá đơn / chứng từ <small>— nếu có</small></label>
+                            <input type="text" id="reference" name="reference" th:value="${f_reference}" maxlength="60" placeholder="VD: HD-2026-118">
+                        </div>
+                        <div class="form-field">
+                            <label for="importDate">Ngày nhập</label>
+                            <input type="date" id="importDate" name="importDate" th:value="${f_date}" required>
+                        </div>
+                        <div class="form-field full">
+                            <label for="note">Ghi chú</label>
+                            <textarea id="note" name="note" maxlength="500" placeholder="VD: Lô áo thu đông, đã chuyển khoản cọc 50%..." th:text="${f_note}"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-card">
+                    <h2 class="form-card-title">Sản phẩm nhập <span class="muted">Chọn nhiều màu / size cùng lúc cho một sản phẩm</span></h2>
+
+                    <div class="im-lines-head">
+                        <span>Màu / Size</span><span>Số lượng</span><span>Giá nhập / cái</span><span>Thành tiền</span><span class="sr-only">Xoá</span>
+                    </div>
+                    <div id="imLines" role="group" aria-label="Các dòng sản phẩm nhập"></div>
+
+                    <button type="button" class="btn-add-color" id="imAddLine"><i class="bi bi-plus-lg"></i> Thêm sản phẩm</button>
+                    <button type="button" class="btn-add-color im-new-btn" id="imNewProduct"><i class="bi bi-box-seam"></i> + Sản phẩm mới</button>
+                    <p class="color-hint">Giá nhập sản phẩm trong Kho hàng sẽ được <b>cập nhật theo giá trung bình</b> giữa hàng đang tồn và lô mới nhập. Giá riêng của từng lô vẫn được lưu trong phiếu.</p>
+                </section>
+            </div>
+
+            <!-- ============ CỘT PHẢI: TỔNG KẾT ============ -->
+            <aside class="form-side">
+                <section class="form-card">
+                    <h2 class="form-card-title">Tổng kết phiếu</h2>
+                    <div class="price-breakdown" role="status" aria-live="polite">
+                        <div><span>Số dòng</span><b id="imSumLines">0</b></div>
+                        <div><span>Tổng số lượng</span><b id="imSumQty">0</b></div>
+                        <div class="total"><span>Tổng tiền nhập</span><b id="imSumCost">0₫</b></div>
+                    </div>
+                    <div class="form-actions side" style="margin-top:18px">
+                        <a href="/dashboard/nhap-hang" class="btn-cancel">Huỷ</a>
+                        <button type="submit" class="btn-primary-dark im-submit"><i class="bi bi-check-lg"></i> Lưu phiếu nhập</button>
+                    </div>
+                    <p class="img-hint">Phiếu đã lưu <b>không sửa được</b>. Nếu nhập nhầm, chỉnh lại số lượng / giá nhập ở trang Kho hàng.</p>
+                </section>
+            </aside>
+        </form>
+
+        <!-- ============ POPUP: TẠO NHANH SẢN PHẨM MỚI (không rời trang nhập hàng) ============ -->
+        <dialog id="imNewDialog" class="im-dialog" aria-labelledby="imNewTitle">
+            <form id="imNewForm" th:action="@{/dashboard/kho-hang/them-nhanh}" method="post" autocomplete="off" novalidate>
+                <div class="im-dialog-head">
+                    <h2 id="imNewTitle">Sản phẩm mới</h2>
+                    <button type="button" class="im-dialog-x" id="imNewClose" aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <p class="im-dialog-note">Chỉ cần thông tin cơ bản. Ảnh, mô tả... bổ sung sau ở trang Kho hàng. Sản phẩm sẽ lên kệ bán khi bạn lưu phiếu nhập này.</p>
+
+                <div class="im-dialog-error" id="imNewError" role="alert" hidden></div>
+
+                <div class="form-grid">
+                    <div class="form-field full">
+                        <label for="nvName">Tên sản phẩm</label>
+                        <input type="text" id="nvName" name="name" maxlength="150" placeholder="VD: Áo sơ mi Camp xanh rêu">
+                    </div>
+                    <div class="form-field">
+                        <label for="nvCode">Mã sản phẩm</label>
+                        <input type="text" id="nvCode" name="code" maxlength="30" placeholder="VD: KS101">
+                    </div>
+                    <div class="form-field">
+                        <label for="nvCategory">Loại sản phẩm</label>
+                        <select id="nvCategory" name="category">
+                            <option value="">— Chọn loại —</option>
+                            <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">Áo</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="nvGender">Dành cho</label>
+                        <select id="nvGender" name="gender">
+                            <option value="">— Chọn đối tượng —</option>
+                            <option value="MEN">Nam</option>
+                            <option value="WOMEN">Nữ</option>
+                            <option value="KIDS">Trẻ em</option>
+                            <option value="UNISEX">Unisex (Nam &amp; Nữ)</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="nvPrice">Giá bán niêm yết</label>
+                        <div class="money-box">
+                            <input type="text" id="nvPrice" name="listPrice" inputmode="numeric" class="im-nv-money" maxlength="15" placeholder="0">
+                            <span>₫</span>
+                        </div>
+                    </div>
+                    <div class="form-field full">
+                        <label for="nvSizes">Size <small>— cách nhau bằng dấu phẩy; để trống = tự chọn theo loại; nhập dấu - nếu không có size</small></label>
+                        <input type="text" id="nvSizes" name="sizes" maxlength="100" placeholder="VD: S, M, L, XL">
+                    </div>
+                    <div class="form-field full">
+                        <label>Màu sắc <small>— không bắt buộc, tối đa 12 màu</small></label>
+                        <input type="hidden" name="colors" id="nvColors">
+                        <div class="color-rows" id="nvColorRows"></div>
+                        <button type="button" class="btn-add-color" id="nvAddColor"><i class="bi bi-plus-lg"></i> Thêm màu</button>
+                    </div>
+                </div>
+
+                <div class="form-actions im-dialog-actions">
+                    <button type="button" class="btn-cancel" id="imNewCancel">Huỷ</button>
+                    <button type="submit" class="btn-primary-dark" id="imNewSave"><i class="bi bi-check-lg"></i> Tạo và chọn sản phẩm</button>
+                </div>
+            </form>
+        </dialog>
+
+    </main>
+</div>
+
+<!-- Danh sách sản phẩm cho ô chọn (data-sizes: các size, hoặc "Màu|SIZE" nếu sản phẩm có màu; rỗng nếu không chia kho) -->
+<template id="imProductOptions">
+    <option value="">— Chọn sản phẩm —</option>
+    <option th:each="p : ${products}" th:value="${p.id}"
+            th:text="${p.name + ' (' + p.code + ')'}"
+            th:data-sizes="${#strings.listJoin(p.importVariants, ',')}"
+            th:data-stock="${p.stock}"
+            th:data-cost="${p.importPrice}">Sản phẩm</option>
+</template>
+
+<script th:inline="javascript">
+    window.IM_ROWS = /*[[${rowsInit}]]*/ '[]';
+</script>
+<script th:src="@{/js/dashboard-import.js}" src="../../static/js/dashboard-import.js"></script>
+</body>
+</html>

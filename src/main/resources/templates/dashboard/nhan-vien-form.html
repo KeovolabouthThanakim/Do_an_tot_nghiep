@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản nhân viên - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('staff', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/nhan-vien" class="back-link"><i class="bi bi-arrow-left"></i> Nhân viên &amp; Admin</a>
+                <h1 th:text="${isEdit} ? 'Sửa tài khoản' : 'Thêm nhân viên mới'">Thêm nhân viên mới</h1>
+                <p th:if="${!isEdit}">Nhân viên đăng nhập bằng <b>tên đăng nhập</b> hoặc <b>email</b>. Mật khẩu được mã hoá BCrypt, tối thiểu 6 ký tự.</p>
+                <p th:if="${isEdit}">Chỉnh thông tin, vai trò và mật khẩu của nhân viên. Đổi tên đăng nhập sẽ cập nhật theo cả đơn hàng đã xử lý.</p>
+            </div>
+        </div>
+
+        <div hidden data-flash="error" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
+        <div hidden data-flash="error" th:if="${staffError != null}" th:text="${staffError}"></div>
+
+        <!-- Thẻ hồ sơ (chế độ sửa) -->
+        <div class="acct-head" th:if="${isEdit}">
+            <div class="acct-avatar"><span th:text="${#strings.substring(form.username, 0, 1)}">A</span><img th:if="${form.avatarUrl != null}" th:src="${form.avatarUrl}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div>
+            <div class="acct-info">
+                <div class="acct-name" th:text="${#strings.isEmpty(form.fullName) ? form.username : form.fullName}">Nhân viên bán hàng</div>
+                <div class="acct-login">Tên đăng nhập <code th:text="${form.username}">nhanvien</code></div>
+            </div>
+            <div class="acct-meta">
+                <span class="role-badge admin" th:if="${form.admin}">ADMIN</span>
+                <span class="role-badge nhanvien" th:unless="${form.admin}">NHANVIEN</span>
+                <span class="status-pill done" th:if="${form.enabled}">Hoạt động</span>
+                <span class="status-pill rejected" th:unless="${form.enabled}">Đã khoá</span>
+                <small>Tạo ngày <span th:text="${form.createdAtText}">—</span></small>
+            </div>
+        </div>
+
+        <div class="sfm-grid">
+
+            <!-- ============ CỘT TRÁI: FORM ============ -->
+            <form class="sfm-form" id="sfForm" method="post" enctype="multipart/form-data"
+                  th:action="${isEdit} ? @{/dashboard/nhan-vien/sua/{id}(id=${form.id})} : @{/dashboard/nhan-vien/them}">
+
+                <!-- 1. Đăng nhập -->
+                <section class="sfm-card">
+                    <div class="sfm-h"><span class="n">1</span><div><h2>Đăng nhập</h2><p>Thông tin để nhân viên vào hệ thống</p></div></div>
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="username">Tên đăng nhập</label>
+                            <input type="text" id="username" name="username" th:value="${form.username}" maxlength="50"
+                                   required autocomplete="off" placeholder="VD: lan.nguyen">
+                            <small class="hint" th:if="${isEdit and !isSelf}">Đổi tên xong, nhân viên phải đăng nhập bằng tên mới. Các đơn đã xử lý sẽ đổi theo.</small>
+                            <small class="hint" th:if="${isEdit and isSelf}">Đây là tài khoản của bạn: đổi tên xong bạn sẽ bị đăng xuất và phải đăng nhập lại bằng tên mới.</small>
+                        </div>
+                        <div class="form-field full" th:unless="${isEdit}">
+                            <label for="password">Mật khẩu <small>— ít nhất 6 ký tự</small></label>
+                            <div class="sfm-pass">
+                                <input type="password" id="password" name="password" minlength="6" required autocomplete="new-password" placeholder="Nhập hoặc tạo ngẫu nhiên">
+                                <button type="button" id="pwShow" title="Hiện / ẩn mật khẩu" aria-label="Hiện / ẩn mật khẩu"><i class="bi bi-eye"></i></button>
+                                <button type="button" id="pwGen" class="gen"><i class="bi bi-magic"></i> Tạo ngẫu nhiên</button>
+                            </div>
+                            <div class="sfm-meter" id="pwMeter" data-level="0"><i></i><i></i><i></i><i></i><span id="pwLabel">Chưa nhập</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Hồ sơ -->
+                <section class="sfm-card">
+                    <div class="sfm-h"><span class="n">2</span><div><h2>Hồ sơ</h2><p>Tên hiển thị và cách liên hệ</p></div></div>
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label>Ảnh đại diện <small>— .jpg .png .webp .gif, tối đa 2MB</small></label>
+                            <div class="sfm-upload">
+                                <span class="x-avatar sfm-up-prev" id="upPrev"><span id="upLetter" th:text="${#strings.isEmpty(form.username) ? 'A' : #strings.toUpperCase(#strings.substring(form.username, 0, 1))}">A</span>
+                                    <img id="upImg" th:if="${isEdit and form.avatarUrl != null}" th:src="${form.avatarUrl}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></span>
+                                <div>
+                                    <label for="avatar" class="x-btn"><i class="bi bi-image"></i> Chọn ảnh</label>
+                                    <input type="file" id="avatar" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                                    <span class="x-muted" id="upName">Chưa chọn ảnh</span>
+                                    <label class="form-check" th:if="${isEdit and form.avatarImage != null}" style="margin-top:10px">
+                                        <input type="checkbox" name="removeAvatar" value="1"> Xoá ảnh đã tải lên
+                                    </label>
+                                </div>
+                            </div>
+                            <small class="hint">Không tải ảnh thì hệ thống dùng Gravatar theo email (nếu có), không có thì hiện chữ cái đầu của tên.</small>
+                        </div>
+                        <div class="form-field full">
+                            <label for="fullName">Họ tên</label>
+                            <input type="text" id="fullName" name="fullName" th:value="${form.fullName}" maxlength="100" placeholder="VD: Nguyễn Thị Lan">
+                        </div>
+                        <div class="form-field">
+                            <label for="email">Email <small>— đăng nhập bằng email này được</small></label>
+                            <input type="email" id="email" name="email" th:value="${form.email}" maxlength="100" placeholder="ten@kosis.vn">
+                        </div>
+                        <div class="form-field">
+                            <label for="phone">Điện thoại</label>
+                            <input type="tel" id="phone" name="phone" th:value="${form.phone}" maxlength="20" placeholder="09xx xxx xxx">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Vai trò -->
+                <section class="sfm-card">
+                    <div class="sfm-h"><span class="n">3</span><div><h2>Vai trò</h2><p>Quyết định nhân viên được làm gì</p></div></div>
+                    <div class="sfm-roles">
+                        <label class="sfm-role">
+                            <input type="radio" name="role" value="NHANVIEN" th:checked="${form.role != 'ADMIN'}" th:disabled="${isSelf}">
+                            <span class="box">
+                                <span class="top"><i class="bi bi-person-workspace"></i><b>NHANVIEN</b><em>Nhân viên bán hàng</em></span>
+                                <ul>
+                                    <li class="y"><i class="bi bi-check2"></i> Sản phẩm &amp; kho hàng</li>
+                                    <li class="y"><i class="bi bi-check2"></i> Đơn hàng, giao hàng, trả hàng</li>
+                                    <li class="y"><i class="bi bi-check2"></i> Xem khách hàng</li>
+                                    <li class="n"><i class="bi bi-x"></i> Mã giảm giá &amp; nhân viên</li>
+                                </ul>
+                            </span>
+                        </label>
+                        <label class="sfm-role">
+                            <input type="radio" name="role" value="ADMIN" th:checked="${form.role == 'ADMIN'}" th:disabled="${isSelf}">
+                            <span class="box">
+                                <span class="top"><i class="bi bi-shield-check"></i><b>ADMIN</b><em>Toàn quyền</em></span>
+                                <ul>
+                                    <li class="y"><i class="bi bi-check2"></i> Mọi quyền của NHANVIEN</li>
+                                    <li class="y"><i class="bi bi-check2"></i> Quản lý mã giảm giá</li>
+                                    <li class="y"><i class="bi bi-check2"></i> Thêm / khoá / xoá nhân viên</li>
+                                    <li class="y"><i class="bi bi-check2"></i> Khoá tài khoản khách</li>
+                                </ul>
+                            </span>
+                        </label>
+                    </div>
+                    <!-- radio bị disabled sẽ không gửi giá trị -> gửi kèm ẩn (server vẫn chặn đổi role của chính mình) -->
+                    <input type="hidden" name="role" th:if="${isSelf}" th:value="${form.role}">
+                    <small class="hint" th:if="${isSelf}">Bạn không thể đổi vai trò của chính mình.</small>
+                </section>
+
+                <div class="sfm-actions">
+                    <a href="/dashboard/nhan-vien" class="btn-cancel">Huỷ</a>
+                    <button type="submit" class="btn-primary-dark"><i class="bi bi-check2"></i>
+                        <span th:text="${isEdit} ? 'Lưu thay đổi' : 'Tạo tài khoản'">Tạo tài khoản</span></button>
+                </div>
+            </form>
+
+            <!-- ============ CỘT PHẢI ============ -->
+            <aside class="sfm-side">
+
+                <!-- Xem trước thẻ nhân viên -->
+                <div class="sfm-card sfm-live">
+                    <div class="sfm-live-h">Xem trước</div>
+                    <div class="sfm-live-card">
+                        <span class="x-avatar lg" id="lvAvatar"><span id="lvLetter" th:text="${#strings.isEmpty(form.username) ? '?' : #strings.toUpperCase(#strings.substring(form.username, 0, 1))}">?</span>
+                            <img id="lvImg" th:if="${isEdit and form.avatarUrl != null}" th:src="${form.avatarUrl}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></span>
+                        <div class="sfm-live-id">
+                            <b id="lvName" th:text="${#strings.isEmpty(form.fullName) ? (#strings.isEmpty(form.username) ? 'Tên nhân viên' : form.username) : form.fullName}">Tên nhân viên</b>
+                            <span id="lvUser" th:text="${#strings.isEmpty(form.username) ? '@tên.đăng.nhập' : '@' + form.username}">@tên.đăng.nhập</span>
+                        </div>
+                        <span class="sf-role" id="lvRole"><i class="bi bi-person-workspace"></i> NHANVIEN</span>
+                    </div>
+                    <div class="x-contact">
+                        <span><i class="bi bi-envelope"></i><span id="lvMail" th:text="${#strings.isEmpty(form.email) ? 'Chưa có email' : form.email}">Chưa có email</span></span>
+                        <span><i class="bi bi-telephone"></i><span id="lvPhone" th:text="${#strings.isEmpty(form.phone) ? 'Chưa có số điện thoại' : form.phone}">Chưa có số điện thoại</span></span>
+                    </div>
+                </div>
+
+                <div class="sfm-card login-card">
+                    <div class="x-od-h"><h2><i class="bi bi-box-arrow-in-right"></i> Cách đăng nhập</h2></div>
+                    <div class="login-box">
+                        <div><span>Tên đăng nhập</span><b id="lgUser" th:text="${#strings.isEmpty(form.username) ? '—' : form.username}">nhanvien</b></div>
+                        <div><span>Hoặc email</span><b id="lgMail" th:text="${#strings.isEmpty(form.email) ? 'chưa có email' : form.email}">email</b></div>
+                    </div>
+                    <p class="x-muted" style="margin-top:12px" th:unless="${isEdit}">Email không được trùng tài khoản khác. Để trống email thì chỉ đăng nhập được bằng tên đăng nhập.</p>
+                </div>
+
+                <!-- Đặt lại mật khẩu (chế độ sửa) -->
+                <div class="sfm-card" th:if="${isEdit}">
+                    <div class="x-od-h"><h2><i class="bi bi-key"></i> Đặt lại mật khẩu</h2></div>
+                    <p class="od-hint">Nhập mật khẩu mới (ít nhất 6 ký tự) rồi báo cho nhân viên. Mật khẩu cũ sẽ không dùng được nữa.</p>
+                    <form th:action="@{/dashboard/nhan-vien/{id}/dat-lai-mat-khau(id=${form.id})}" method="post"
+                          data-confirm="Đặt lại mật khẩu cho tài khoản này?" data-confirm-ok="Đặt lại mật khẩu">
+                        <div class="form-field" style="margin-bottom:14px">
+                            <label for="newPassword">Mật khẩu mới</label>
+                            <input type="password" id="newPassword" name="newPassword" minlength="6" required autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn-primary-dark od-btn"><i class="bi bi-key"></i> Đặt lại mật khẩu</button>
+                    </form>
+                </div>
+            </aside>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        var $ = function (id) { return document.getElementById(id); };
+        var first = function (s) { return s ? s.trim().charAt(0).toUpperCase() : ''; };
+
+        /* ---------- xem trước trực tiếp ---------- */
+        function live() {
+            var user = $('username').value.trim(), name = $('fullName').value.trim();
+            var mail = $('email').value.trim(), phone = $('phone').value.trim();
+            var admin = document.querySelector('input[name="role"]:checked');
+            admin = admin ? admin.value === 'ADMIN' : (document.querySelector('input[type="hidden"][name="role"]') || {}).value === 'ADMIN';
+            var letter = first(user) || first(name) || '?';
+            $('lvLetter').textContent = letter;
+            $('upLetter').textContent = letter === '?' ? 'A' : letter;
+            $('lvName').textContent = name || user || 'Tên nhân viên';
+            $('lvUser').textContent = user ? '@' + user : '@tên.đăng.nhập';
+            $('lvMail').textContent = mail || 'Chưa có email';
+            $('lvPhone').textContent = phone || 'Chưa có số điện thoại';
+            $('lgUser').textContent = user || '—';
+            $('lgMail').textContent = mail || 'chưa có email';
+            var r = $('lvRole');
+            r.className = 'sf-role' + (admin ? ' admin' : '');
+            r.innerHTML = admin ? '<i class="bi bi-shield-check"></i> ADMIN' : '<i class="bi bi-person-workspace"></i> NHANVIEN';
+        }
+        ['username', 'fullName', 'email', 'phone'].forEach(function (id) { $(id).addEventListener('input', live); });
+        document.querySelectorAll('input[name="role"]').forEach(function (r) { r.addEventListener('change', live); });
+        live();
+
+        /* ---------- ảnh đại diện: xem trước ngay ---------- */
+        $('avatar').addEventListener('change', function () {
+            var f = this.files && this.files[0];
+            $('upName').textContent = f ? f.name : 'Chưa chọn ảnh';
+            ['upPrev', 'lvAvatar'].forEach(function (id) {
+                var box = $(id), img = box.querySelector('img');
+                if (img) img.remove();
+                if (!f) return;
+                img = document.createElement('img');
+                img.alt = '';
+                img.src = URL.createObjectURL(f);
+                box.appendChild(img);
+            });
+        });
+
+        /* ---------- mật khẩu (chỉ khi tạo mới) ---------- */
+        var pw = $('password');
+        if (pw) {
+            var labels = ['Chưa nhập', 'Yếu', 'Tạm được', 'Khá', 'Mạnh'];
+            function meter() {
+                var v = pw.value, s = 0;
+                if (v.length >= 6) s++;
+                if (v.length >= 10) s++;
+                if (/[a-z]/.test(v) && /[A-Z]/.test(v) || /\d/.test(v) && /[a-zA-Z]/.test(v)) s++;
+                if (/[^A-Za-z0-9]/.test(v) && v.length >= 8) s++;
+                if (!v) s = 0; else if (v.length < 6) s = 1;
+                $('pwMeter').dataset.level = s;
+                $('pwLabel').textContent = v && v.length < 6 ? 'Quá ngắn (cần ≥ 6)' : labels[s];
+            }
+            pw.addEventListener('input', meter);
+            $('pwShow').addEventListener('click', function () {
+                var show = pw.type === 'password';
+                pw.type = show ? 'text' : 'password';
+                this.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+            $('pwGen').addEventListener('click', function () {
+                var chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', out = '';
+                var buf = new Uint32Array(12);
+                (window.crypto || window.msCrypto).getRandomValues(buf);
+                for (var i = 0; i < buf.length; i++) out += chars[buf[i] % chars.length];
+                pw.value = out; pw.type = 'text';
+                $('pwShow').querySelector('i').className = 'bi bi-eye-slash';
+                meter();
+                if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).catch(function () {});
+            });
+            meter();
+        }
+    })();
+</script>
+</body>
+</html>

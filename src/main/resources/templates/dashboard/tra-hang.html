@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trả hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('returns', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <h1>Trả hàng &amp; hoàn tiền</h1>
+                <p>Khách chỉ gửi được yêu cầu cho đơn đã giao thành công, trong thời hạn đổi trả của đơn kể từ khi nhận hàng (đơn đặt từ bây giờ: <b th:text="${windowDays}">7</b> ngày; đơn cũ giữ số ngày lúc khách đặt).
+                    Duyệt yêu cầu &rarr; khách gửi hàng về &rarr; nhận lại hàng thì ghi nhận hoàn tiền.</p>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${returnMessage != null}" th:text="${returnMessage}"></div>
+        <div hidden data-flash="error" th:if="${returnError != null}" th:text="${returnError}"></div>
+
+        <!-- TỔNG HỢP: thanh tỷ lệ các trạng thái -->
+        <section class="x-summary" th:with="total=${#lists.size(returns)}">
+            <div class="x-summary-top">
+                <div><b th:text="${openCount}">0</b>yêu cầu cần xử lý
+                    <span class="x-muted" th:text="'· ' + ${total} + ' yêu cầu tất cả'">· 0 yêu cầu tất cả</span></div>
+                <div class="x-fig">Đã hoàn cho khách
+                    <b th:text="${#numbers.formatInteger(refundedTotal, 0, 'POINT')} + '₫'">0₫</b></div>
+            </div>
+            <div class="x-split" th:if="${total > 0}">
+                <span class="w" th:style="'width:' + ${requestedCount * 100.0 / total} + '%'"></span>
+                <span class="b" th:style="'width:' + ${approvedCount * 100.0 / total} + '%'"></span>
+                <span class="c" th:style="'width:' + ${refundedCount * 100.0 / total} + '%'"></span>
+                <span class="r" th:style="'width:' + ${rejectedCount * 100.0 / total} + '%'"></span>
+            </div>
+            <div class="x-split" th:unless="${total > 0}"></div>
+        </section>
+
+        <!-- LUỒNG XỬ LÝ (bấm từng bước để lọc danh sách) -->
+        <div class="x-flow" id="rtChips">
+            <button type="button" class="x-step active" data-status="all">
+                <span class="ico"><i class="bi bi-collection"></i></span>
+                <span class="num" th:text="${#lists.size(returns)}">0</span><span class="lbl">Tất cả</span>
+            </button>
+            <span class="sep"></span>
+            <button type="button" class="x-step wait flow" data-status="requested">
+                <span class="ico"><i class="bi bi-inbox"></i></span>
+                <span class="num" th:text="${requestedCount}">0</span><span class="lbl">Chờ duyệt</span>
+            </button>
+            <button type="button" class="x-step go flow" data-status="approved">
+                <span class="ico"><i class="bi bi-box-arrow-in-down"></i></span>
+                <span class="num" th:text="${approvedCount}">0</span><span class="lbl">Chờ nhận hàng về</span>
+            </button>
+            <button type="button" class="x-step ok" data-status="refunded">
+                <span class="ico"><i class="bi bi-cash-coin"></i></span>
+                <span class="num" th:text="${refundedCount}">0</span><span class="lbl">Đã hoàn tiền</span>
+            </button>
+            <span class="sep"></span>
+            <button type="button" class="x-step bad" data-status="rejected">
+                <span class="ico"><i class="bi bi-x-octagon"></i></span>
+                <span class="num" th:text="${rejectedCount}">0</span><span class="lbl">Từ chối</span>
+            </button>
+        </div>
+
+        <div class="x-table-card">
+            <div class="x-toolbar">
+                <div class="inv-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="rtSearch" placeholder="Tìm theo mã đơn, tên khách hoặc lý do...">
+                </div>
+                <div class="count"><span id="rtShown">0</span> yêu cầu đang hiển thị</div>
+            </div>
+
+            <div class="x-ret-list" id="rtBody">
+                <article class="x-ret" th:each="r : ${returns}"
+                         th:data-status="${r.requested ? 'requested' : (r.approved ? 'approved' : (r.refunded ? 'refunded' : 'rejected'))}"
+                         th:data-prio="${r.requested ? 0 : (r.approved ? 1 : 2)}"
+                         th:data-search="${#strings.toLowerCase(r.orderCode + ' ' + r.username + ' ' + r.reason)}"
+                         th:with="step=${r.refunded ? 3 : (r.approved ? 2 : 1)}">
+
+                    <header class="x-ret-head">
+                        <div class="x-person">
+                            <span class="x-avatar" th:text="${#strings.isEmpty(r.username)} ? '?' : ${#strings.toUpperCase(#strings.substring(r.username, 0, 1))}">A</span>
+                            <div>
+                                <span class="p-name" th:text="${r.username}">username</span>
+                                <span class="p-code" th:text="'Gửi lúc ' + ${r.createdAtText}">Gửi lúc 04/11/2026 10:00</span>
+                            </div>
+                        </div>
+                        <a class="order-code" th:href="@{/dashboard/don-hang/{id}(id=${r.orderId})}" th:text="'Đơn ' + ${r.orderCode}">Đơn KS000001</a>
+                        <span class="status-pill review" th:if="${r.requested}" th:text="${r.statusLabel}">Chờ duyệt</span>
+                        <span class="status-pill shipping" th:if="${r.approved}" th:text="${r.statusLabel}">Đã duyệt</span>
+                        <span class="status-pill done" th:if="${r.refunded}" th:text="${r.statusLabel}">Đã hoàn tiền</span>
+                        <span class="status-pill rejected" th:if="${r.rejected}" th:text="${r.statusLabel}">Từ chối</span>
+                        <div class="x-ret-amount">
+                            <small>Số tiền hoàn</small>
+                            <b th:text="${#numbers.formatInteger(r.refundAmount, 0, 'POINT')} + '₫'">890.000₫</b>
+                        </div>
+                    </header>
+
+                    <div class="x-ret-body">
+                        <div class="x-ret-main">
+                            <!-- Tiến trình: gửi yêu cầu -> duyệt -> nhận hàng & hoàn tiền -->
+                            <ol class="x-ret-track" th:classappend="${r.rejected} ? 'fail'">
+                                <li class="on"><i class="bi bi-send"></i><span>Gửi yêu cầu</span></li>
+                                <li th:classappend="${r.rejected} ? 'bad' : (${step >= 2} ? 'on' : 'now')">
+                                    <i class="bi" th:classappend="${r.rejected} ? 'bi-x-lg' : 'bi-check2'"></i>
+                                    <span th:text="${r.rejected} ? 'Từ chối' : 'Duyệt yêu cầu'">Duyệt yêu cầu</span>
+                                </li>
+                                <li th:classappend="${r.refunded} ? 'on' : (${r.approved} ? 'now' : '')">
+                                    <i class="bi bi-cash-coin"></i><span>Nhận hàng &amp; hoàn tiền</span>
+                                </li>
+                            </ol>
+
+                            <blockquote class="x-quote">
+                                <span>Lý do của khách</span>
+                                <p th:text="${r.reason}">Sai size</p>
+                            </blockquote>
+
+                            <blockquote class="x-quote store" th:classappend="${r.rejected} ? 'bad'" th:if="${r.staffNote != null}">
+                                <span th:text="${r.rejected} ? 'Lý do từ chối' : 'Ghi chú của cửa hàng'">Ghi chú của cửa hàng</span>
+                                <p th:text="${r.staffNote}">Ghi chú</p>
+                            </blockquote>
+                        </div>
+
+                        <div class="x-ret-act">
+                            <!-- Chờ duyệt: đồng ý hoặc từ chối (mở 1 ô thì ô kia tự đóng) -->
+                            <th:block th:if="${r.requested}">
+                                <details class="x-act ok" th:name="'act' + ${r.id}">
+                                    <summary><i class="bi bi-check2-circle"></i> Duyệt yêu cầu</summary>
+                                    <form th:action="@{/dashboard/tra-hang/{id}/duyet(id=${r.id})}" method="post"
+                                          data-confirm="Duyệt yêu cầu trả hàng này?" data-confirm-ok="Duyệt">
+                                        <label th:for="'dn' + ${r.id}">Hướng dẫn gửi hàng về (không bắt buộc)</label>
+                                        <textarea th:id="'dn' + ${r.id}" name="note" rows="2" maxlength="300" placeholder="VD: Gửi về 123 đường Atelier, Quận 1; ghi mã đơn ngoài kiện hàng..."></textarea>
+                                        <button type="submit" class="btn-primary-dark"><i class="bi bi-check2-circle"></i> Duyệt yêu cầu</button>
+                                    </form>
+                                </details>
+                                <details class="x-act bad" th:name="'act' + ${r.id}">
+                                    <summary><i class="bi bi-x-circle"></i> Từ chối</summary>
+                                    <form th:action="@{/dashboard/tra-hang/{id}/tu-choi(id=${r.id})}" method="post"
+                                          data-confirm="Từ chối yêu cầu trả hàng này?" data-confirm-ok="Từ chối" data-confirm-danger>
+                                        <label th:for="'rn' + ${r.id}">Lý do từ chối <em>*</em></label>
+                                        <textarea th:id="'rn' + ${r.id}" name="note" rows="2" maxlength="300" required placeholder="VD: Quá hạn / sản phẩm đã qua sử dụng..."></textarea>
+                                        <button type="submit" class="btn-danger"><i class="bi bi-x-circle"></i> Từ chối</button>
+                                    </form>
+                                </details>
+                            </th:block>
+
+                            <!-- Đã duyệt: nhận lại hàng -> hoàn tiền -->
+                            <details class="x-act ok" open th:if="${r.approved}">
+                                <summary><i class="bi bi-cash-coin"></i> Nhận hàng &amp; hoàn tiền</summary>
+                                <form th:action="@{/dashboard/tra-hang/{id}/hoan-tien(id=${r.id})}" method="post"
+                                      data-confirm="Xác nhận đã nhận lại hàng và hoàn tiền cho khách?" data-confirm-ok="Đã hoàn tiền">
+                                    <label th:for="'fn' + ${r.id}">Ghi chú hoàn tiền (mã giao dịch...)</label>
+                                    <textarea th:id="'fn' + ${r.id}" name="note" rows="2" maxlength="300" placeholder="VD: Đã chuyển khoản lại, mã GD 12345"></textarea>
+                                    <label class="x-check">
+                                        <input type="checkbox" name="restock" value="true">
+                                        <span>Hàng còn nguyên vẹn &ndash; cộng lại tồn kho</span>
+                                    </label>
+                                    <button type="submit" class="btn-primary-dark"><i class="bi bi-cash-coin"></i> Đã nhận hàng &amp; hoàn tiền</button>
+                                </form>
+                            </details>
+
+                            <!-- Đã xử lý xong: chỉ hiện người xử lý -->
+                            <div class="x-ret-done ok" th:if="${r.refunded}">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <div><b>Đã hoàn tiền</b><br><span th:if="${r.handledBy != null}" th:text="${r.handledBy} + ' · ' + ${r.handledAtText}">admin · 04/11/2026</span></div>
+                            </div>
+                            <div class="x-ret-done bad" th:if="${r.rejected}">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <div><b>Đã từ chối</b><br><span th:if="${r.handledBy != null}" th:text="${r.handledBy} + ' · ' + ${r.handledAtText}">admin · 04/11/2026</span></div>
+                            </div>
+                            <div class="x-ret-done" th:if="${r.approved and r.handledBy != null}">
+                                <i class="bi bi-person-check"></i>
+                                <div>Đã duyệt bởi <b th:text="${r.handledBy}">admin</b><br><span th:text="${r.handledAtText}">04/11/2026</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="inv-empty" id="rtEmpty" th:hidden="${!#lists.isEmpty(returns)}">
+                <i class="bi bi-inbox"></i>
+                <p>Chưa có yêu cầu trả hàng nào.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        var body = document.getElementById('rtBody');
+        var rows = Array.prototype.slice.call(body.querySelectorAll('.x-ret'));
+        var chips = document.querySelectorAll('#rtChips button');
+        var search = document.getElementById('rtSearch');
+        var shownEl = document.getElementById('rtShown');
+        var empty = document.getElementById('rtEmpty');
+        var status = 'all';
+
+        /* Việc cần làm lên đầu: chờ duyệt -> chờ nhận hàng -> đã xử lý (mới nhất trước trong từng nhóm) */
+        rows.map(function (r, i) { return { r: r, i: i }; })
+            .sort(function (a, b) { return (a.r.dataset.prio - b.r.dataset.prio) || (a.i - b.i); })
+            .forEach(function (x) { body.appendChild(x.r); });
+
+        function apply() {
+            var q = search.value.trim().toLowerCase();
+            var shown = 0;
+            rows.forEach(function (r) {
+                var ok = (status === 'all' || r.dataset.status === status)
+                      && (!q || r.dataset.search.indexOf(q) >= 0);
+                r.hidden = !ok;
+                if (ok) shown++;
+            });
+            shownEl.textContent = shown;
+            if (rows.length === 0) return;      // chưa có yêu cầu nào: giữ nguyên thông báo "Chưa có yêu cầu" do server render
+            empty.hidden = shown > 0;
+            empty.querySelector('p').textContent = 'Không có yêu cầu phù hợp.';
+        }
+        chips.forEach(function (c) {
+            c.addEventListener('click', function () {
+                chips.forEach(function (x) { x.classList.remove('active'); });
+                c.classList.add('active');
+                status = c.dataset.status;
+                apply();
+            });
+        });
+        search.addEventListener('input', apply);
+        apply();
+    })();
+</script>
+</body>
+</html>

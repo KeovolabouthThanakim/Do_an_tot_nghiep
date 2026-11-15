@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head('Tài khoản của tôi | KOSIS', 'pages')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: header}"></th:block>
+<main id="main">
+<div class="container container--content">
+    <div class="page-head"><p class="eyebrow">HỒ SƠ CỦA BẠN</p><h1 class="display">Tài khoản của tôi</h1></div>
+    <div class="acct">
+        <aside class="acct__side">
+            <div class="acct__avatar" th:text="${#strings.toUpperCase(#strings.substring(user.username, 0, 1))}">K</div>
+            <h2 th:text="${user.fullName != null and !user.fullName.isEmpty() ? user.fullName : user.username}">Name</h2>
+            <small th:text="'@' + ${user.username}">@user</small>
+            <div class="acct__links">
+                <a th:href="@{/don-hang-cua-toi}">Đơn hàng của tôi <i class="bi bi-arrow-right"></i></a>
+                <a th:href="@{/wishlist}">Yêu thích <i class="bi bi-arrow-right"></i></a>
+                <a th:href="@{/gio-hang}">Giỏ hàng <i class="bi bi-arrow-right"></i></a>
+                <form th:action="@{/logout}" method="post"><button type="submit">Đăng xuất <i class="bi bi-box-arrow-right"></i></button></form>
+            </div>
+        </aside>
+        <div class="acct__main">
+            <div class="acct__card">
+                <h3>Thông tin cá nhân</h3>
+                <div hidden data-flash="success" th:if="${accountMessage != null}" th:text="${accountMessage}"></div>
+                <div hidden data-flash="error" th:if="${accountError != null}" th:text="${accountError}"></div>
+                <form th:action="@{/account}" method="post">
+                    <div class="auth-grid">
+                        <div class="field full"><label for="fullName">Họ và tên</label><input type="text" id="fullName" name="fullName" th:value="${user.fullName}" maxlength="100" required></div>
+                        <div class="field"><label for="email">Email</label><input type="email" id="email" name="email" th:value="${user.email}" maxlength="150"></div>
+                        <div class="field"><label for="phone">Số điện thoại</label><input type="tel" id="phone" name="phone" th:value="${user.phone}" maxlength="20"></div>
+                        <div class="field full"><label for="address">Địa chỉ giao hàng</label><input type="text" id="address" name="address" th:value="${user.address}" maxlength="255"></div>
+                    </div>
+                    <button class="btn btn--dark" type="submit">Lưu thay đổi</button>
+                </form>
+            </div>
+            <div class="acct__card">
+                <h3>Đổi mật khẩu</h3>
+                <div hidden data-flash="success" th:if="${passwordMessage != null}" th:text="${passwordMessage}"></div>
+                <div hidden data-flash="error" th:if="${passwordError != null}" th:text="${passwordError}"></div>
+                <form th:action="@{/account/password}" method="post">
+                    <div class="auth-grid">
+                        <div class="field full"><label for="currentPassword">Mật khẩu hiện tại</label><input type="password" id="currentPassword" name="currentPassword" autocomplete="current-password" required></div>
+                        <div class="field"><label for="newPassword">Mật khẩu mới</label><input type="password" id="newPassword" name="newPassword" minlength="6" maxlength="72" autocomplete="new-password" required></div>
+                        <div class="field"><label for="confirmPassword">Nhập lại mật khẩu mới</label><input type="password" id="confirmPassword" name="confirmPassword" minlength="6" maxlength="72" autocomplete="new-password" required></div>
+                    </div>
+                    <button class="btn btn--dark" type="submit">Đổi mật khẩu</button>
+                </form>
+            </div>
+            <div class="acct__card">
+                <h3>Đơn hàng gần đây <a th:href="@{/don-hang-cua-toi}" th:if="${orderCount > 0}">Xem tất cả (<span th:text="${orderCount}">3</span>)</a></h3>
+                <p style="color:var(--muted)" th:if="${#lists.isEmpty(recentOrders)}">Bạn chưa có đơn hàng nào.</p>
+                <div class="recent" th:each="o : ${recentOrders}">
+                    <span><b th:text="'#' + ${o.orderCode}">#KS000001</b><small th:text="${o.createdAtText}">29/10/2026</small></span>
+                    <span><span th:text="${o.statusLabel}">Pending</span> · <b th:text="${#numbers.formatInteger(o.totalAmount, 0, 'POINT')} + ' ₫'">1.000.000 ₫</b></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer}"></th:block>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

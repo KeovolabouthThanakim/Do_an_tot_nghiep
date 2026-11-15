@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('orders', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/don-hang" class="back-link"><i class="bi bi-arrow-left"></i> Danh sách đơn hàng</a>
+                <h1>
+                    Đơn <span th:text="${order.orderCode}">KS000001</span>
+                    <span class="status-pill review" th:if="${order.awaitingReview}" th:text="${order.statusLabel}">Chờ</span>
+                    <span class="status-pill done" th:if="${order.confirmed}" th:text="${order.statusLabel}">Đã xác nhận</span>
+                    <span class="status-pill rejected" th:if="${order.rejected}" th:text="${order.statusLabel}">Bị từ chối</span>
+                </h1>
+                <p>Đặt lúc <b th:text="${order.createdAtText}">29/09/2026 14:30</b>
+                    · bởi <b th:text="${order.username}">user</b>
+                    · <span th:text="${order.paymentLabel}">COD</span></p>
+            </div>
+            <div class="x-actions">
+                <button type="button" class="x-btn" data-inv-open th:if="${order.confirmed}"><i class="bi bi-receipt"></i> Xem / in hóa đơn</button>
+                <a class="btn-primary-dark" th:if="${order.confirmed}" th:href="@{/dashboard/giao-hang/{id}(id=${order.id})}">
+                    <i class="bi bi-truck"></i> Quản lý giao hàng</a>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${orderMessage != null}" th:text="${orderMessage}"></div>
+        <div hidden data-flash="error" th:if="${orderError != null}" th:text="${orderError}"></div>
+
+        <th:block th:if="${!order.rejected}">
+            <th:block th:replace="~{fragments/shipping :: refuseBanner(${refuseCount}, ${order})}"></th:block>
+        </th:block>
+
+        <!-- ============ TIẾN TRÌNH ĐƠN: đặt hàng -> xác nhận -> chuẩn bị -> vận chuyển -> hoàn tất ============ -->
+        <section class="x-od-progress">
+            <ol class="x-ret-track n5"
+                th:with="cur=${order.rejected or order.awaitingReview ? 2 : (order.delivered ? 6 : (order.arrived ? 5 : (order.shipping or order.failed ? 4 : 3)))}">
+                <li class="on">
+                    <i class="bi bi-bag-check"></i><span>Đặt hàng</span>
+                    <small th:text="${order.createdAtText}">29/09 14:30</small>
+                </li>
+                <li th:classappend="${order.rejected} ? 'bad' : (${order.awaitingReview} ? 'now' : 'on')">
+                    <i class="bi" th:classappend="${order.rejected} ? 'bi-x-lg' : 'bi-check2'"></i>
+                    <span th:text="${order.rejected} ? ${order.statusLabel} : (${order.awaitingReview} ? 'Chờ xác nhận' : 'Đã xác nhận')">Đã xác nhận</span>
+                    <small th:if="${!order.awaitingReview and !#strings.isEmpty(order.reviewedAtText)}" th:text="${order.reviewedAtText}">29/09 15:00</small>
+                </li>
+                <li th:classappend="${cur > 3} ? 'on' : (${cur == 3} ? 'now' : '')">
+                    <i class="bi bi-box-seam"></i><span>Chuẩn bị hàng</span>
+                </li>
+                <li th:classappend="${order.failed} ? 'bad' : (${cur > 4} ? 'on' : (${cur == 4} ? 'now' : ''))">
+                    <i class="bi" th:classappend="${order.failed} ? 'bi-x-lg' : 'bi-truck'"></i>
+                    <span th:text="${order.failed} ? ${order.shippingLabel} : 'Vận chuyển'">Vận chuyển</span>
+                    <small th:if="${order.shippedAt != null}" th:text="${order.shippedAtText}">02/11 09:00</small>
+                </li>
+                <li th:classappend="${cur == 6} ? 'on' : (${cur == 5} ? 'now' : '')">
+                    <i class="bi bi-patch-check"></i>
+                    <span th:text="${cur == 5} ? 'Chờ khách xác nhận' : 'Đã giao'">Đã giao</span>
+                    <small th:if="${order.delivered and order.deliveredAt != null}" th:text="${order.deliveredAtText}">03/11 15:00</small>
+                </li>
+            </ol>
+        </section>
+
+        <div class="od-grid">
+
+            <!-- ============ TRÁI: sản phẩm + giao tới ============ -->
+            <div class="od-col">
+
+                <section class="x-od">
+                    <div class="x-od-h">
+                        <h2><i class="bi bi-bag"></i> Sản phẩm</h2>
+                        <span class="aside" th:text="${#lists.size(order.items)} + ' mặt hàng'">1 mặt hàng</span>
+                    </div>
+                    <div class="x-line" th:each="it : ${order.items}">
+                        <img th:src="${#strings.isEmpty(it.image) ? '/images/products/placeholder.jpg' : it.image}" th:alt="${it.productName}"
+                             onerror="this.src='https://placehold.co/120x120/f7f7f7/222222?text=Product'">
+                        <div>
+                            <strong class="nm" th:text="${it.productName}">Tên sản phẩm</strong>
+                            <div class="sub">
+                                <span class="x-chip" th:if="${!#strings.isEmpty(it.variantText)}" th:text="${it.variantText}">Size M</span>
+                                <span th:if="${it.productCode != null}" th:text="'Mã ' + ${it.productCode}">Mã KS001</span>
+                            </div>
+                        </div>
+                        <div class="tot">
+                            <span th:text="${#numbers.formatInteger(it.lineTotal, 0, 'POINT')} + '₫'">890.000₫</span>
+                            <small th:text="${it.quantity} + ' × ' + ${#numbers.formatInteger(it.unitPrice, 0, 'POINT')} + '₫'">1 × 890.000₫</small>
+                        </div>
+                    </div>
+
+                    <!-- Tiền hàng - giảm giá + phí giao = tổng cần thu -->
+                    <div class="x-sum">
+                        <div><span>Tạm tính</span><b th:text="${#numbers.formatInteger(order.itemsTotal, 0, 'POINT')} + '₫'">890.000₫</b></div>
+                        <div class="disc" th:if="${order.discountAmount > 0}">
+                            <span>Mã giảm giá <span class="x-chip gold" th:if="${order.voucherCode != null}" th:text="${order.voucherCode}">KOSIS10</span></span>
+                            <b th:text="'-' + ${#numbers.formatInteger(order.discountAmount, 0, 'POINT')} + '₫'">-89.000₫</b>
+                        </div>
+                        <div><span>Phí vận chuyển</span>
+                            <b th:text="${order.shippingFee == 0} ? 'Miễn phí' : ${#numbers.formatInteger(order.shippingFee, 0, 'POINT')} + '₫'">30.000₫</b></div>
+                        <div class="grand"><span>Tổng cần thu</span><b th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT')} + '₫'">2.670.000₫</b></div>
+                    </div>
+
+                    <div class="ship-cod" th:if="${!order.bank and !order.rejected}">
+                        <i class="bi bi-cash-coin"></i> Thu hộ (COD) khi giao:
+                        <b th:text="${#numbers.formatInteger(order.codDue, 0, 'POINT')} + '₫'">2.670.000₫</b>
+                        <small th:if="${order.codDeposit}" th:text="'(khách đã cọc ' + ${#numbers.formatInteger(order.depositAmount, 0, 'POINT')} + '₫)'"></small>
+                    </div>
+                    <div class="ship-cod paid" th:if="${order.bank and order.confirmed}">
+                        <i class="bi bi-check2-circle"></i> Khách đã chuyển khoản - <b>không thu tiền</b> khi giao
+                    </div>
+                </section>
+
+                <section class="x-od">
+                    <div class="x-od-h">
+                        <h2><i class="bi bi-geo-alt"></i> Giao tới</h2>
+                        <span class="aside">Người nhận có thể khác chủ tài khoản</span>
+                    </div>
+                    <div class="x-recv">
+                        <div class="x-kv"><i class="bi bi-person"></i>
+                            <div><small>Người nhận</small><b th:text="${order.receiverName}">Nguyễn Văn A</b></div></div>
+                        <div class="x-kv"><i class="bi bi-telephone"></i>
+                            <div><small>Điện thoại</small>
+                                <span class="v" th:text="${order.phone}">0901234567</span>
+                                <a th:href="'tel:' + ${order.phone}">Gọi</a>
+                                <button type="button" class="ship-copy" th:data-copy="${order.phone}"
+                                        onclick="if(navigator.clipboard){navigator.clipboard.writeText(this.dataset.copy);this.textContent='Đã chép';}">Chép</button></div></div>
+                        <div class="x-kv"><i class="bi bi-house-door"></i>
+                            <div><small>Địa chỉ</small>
+                                <span class="v" th:text="${order.address}">Địa chỉ</span>
+                                <a th:href="'https://www.google.com/maps/search/?api=1&amp;query=' + ${#uris.escapeQueryParam(order.address)}"
+                                   target="_blank" rel="noopener noreferrer">Mở bản đồ</a></div></div>
+                    </div>
+                    <blockquote class="x-quote" style="margin-top:18px" th:if="${!#strings.isEmpty(order.note)}">
+                        <span>Ghi chú của khách</span>
+                        <p th:text="${order.note}">Ghi chú</p>
+                    </blockquote>
+                </section>
+            </div>
+
+            <!-- ============ PHẢI: xử lý + thanh toán + khách + giao hàng ============ -->
+            <div class="od-col">
+
+                <!-- ĐANG CHỜ: xác nhận hoặc từ chối (đưa lên đầu vì là việc cần làm) -->
+                <section class="x-od todo" th:if="${order.awaitingReview}">
+                    <div class="x-od-h"><h2><i class="bi bi-clipboard-check"></i> Cần xử lý</h2></div>
+                    <p class="x-hint" th:if="${order.hasTransfer}">Chỉ bấm <b>Xác nhận</b> khi bạn đã thấy đủ
+                        <b th:text="${#numbers.formatInteger(order.payNow, 0, 'POINT')} + '₫'">0₫</b><th:block th:if="${order.codDeposit}"> (tiền cọc)</th:block> trong tài khoản ngân hàng (xem ảnh bill ở thẻ Thanh toán bên dưới).</p>
+                    <p class="x-hint" th:unless="${order.hasTransfer}">Đơn COD: kiểm tra thông tin giao hàng rồi xác nhận.</p>
+
+                    <form th:action="@{/dashboard/don-hang/{id}/xac-nhan(id=${order.id})}" method="post"
+                          data-confirm="Xác nhận đơn này? Hãy chắc chắn bạn đã kiểm tra bill và tiền đã về tài khoản." data-confirm-ok="Xác nhận đơn">
+                        <button type="submit" class="btn-primary-dark od-btn"><i class="bi bi-check2-circle"></i> Xác nhận đơn hàng</button>
+                    </form>
+
+                    <details class="x-act bad">
+                        <summary><i class="bi bi-x-circle"></i> Từ chối đơn</summary>
+                        <form th:action="@{/dashboard/don-hang/{id}/tu-choi(id=${order.id})}" method="post"
+                              data-confirm="Từ chối đơn này? Tồn kho sẽ được hoàn lại." data-confirm-ok="Từ chối đơn" data-confirm-danger>
+                            <label for="reason">Lý do từ chối <em>*</em></label>
+                            <textarea id="reason" name="reason" rows="3" maxlength="300" required
+                                      placeholder="VD: Chưa nhận được tiền / số tiền không khớp / ảnh bill không rõ..."></textarea>
+                            <button type="submit" class="btn-danger"><i class="bi bi-x-circle"></i> Từ chối đơn</button>
+                        </form>
+                    </details>
+                </section>
+
+                <!-- ĐÃ XỬ LÝ -->
+                <section class="x-od" th:unless="${order.awaitingReview}">
+                    <div class="x-od-h"><h2><i class="bi bi-clipboard-check"></i> Kết quả kiểm tra</h2></div>
+                    <div class="x-ret-done ok" th:if="${order.confirmed}">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div><b th:text="${order.statusLabel}">Đã xác nhận</b><br>
+                            <span th:text="${order.reviewedByLabel} + (${#strings.isEmpty(order.reviewedAtText)} ? '' : ' · ' + ${order.reviewedAtText})">admin · 29/09/2026 15:00</span></div>
+                    </div>
+                    <div class="x-ret-done bad" th:if="${order.rejected}">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <div><b th:text="${order.statusLabel}">Bị từ chối</b><br>
+                            <span th:text="${order.reviewedByLabel} + (${#strings.isEmpty(order.reviewedAtText)} ? '' : ' · ' + ${order.reviewedAtText})">admin · 29/09/2026 15:00</span></div>
+                    </div>
+                    <blockquote class="x-quote store bad" style="margin-top:12px" th:if="${order.rejectReason != null}">
+                        <span>Lý do từ chối</span>
+                        <p th:text="${order.rejectReason}">Lý do</p>
+                    </blockquote>
+                </section>
+
+                <section class="x-od">
+                    <div class="x-od-h"><h2><i class="bi bi-wallet2"></i> Thanh toán</h2></div>
+                    <div class="x-pay">
+                        <i class="bi" th:classappend="${order.bank} ? 'bi-bank' : 'bi-cash-coin'"></i>
+                        <div><b th:text="${order.paymentLabel}">Chuyển khoản</b>
+                            <small th:text="${order.bank} ? 'Khách trả trước' : (${order.codDeposit} ? 'Đã cọc ' + ${#numbers.formatInteger(order.depositAmount, 0, 'POINT')} + '₫ · thu ' + ${#numbers.formatInteger(order.codDue, 0, 'POINT')} + '₫ khi giao' : 'Thu tiền khi giao hàng')">Khách trả trước</small></div>
+                    </div>
+
+                    <th:block th:if="${order.hasTransfer}">
+                        <div class="x-expect" th:if="${order.awaitingReview}">
+                            Số tiền cần đối chiếu<span th:if="${order.codDeposit}"> (tiền cọc COD)</span>: <b th:text="${#numbers.formatInteger(order.payNow, 0, 'POINT')} + '₫'">0₫</b>
+                            · nội dung chuyển khoản phải khớp mã đơn <b th:text="${order.orderCode}">KS000001</b>.
+                        </div>
+                        <div th:if="${order.hasSlip}" class="od-slip">
+                            <a th:href="@{/thanh-toan/slip/{id}(id=${order.id})}" target="_blank" rel="noopener" title="Bấm để mở ảnh lớn">
+                                <img th:src="@{/thanh-toan/slip/{id}(id=${order.id})}" alt="Ảnh bill chuyển khoản">
+                            </a>
+                            <small>Bấm vào ảnh để xem cỡ lớn. Đối chiếu <b>số tiền</b> và <b>nội dung</b> với tài khoản ngân hàng của cửa hàng.</small>
+                        </div>
+                        <p class="od-warn" style="margin-top:14px" th:unless="${order.hasSlip}"><i class="bi bi-exclamation-triangle-fill"></i> Đơn này chưa có ảnh bill.</p>
+                    </th:block>
+                </section>
+
+                <!-- Tài khoản đã đăng nhập để đặt đơn: tên đăng nhập luôn hiện rõ -->
+                <section class="x-od">
+                    <div class="x-od-h"><h2><i class="bi bi-person-circle"></i> Tài khoản đặt hàng</h2></div>
+                    <div class="x-acct">
+                        <div class="x-person">
+                            <span class="x-avatar lg">
+                                <span th:text="${#strings.toUpperCase(#strings.substring(order.username, 0, 1))}">A</span>
+                                <img th:if="${account != null and account.avatarUrl != null}" th:src="${account.avatarUrl}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">
+                            </span>
+                            <div>
+                                <span class="p-name" th:text="${account != null and !#strings.isEmpty(account.fullName) ? account.fullName : order.username}">Nguyễn Văn A</span>
+                                <span class="p-code" th:text="'@' + ${order.username}">@username</span>
+                            </div>
+                        </div>
+                        <th:block th:if="${account != null}">
+                            <span class="status-pill done" th:if="${account.enabled}">Hoạt động</span>
+                            <span class="status-pill rejected" th:unless="${account.enabled}">Đã khoá</span>
+                        </th:block>
+                    </div>
+                    <div class="x-contact" th:if="${account != null}">
+                        <span th:if="${!#strings.isEmpty(account.email)}"><i class="bi bi-envelope"></i><span th:text="${account.email}">email</span></span>
+                        <span class="none" th:if="${#strings.isEmpty(account.email)}"><i class="bi bi-envelope"></i>—</span>
+                        <span th:if="${!#strings.isEmpty(account.phone)}"><i class="bi bi-telephone"></i><span th:text="${account.phone}">0901234567</span></span>
+                        <span class="none" th:if="${#strings.isEmpty(account.phone)}"><i class="bi bi-telephone"></i>—</span>
+                    </div>
+                    <p class="x-hint" style="margin:0" th:if="${account == null}">Tài khoản này không còn trong hệ thống.</p>
+                    <a class="x-btn block" th:if="${account != null and account.role == 'USER'}"
+                       th:href="@{/dashboard/khach-hang/{id}(id=${account.id})}"><i class="bi bi-person-lines-fill"></i> Xem hồ sơ &amp; các đơn khác của khách</a>
+                </section>
+
+                <!-- GIAO HÀNG: tóm tắt + nút sang trang giao hàng riêng (chỉ khi đơn đã xác nhận) -->
+                <section class="x-od" th:if="${order.confirmed}">
+                    <div class="x-od-h">
+                        <h2><i class="bi bi-truck"></i> Giao hàng</h2>
+                        <span class="status-pill review" th:if="${order.preparing}" th:text="${order.shippingLabel}">Chuẩn bị</span>
+                        <span class="status-pill shipping" th:if="${order.shipping}" th:text="${order.shippingLabel}">Đang vận chuyển</span>
+                        <span class="status-pill arrived" th:if="${order.arrived}" th:text="${order.shippingLabel}">Chờ khách xác nhận</span>
+                        <span class="status-pill done" th:if="${order.delivered}" th:text="${order.shippingLabel}">Đã giao</span>
+                        <span class="status-pill rejected" th:if="${order.failed}" th:text="${order.shippingLabel}">Không thành công</span>
+                    </div>
+                    <th:block th:replace="~{fragments/shipping :: info(${order})}"></th:block>
+                    <a class="btn-primary-dark od-btn ship-link" th:href="@{/dashboard/giao-hang/{id}(id=${order.id})}">
+                        <i class="bi bi-truck"></i> <span th:text="${order.delivered} ? 'Xem thông tin giao hàng' : 'Quản lý giao hàng'">Quản lý giao hàng</span>
+                    </a>
+                </section>
+            </div>
+        </div>
+
+        <!-- ============ HÓA ĐƠN (hiện ngay trong trang, in được) ============ -->
+        <div class="inv-modal" id="invModal" hidden th:if="${order.confirmed}">
+        <div class="inv-backdrop no-print" data-inv-close></div>
+        <section class="inv" id="hoa-don" role="dialog" aria-modal="true" aria-label="Hóa đơn đơn hàng">
+            <div class="inv-bar no-print">
+                <h2><i class="bi bi-receipt"></i> Hóa đơn <span class="x-muted" th:text="${order.invoiceNumber}">HDKS000001</span></h2>
+                <div class="inv-bar-act">
+                    <button type="button" class="btn-primary-dark inv-print" onclick="window.print()"><i class="bi bi-printer"></i> In hóa đơn</button>
+                    <button type="button" class="inv-close" data-inv-close aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+            <div class="inv-stage">
+            <div class="inv-body">
+                <header class="inv-head">
+                    <div><div class="inv-brand">KOSIS</div><div class="inv-sub">Cửa hàng thời trang trực tuyến</div></div>
+                    <div class="inv-title"><b>HÓA ĐƠN ĐẶT HÀNG</b><span th:text="'#' + ${order.orderCode}">#KS000001</span>
+                        <small th:if="${!#strings.isEmpty(order.invoiceDateText)}" th:text="'Ngày xuất: ' + ${order.invoiceDateText}">Ngày xuất: 29/10/2026 15:00</small></div>
+                </header>
+
+                <div class="inv-info">
+                    <div class="inv-box">
+                        <h3>Người nhận</h3>
+                        <dl>
+                            <div><dt>Họ tên</dt><dd th:text="${order.receiverName}">Name</dd></div>
+                            <div><dt>Điện thoại</dt><dd th:text="${order.phone}">0901234567</dd></div>
+                            <div><dt>Địa chỉ</dt><dd th:text="${order.address}">Address</dd></div>
+                            <div th:if="${order.note != null and !#strings.isEmpty(order.note)}"><dt>Ghi chú</dt><dd th:text="${order.note}">Note</dd></div>
+                        </dl>
+                    </div>
+                    <div class="inv-box">
+                        <h3>Thông tin đơn</h3>
+                        <dl>
+                            <div><dt>Ngày đặt</dt><dd th:text="${order.createdAtText}">29/10/2026 14:30</dd></div>
+                            <div><dt>Trạng thái</dt><dd th:text="${order.statusLabel}">Đã xác nhận</dd></div>
+                            <div><dt>Thanh toán</dt><dd th:text="${order.paymentLabel}">COD</dd></div>
+                            <div><dt>Tài khoản</dt><dd th:text="${order.username}">user</dd></div>
+                            <div th:if="${order.carrier != null}"><dt>Vận chuyển</dt><dd th:text="${order.carrierLabel + (order.trackingCode != null ? ' · ' + order.trackingCode : '')}">GHN</dd></div>
+                        </dl>
+                    </div>
+                </div>
+
+                <table class="inv-table">
+                    <thead><tr><th>#</th><th>Sản phẩm</th><th class="num">Đơn giá</th><th class="num">SL</th><th class="num">Thành tiền</th></tr></thead>
+                    <tbody>
+                        <tr th:each="it, st : ${order.items}">
+                            <td th:text="${st.count}">1</td>
+                            <td><b th:text="${it.productName}">Product</b>
+                                <small th:if="${!#strings.isEmpty(it.variantText) or it.productCode != null}"
+                                       th:text="(${it.productCode != null} ? 'Mã ' + ${it.productCode} : '') + (${!#strings.isEmpty(it.variantText)} ? (${it.productCode != null} ? ' · ' : '') + ${it.variantText} : '')">Size M</small></td>
+                            <td class="num" th:text="${#numbers.formatInteger(it.unitPrice, 0, 'POINT')} + '₫'">1.190.000₫</td>
+                            <td class="num" th:text="${it.quantity}">1</td>
+                            <td class="num" th:text="${#numbers.formatInteger(it.lineTotal, 0, 'POINT')} + '₫'">1.190.000₫</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="inv-sum">
+                    <div><span>Tạm tính</span><span th:text="${#numbers.formatInteger(order.itemsTotal, 0, 'POINT')} + '₫'">0₫</span></div>
+                    <div th:if="${order.discountAmount > 0}"><span th:text="'Mã giảm giá (' + ${order.voucherCode} + ')'">Mã giảm giá</span><span th:text="'-' + ${#numbers.formatInteger(order.discountAmount, 0, 'POINT')} + '₫'">-0₫</span></div>
+                    <div><span>Phí vận chuyển</span><span th:text="${order.shippingFee == 0} ? 'Miễn phí' : ${#numbers.formatInteger(order.shippingFee, 0, 'POINT')} + '₫'">Miễn phí</span></div>
+                    <div class="inv-grand"><span>Tổng thanh toán</span><b th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT')} + '₫'">0₫</b></div>
+                </div>
+
+                <p class="inv-foot">Cảm ơn bạn đã mua sắm tại KOSIS. Đổi trả trong <th:block th:text="${order.effectiveReturnDays(returnWindowDays)}">7</th:block> ngày kể từ khi nhận hàng.<br>
+                    <small>Hóa đơn xác nhận đơn hàng đặt trên website, không phải hóa đơn VAT.</small></p>
+            </div>
+            </div>
+        </section>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        var modal = document.getElementById('invModal');
+        if (!modal) return;
+        function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+        function close() { modal.hidden = true; document.body.style.overflow = ''; if (location.hash === '#hoa-don') history.replaceState(null, '', location.pathname + location.search); }
+        document.querySelectorAll('[data-inv-open]').forEach(function (b) { b.addEventListener('click', open); });
+        modal.querySelectorAll('[data-inv-close]').forEach(function (b) { b.addEventListener('click', close); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) close(); });
+        if (location.hash === '#hoa-don') open();   // link cũ .../don-hang/{id}#hoa-don vẫn mở được hóa đơn
+    })();
+</script>
+</body>
+</html>

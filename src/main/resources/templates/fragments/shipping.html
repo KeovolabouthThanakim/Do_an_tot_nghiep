@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Thanh tiến trình giao hàng: dùng chung cho dashboard và trang khách. Tham số o = đơn hàng -->
+<ol class="ship-steps" th:fragment="steps(o)">
+    <li th:each="s, st : ${ {'Đã xác nhận','Chuẩn bị hàng','Đang vận chuyển','Đã giao'} }"
+        th:classappend="${st.count lt o.shipStep or (st.count == o.shipStep and o.delivered)} ? 'done' : (${st.count == o.shipStep} ? (${o.failed} ? 'failed' : 'current') : '')">
+        <span class="dot" th:text="${st.count}">1</span>
+        <span class="lbl" th:text="${st.count == 3 and o.refused} ? 'Khách không nhận hàng' : (${st.count == 3 and o.returned} ? 'Giao không thành công' : (${st.count == 4 and o.arrived} ? 'Đã tới - chờ xác nhận' : ${s}))">Bước</span>
+    </li>
+</ol>
+
+<!-- Thông tin vận chuyển: hãng, mã vận đơn (có nút chép + tra cứu), thời gian, ghi chú -->
+<dl class="ship-info" th:fragment="info(o)">
+    <div th:if="${o.carrier != null}"><dt>Vận chuyển</dt><dd th:text="${o.carrierLabel}">GHN</dd></div>
+    <div th:if="${o.trackingCode != null}"><dt>Mã vận đơn</dt>
+        <dd><b th:text="${o.trackingCode}">GHN123</b>
+            <button type="button" class="ship-copy" th:attr="data-copy=${o.trackingCode}"
+                    onclick="if(navigator.clipboard){navigator.clipboard.writeText(this.dataset.copy);this.textContent='Đã chép';}">Chép</button>
+            <a th:if="${o.trackingUrl != null}" th:href="${o.trackingUrl}" target="_blank" rel="noopener noreferrer">Tra cứu hành trình</a></dd></div>
+    <div th:if="${o.carrier != null and o.trackingCode == null and o.trackingUrl != null}"><dt>Tra cứu</dt>
+        <dd><a th:href="${o.trackingUrl}" target="_blank" rel="noopener noreferrer">Mở trang theo dõi</a></dd></div>
+    <div th:if="${o.shippedAt != null}"><dt>Giao cho vận chuyển</dt><dd th:text="${o.shippedAtText}">02/11/2026 09:00</dd></div>
+    <div th:if="${o.arrived and o.arrivedAt != null}"><dt>Vận chuyển báo đã tới</dt><dd th:text="${o.arrivedAtText}">04/11/2026 10:00</dd></div>
+    <div th:if="${o.delivered and o.deliveredAt != null}"><dt>Giao thành công</dt><dd th:text="${o.deliveredAtText}">03/11/2026 15:00</dd></div>
+    <div th:if="${o.delivered and o.deliveredBy != null}"><dt>Xác nhận bởi</dt><dd th:text="${o.deliveredByLabel}">Khách xác nhận</dd></div>
+    <div th:if="${o.shippingNote != null}"><dt th:text="${o.failed} ? 'Lý do' : 'Ghi chú'">Ghi chú</dt><dd th:text="${o.shippingNote}">Ghi chú</dd></div>
+</dl>
+
+<!-- Cảnh báo nhân viên: khách (cùng tài khoản hoặc cùng số điện thoại) từng KHÔNG NHẬN hàng. n = số lần, o = đơn hiện tại -->
+<div class="ship-warn" th:fragment="refuseBanner(n, o)" th:if="${n != null and n > 0}"
+     th:classappend="${n >= 2 and !o.hasTransfer} ? 'danger' : ''">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>
+        <b th:text="'Khách này từng không nhận hàng ' + ${n} + ' lần'">Khách này từng không nhận hàng 1 lần</b>
+        <span th:if="${!o.hasTransfer}">Đơn này là COD (thu tiền khi giao): nên gọi xác nhận với khách trước khi gửi, hoặc đề nghị chuyển khoản trước.</span>
+        <span th:if="${o.codDeposit}">Đơn COD này khách đã đặt cọc nên rủi ro thấp hơn; vẫn nên gọi xác nhận trước khi gửi.</span>
+        <span th:if="${o.bank}">Đơn này khách đã chuyển khoản trước nên rủi ro thấp.</span>
+    </div>
+</div>
+
+</body>
+</html>

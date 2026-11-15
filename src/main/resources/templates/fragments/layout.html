@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+
+<!-- ============================================================
+     <head>  usage:  <head th:replace="~{fragments/layout :: head('Page title', 'home')}"></head>
+     2nd argument = optional page stylesheet in /css/kosis/ (home, shop, checkout, pages) or null
+     ============================================================ -->
+<head th:fragment="head(title, css)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Đã đăng nhập: main.js lưu danh sách yêu thích vào tài khoản (cần tên đăng nhập + CSRF token) -->
+    <meta name="kosis-auth" sec:authorize="isAuthenticated()" th:content="${#authentication.name}">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <title th:text="${title}">KOSIS</title>
+    <script>document.documentElement.classList.add('js');</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/base.css}">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+    <link rel="stylesheet" th:if="${css != null}" th:href="@{'/css/kosis/' + ${css} + '.css'}">
+</head>
+
+<body>
+
+<!-- ============================================================
+     HEADER: announcement bar + sticky navigation + mobile drawer + search overlay
+     ============================================================ -->
+<th:block th:fragment="header">
+    <a class="skip-link" href="#main">Bỏ qua đến nội dung</a>
+    <!-- Bộ biểu tượng Phosphor (kiểu "bold", MIT) nhúng sẵn — không cần tải từ CDN; dùng: <svg class="ico"><use href="#i-house"/></svg> -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="i-house" viewBox="0 0 256 256"><path d="M222.14,105.85l-80-80a20,20,0,0,0-28.28,0l-80,80A19.86,19.86,0,0,0,28,120v96a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V164h24v52a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V120A19.86,19.86,0,0,0,222.14,105.85ZM204,204H164V152a12,12,0,0,0-12-12H104a12,12,0,0,0-12,12v52H52V121.65l76-76,76,76Z"/></symbol><symbol id="i-lock" viewBox="0 0 256 256"><path d="M208,76H180V56A52,52,0,0,0,76,56V76H48A20,20,0,0,0,28,96V208a20,20,0,0,0,20,20H208a20,20,0,0,0,20-20V96A20,20,0,0,0,208,76ZM100,56a28,28,0,0,1,56,0V76H100ZM204,204H52V100H204Zm-60-52a16,16,0,1,1-16-16A16,16,0,0,1,144,152Z"/></symbol><symbol id="i-cart" viewBox="0 0 256 256"><path d="M233.21,56.31A12,12,0,0,0,224,52H66L60.53,21.85A12,12,0,0,0,48.73,12H24a12,12,0,0,0,0,24H38.71L63.62,173a28,28,0,0,0,4.07,10.21A32,32,0,1,0,123,196h34a32,32,0,1,0,31-24H91.17a4,4,0,0,1-3.93-3.28L84.92,156H196.1a28,28,0,0,0,27.55-23l12.16-66.86A12,12,0,0,0,233.21,56.31ZM100,204a8,8,0,1,1-8-8A8,8,0,0,1,100,204Zm88,8a8,8,0,1,1,8-8A8,8,0,0,1,188,212Zm12-83.28A4,4,0,0,1,196.1,132H80.56L70.38,76H209.62Z"/></symbol><symbol id="i-search" viewBox="0 0 256 256"><path d="M232.49,215.51,185,168a92.12,92.12,0,1,0-17,17l47.53,47.54a12,12,0,0,0,17-17ZM44,112a68,68,0,1,1,68,68A68.07,68.07,0,0,1,44,112Z"/></symbol><symbol id="i-list" viewBox="0 0 256 256"><path d="M228,128a12,12,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128ZM40,76H216a12,12,0,0,0,0-24H40a12,12,0,0,0,0,24ZM216,180H40a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Z"/></symbol><symbol id="i-heart" viewBox="0 0 256 256"><path d="M178,36c-20.09,0-37.92,7.93-50,21.56C115.92,43.93,98.09,36,78,36a66.08,66.08,0,0,0-66,66c0,72.34,105.81,130.14,110.31,132.57a12,12,0,0,0,11.38,0C138.19,232.14,244,174.34,244,102A66.08,66.08,0,0,0,178,36Zm-5.49,142.36A328.69,328.69,0,0,1,128,210.16a328.69,328.69,0,0,1-44.51-31.8C61.82,159.77,36,131.42,36,102A42,42,0,0,1,78,60c17.8,0,32.7,9.4,38.89,24.54a12,12,0,0,0,22.22,0C145.3,69.4,160.2,60,178,60a42,42,0,0,1,42,42C220,131.42,194.18,159.77,172.51,178.36Z"/></symbol><symbol id="i-user" viewBox="0 0 256 256"><path d="M128,20A108,108,0,1,0,236,128,108.12,108.12,0,0,0,128,20ZM79.57,196.57a60,60,0,0,1,96.86,0,83.72,83.72,0,0,1-96.86,0ZM100,120a28,28,0,1,1,28,28A28,28,0,0,1,100,120ZM194,179.94a83.48,83.48,0,0,0-29-23.42,52,52,0,1,0-74,0,83.48,83.48,0,0,0-29,23.42,84,84,0,1,1,131.9,0Z"/></symbol><symbol id="i-caret" viewBox="0 0 256 256"><path d="M216.49,104.49l-80,80a12,12,0,0,1-17,0l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17Z"/></symbol></svg>
+    <div class="announcement" role="note"><span th:if="${pricing.shippingFee == 0}">Miễn phí vận chuyển mọi đơn hàng</span><span th:if="${pricing.shippingFee > 0 and pricing.freeThreshold > 0}">Miễn phí vận chuyển cho đơn từ <th:block th:text="${#numbers.formatInteger(pricing.freeThreshold, 0, 'POINT')} + ' ₫'">500.000 ₫</th:block></span><span th:if="${pricing.shippingFee > 0 and pricing.freeThreshold == 0}">Giao hàng toàn quốc</span> &nbsp;·&nbsp; Đổi trả trong <th:block th:text="${returnWindowDays}">7</th:block> ngày</div>
+
+    <header class="site-header" id="siteHeader">
+        <!-- Hàng 1: logo + ô tìm kiếm + biểu tượng (yêu thích / tài khoản / giỏ hàng) -->
+        <div class="site-header__inner">
+            <button class="icon-btn nav-toggle" type="button" aria-label="Mở menu" aria-controls="mobileDrawer" aria-expanded="false" data-drawer-open>
+                <svg class="ico" aria-hidden="true"><use href="#i-list"/></svg>
+            </button>
+
+            <a class="logo" th:href="@{/}" aria-label="Trang chủ KOSIS">KOSIS</a>
+
+            <!-- Khi cuộn xuống: menu thu gọn còn 1 hàng = nút Trang chủ + Danh mục (chỉ hiện ở desktop, xem base.css) -->
+            <div class="stuck-nav">
+                <a class="icon-btn stuck-home" th:href="@{/}" aria-label="Trang chủ"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg></a>
+                <div class="nav-drop cat-drop">
+                    <a class="cat-btn" th:href="@{/collections}" aria-haspopup="true"><svg class="ico" aria-hidden="true"><use href="#i-list"/></svg> Danh mục sản phẩm</a>
+                    <div class="nav-drop__menu">
+                        <a th:href="@{/collections}">Tất cả sản phẩm</a>
+                        <a th:each="c : ${menuCategories}" th:href="@{/collections(category=${c})}" th:text="${c}">Áo</a>
+                    </div>
+                </div>
+            </div>
+
+            <form class="header-search" th:action="@{/search}" method="get" role="search">
+                <input type="search" name="q" placeholder="Tìm kiếm sản phẩm" aria-label="Tìm sản phẩm" autocomplete="off">
+                <button type="submit" aria-label="Tìm kiếm"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg></button>
+            </form>
+
+            <div class="header-actions">
+                <button class="icon-btn header-search-open" type="button" aria-label="Tìm kiếm" data-search-open><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg></button>
+                <a class="icon-btn wishlist-link" th:href="@{/wishlist}" aria-label="Yêu thích">
+                    <svg class="ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="badge-dot" data-wishlist-count hidden>0</span>
+                </a>
+                <a class="icon-btn header-account" th:href="@{/login}" aria-label="Đăng nhập" title="Đăng nhập" sec:authorize="!isAuthenticated()">
+                    <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+                </a>
+                <a class="icon-btn header-account" th:href="@{/account}" aria-label="Tài khoản của tôi" title="Tài khoản của tôi" sec:authorize="isAuthenticated()">
+                    <svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>
+                </a>
+                <a class="icon-btn cart-btn" th:href="@{/gio-hang}" aria-label="Giỏ hàng">
+                    <svg class="ico" aria-hidden="true"><use href="#i-cart"/></svg><span class="badge-dot cart-count" th:text="${cartCount}">0</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Hàng 2: nút "Danh mục sản phẩm" (nền xám, bo góc) bên trái + liên kết chính căn phải -->
+        <div class="site-header__bar">
+            <div class="nav-drop cat-drop">
+                <a class="cat-btn" th:href="@{/collections}" th:classappend="${activePage == 'collections'} ? 'is-active'" aria-haspopup="true">
+                    <svg class="ico" aria-hidden="true"><use href="#i-list"/></svg> Danh mục sản phẩm <svg class="ico ico-caret" aria-hidden="true"><use href="#i-caret"/></svg>
+                </a>
+                <div class="nav-drop__menu">
+                    <a th:href="@{/collections}">Tất cả sản phẩm</a>
+                    <!-- danh mục do ADMIN quản lý ở /dashboard/cai-dat/menu -->
+                    <a th:each="c : ${menuCategories}" th:href="@{/collections(category=${c})}" th:text="${c}">Áo</a>
+                </div>
+            </div>
+
+            <nav class="main-nav" aria-label="Menu chính">
+                <a th:href="@{/men}" th:classappend="${activePage == 'men'} ? 'is-active'">Nam</a>
+                <a th:href="@{/women}" th:classappend="${activePage == 'women'} ? 'is-active'">Nữ</a>
+                <a th:href="@{/kids}" th:classappend="${activePage == 'kids'} ? 'is-active'">Trẻ em</a>
+                <a class="nav-sale" th:href="@{/sale}" th:classappend="${activePage == 'sale'} ? 'is-active'">Giảm giá 50%</a>
+                <a th:href="@{/gifts}" th:classappend="${activePage == 'gifts'} ? 'is-active'">Quà tặng</a>
+                <!-- liên kết thêm do ADMIN quản lý ở /dashboard/cai-dat/menu -->
+                <th:block th:each="l : ${menuLinks}">
+                    <a th:if="${l.external}" th:href="@{${l.url}}" th:text="${l.label}" target="_blank" rel="noopener noreferrer">Liên kết</a>
+                    <a th:unless="${l.external}" th:href="@{${l.url}}" th:text="${l.label}">Liên kết</a>
+                </th:block>
+                <div class="nav-drop">
+                    <a th:href="@{/about}" th:classappend="${activePage == 'about'} ? 'is-active'" aria-haspopup="true">Về KOSIS <svg class="ico ico-caret" aria-hidden="true"><use href="#i-caret"/></svg></a>
+                    <div class="nav-drop__menu nav-drop__menu--right">
+                        <div class="nav-drop__hello" sec:authorize="isAuthenticated()">Xin chào, <strong sec:authentication="name">user</strong></div>
+                        <a th:href="@{/about}">Giới thiệu</a>
+                        <a th:href="@{/account}" sec:authorize="isAuthenticated()">Tài khoản của tôi</a>
+                        <a th:href="@{/don-hang-cua-toi}">Đơn hàng của tôi</a>
+                        <a th:href="@{/danh-gia}">Điểm đánh giá</a>
+                        <a th:href="@{/contact}">Liên hệ</a>
+                        <a th:href="@{/dashboard}" sec:authorize="hasAnyRole('ADMIN','NHANVIEN')">Quản trị</a>
+                        <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                            <button type="submit">Đăng xuất</button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="scrim" data-scrim></div>
+
+    <aside class="drawer" id="mobileDrawer" aria-label="Menu" aria-hidden="true">
+        <div class="drawer__top">
+            <a class="logo" th:href="@{/}">KOSIS</a>
+            <button class="icon-btn" type="button" aria-label="Đóng menu" data-drawer-close><i class="bi bi-x-lg"></i></button>
+        </div>
+        <nav aria-label="Menu di động">
+            <a th:href="@{/}">Trang chủ <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/men}">Nam <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/women}">Nữ <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/kids}">Trẻ em <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/collections}">Bộ sưu tập <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/sale}" class="nav-sale">Giảm giá 50% <i class="bi bi-arrow-up-right"></i></a>
+            <a th:href="@{/gifts}">Quà tặng <i class="bi bi-arrow-up-right"></i></a>
+            <th:block th:each="l : ${menuLinks}">
+                <a th:if="${l.external}" th:href="@{${l.url}}" target="_blank" rel="noopener noreferrer"><span th:text="${l.label}">Liên kết</span> <i class="bi bi-arrow-up-right"></i></a>
+                <a th:unless="${l.external}" th:href="@{${l.url}}"><span th:text="${l.label}">Liên kết</span> <i class="bi bi-arrow-up-right"></i></a>
+            </th:block>
+        </nav>
+        <p class="drawer__sub" th:if="${!#lists.isEmpty(menuCategories)}">DANH MỤC</p>
+        <div class="drawer__links" th:if="${!#lists.isEmpty(menuCategories)}">
+            <a th:each="c : ${menuCategories}" th:href="@{/collections(category=${c})}" th:text="${c}">Áo</a>
+        </div>
+        <p class="drawer__sub">KHÁC</p>
+        <div class="drawer__links">
+            <a th:href="@{/wishlist}">Yêu thích</a>
+            <a th:href="@{/don-hang-cua-toi}">Đơn hàng của tôi</a>
+            <a th:href="@{/about}">Về KOSIS</a>
+            <a th:href="@{/contact}">Liên hệ</a>
+        </div>
+        <div class="drawer__auth">
+            <a class="btn btn--dark" th:href="@{/login}" sec:authorize="!isAuthenticated()">Đăng nhập</a>
+            <a class="btn btn--outline" th:href="@{/register}" sec:authorize="!isAuthenticated()">Tạo tài khoản</a>
+            <a class="btn btn--dark" th:href="@{/account}" sec:authorize="isAuthenticated()">Tài khoản của tôi</a>
+            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                <button class="btn btn--outline btn--block" type="submit">Đăng xuất</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Tìm kiếm" aria-hidden="true">
+        <div class="search-overlay__inner">
+            <form class="search-form" th:action="@{/search}" method="get" role="search">
+                <i class="bi bi-search"></i>
+                <input type="search" name="q" placeholder="Tìm kiếm tại KOSIS" aria-label="Tìm sản phẩm" autocomplete="off">
+                <button type="button" aria-label="Đóng tìm kiếm" data-search-close><i class="bi bi-x-lg"></i></button>
+            </form>
+            <div class="chips">
+                <a class="chip" th:href="@{/search(q='Trench coat')}">Áo trench coat</a>
+                <a class="chip" th:href="@{/search(q='Sneaker')}">Sneaker</a>
+                <a class="chip" th:href="@{/search(q='Hoodie')}">Hoodie</a>
+                <a class="chip" th:href="@{/search(q='Túi')}">Túi xách</a>
+                <a class="chip" th:href="@{/search(q='Kính')}">Kính mát</a>
+                <a class="chip" th:href="@{/search(q='Nón')}">Nón</a>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<!-- ============================================================
+     NEWSLETTER (home + about)
+     ============================================================ -->
+<section class="newsletter" th:fragment="newsletter" aria-labelledby="nl-title">
+    <div class="container container--content reveal">
+        <p class="eyebrow">Bản tin</p>
+        <h2 class="display" id="nl-title" style="margin-top:12px">Tham gia cộng đồng KOSIS</h2>
+        <p>Khám phá bộ sưu tập mới, ưu đãi độc quyền và cảm hứng thời trang.</p>
+        <form class="newsletter__form" th:action="@{/newsletter}" method="post" novalidate data-newsletter>
+            <label class="sr-only" for="nl-email">Địa chỉ email</label>
+            <input id="nl-email" type="email" name="email" placeholder="Nhập email của bạn" autocomplete="email" required>
+            <button class="btn btn--dark" type="submit">Đăng ký</button>
+        </form>
+        <p class="newsletter__msg" role="status" aria-live="polite" data-newsletter-msg></p>
+    </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="site-footer" th:fragment="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a class="logo" th:href="@{/}">KOSIS</a>
+                <p>Thời trang hằng ngày tinh tế với chất liệu tự nhiên và bảng màu nhã nhặn. Thiết kế để mặc thường xuyên và giữ bền theo năm tháng.</p>
+                <div class="social">
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.pinterest.com/" target="_blank" rel="noopener" aria-label="Pinterest"><i class="bi bi-pinterest"></i></a>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>MUA SẮM</h4>
+                <ul>
+                    <li><a th:href="@{/men}">Nam</a></li>
+                    <li><a th:href="@{/women}">Nữ</a></li>
+                    <li><a th:href="@{/kids}">Trẻ em</a></li>
+                    <li><a th:href="@{/collections(sort='newest')}">Hàng mới về</a></li>
+                    <li><a th:href="@{/collections}">Bộ sưu tập</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>HỖ TRỢ KHÁCH HÀNG</h4>
+                <ul>
+                    <li><a th:href="@{/contact}">Liên hệ</a></li>
+                    <li><a th:href="@{/shipping}">Thông tin vận chuyển</a></li>
+                    <li><a th:href="@{/returns}">Đổi trả &amp; hoàn tiền</a></li>
+                    <li><a th:href="@{/faq}">Câu hỏi thường gặp</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>VỀ KOSIS</h4>
+                <ul>
+                    <li><a th:href="@{/about}">Giới thiệu</a></li>
+                    <li><a th:href="@{/our-story}">Câu chuyện thương hiệu</a></li>
+                    <li><a th:href="@{/privacy}">Chính sách bảo mật</a></li>
+                    <li><a th:href="@{/terms}">Điều khoản &amp; điều kiện</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 KOSIS. Bảo lưu mọi quyền.</span>
+            <div class="pay-list" aria-label="Phương thức thanh toán">
+                <span class="pay"><i class="bi bi-qr-code"></i> Chuyển khoản (QR)</span>
+                <span class="pay"><i class="bi bi-cash-coin"></i> Thanh toán khi nhận hàng</span>
+            </div>
+            <div class="locale">
+                <label class="sr-only" for="loc-lang">Ngôn ngữ</label>
+                <select id="loc-lang"><option selected>Tiếng Việt</option><option disabled>English (sắp có)</option></select>
+                <label class="sr-only" for="loc-cur">Tiền tệ</label>
+                <select id="loc-cur"><option selected>VND ₫</option><option disabled>USD $ (sắp có)</option></select>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS: back-to-top, toast mount, main.js
+     ============================================================ -->
+<th:block th:fragment="scripts">
+    <button class="to-top" type="button" aria-label="Lên đầu trang" data-to-top><i class="bi bi-arrow-up"></i></button>
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+    <script th:src="@{/js/main.js}" defer></script>
+</th:block>
+
+<!-- ============================================================
+     PRODUCT CARD:  th:replace="~{fragments/layout :: productCard(${p}, 'tile')}"
+     variant: CSS class(es): 'tile' (compact) | 'arrival' (taller, colour swatches); extra classes allowed
+     ============================================================ -->
+<article class="p-card" th:fragment="productCard(p, variant)"
+         th:classappend="${variant} + (${p.stock <= 0} ? ' is-soldout' : '')"
+         th:data-id="${p.id}" th:data-name="${p.name}"
+         th:data-price="${#numbers.formatInteger(p.price, 0, 'POINT')} + ' ₫'"
+         th:data-old="${p.oldPrice > p.price} ? ${#numbers.formatInteger(p.oldPrice, 0, 'POINT')} + ' ₫' : ''"
+         th:data-img="${p.image}" th:data-url="@{/san-pham/{id}(id=${p.id})}"
+         th:data-sizes="${p.hasSizes} ? ${#strings.listJoin(p.sizeList, ',')} : ''"
+         th:data-sizestock="${p.sizeStockSummary}"
+         th:data-stock="${p.stock}" th:data-desc="${p.description}">
+    <a class="p-card__media" th:href="@{/san-pham/{id}(id=${p.id})}" th:aria-label="${p.name}">
+        <img th:src="@{${#strings.isEmpty(p.image) ? '/images/products/placeholder.svg' : p.image}}" th:alt="${p.name}" loading="lazy" decoding="async"
+             onerror="this.onerror=null;this.src='/images/products/placeholder.svg'">
+    </a>
+    <span class="p-card__badge" th:if="${p.displayDiscount > 0}" th:text="'-' + ${p.displayDiscount} + '%'">-20%</span>
+    <span class="p-card__badge p-card__badge--new" th:if="${p.displayDiscount <= 0 and p.new}">MỚI</span>
+    <button class="p-card__fav" type="button" data-wishlist-toggle th:data-id="${p.id}" aria-pressed="false" aria-label="Thêm vào yêu thích"><i class="bi bi-heart"></i></button>
+    <span class="p-card__soldout" th:if="${p.stock <= 0}">Hết hàng</span>
+    <div class="p-card__actions" th:if="${p.stock > 0}">
+        <button type="button" class="btn btn--sm btn--qv" data-quick-view><i class="bi bi-eye"></i> Xem nhanh</button>
+        <button type="button" class="btn btn--sm" data-quick-add aria-label="Thêm vào giỏ"><i class="bi bi-bag-plus"></i> Thêm</button>
+    </div>
+    <div class="p-card__body">
+        <h3 class="p-card__name"><a th:href="@{/san-pham/{id}(id=${p.id})}" th:text="${p.name}">Product name</a></h3>
+        <p class="p-card__price">
+            <span th:classappend="${p.oldPrice > p.price} ? 'is-sale'" th:text="${#numbers.formatInteger(p.price, 0, 'POINT')} + ' ₫'">1.290.000 ₫</span>
+            <s th:if="${p.oldPrice > p.price}" th:text="${#numbers.formatInteger(p.oldPrice, 0, 'POINT')} + ' ₫'">1.590.000 ₫</s>
+        </p>
+        <div class="p-card__swatches" th:if="${#strings.contains(variant, 'arrival') and !p.colorList.isEmpty()}">
+            <span class="swatch" th:each="c : ${p.colorList}" th:style="'--c:' + ${c.hex}" th:title="${c.name}"></span>
+        </div>
+    </div>
+    <form class="js-add-cart p-card__form" th:if="${p.stock > 0}" th:action="@{/gio-hang/them/{id}(id=${p.id})}" method="post">
+        <input type="hidden" name="quantity" value="1">
+        <input type="hidden" name="size" value="">
+    </form>
+</article>
+
+</body>
+</html>

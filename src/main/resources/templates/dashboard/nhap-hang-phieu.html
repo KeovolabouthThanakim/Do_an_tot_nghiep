@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Phiếu nhập hàng ' + ${imp.code} + ' - KOSIS'">Phiếu nhập hàng - KOSIS</title>
+    <style>
+        :root { --ink: #1a1a1a; --muted: #6b6b6b; --line: #d9d9d9; --soft: #f5f3ef; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #ececec; color: var(--ink); font: 14px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .toolbar { position: sticky; top: 0; display: flex; gap: 10px; justify-content: center; padding: 12px; background: #fff; border-bottom: 1px solid var(--line); }
+        .toolbar a, .toolbar button { font: inherit; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-decoration: none; }
+        .toolbar button { background: var(--ink); color: #fff; }
+        .sheet { width: 210mm; max-width: 100%; min-height: 297mm; margin: 18px auto; padding: 16mm 15mm; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.12); }
+        .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+        .brand { font-size: 26px; font-weight: 800; letter-spacing: .22em; }
+        .brand small { display: block; font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
+        .title { text-align: right; }
+        .title h1 { margin: 0; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; }
+        .title .code { font-size: 15px; font-weight: 700; }
+        .title .date { color: var(--muted); }
+        .info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; margin: 18px 0; }
+        .info div { display: flex; gap: 8px; }
+        .info dt { flex: 0 0 105px; color: var(--muted); }
+        .info dd { margin: 0; font-weight: 500; word-break: break-word; }
+        .info .full { grid-column: 1 / -1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        th { background: var(--soft); text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+        th, td { padding: 9px 10px; border: 1px solid var(--line); vertical-align: top; }
+        td.num, th.num { text-align: right; white-space: nowrap; }
+        td.c, th.c { text-align: center; }
+        .code-sub { display: block; font-size: 12px; color: var(--muted); }
+        tr { page-break-inside: avoid; }
+        tfoot td { font-weight: 600; background: #fafafa; }
+        tfoot tr.grand td { font-size: 16px; font-weight: 800; background: var(--soft); }
+        .sign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 38px; text-align: center; page-break-inside: avoid; }
+        .sign b { display: block; }
+        .sign span { display: block; color: var(--muted); font-size: 12px; }
+        .sign .space { height: 80px; }
+        .foot { margin-top: 26px; text-align: center; font-size: 11.5px; color: var(--muted); }
+        @media print {
+            @page { size: A4; margin: 0; }
+            body { background: #fff; }
+            .toolbar { display: none; }
+            .sheet { margin: 0; width: auto; min-height: 0; box-shadow: none; padding: 14mm 14mm; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <button type="button" onclick="window.print()">In / Lưu PDF</button>
+    <a href="/dashboard/nhap-hang">Quay lại</a>
+</div>
+
+<div class="sheet">
+    <div class="head">
+        <div class="brand">KOSIS<small>Phiếu nhập kho</small></div>
+        <div class="title">
+            <h1>Phiếu nhập hàng</h1>
+            <div class="code" th:text="'Số: ' + ${imp.code}">Số: NH00001</div>
+            <div class="date" th:text="'Ngày nhập: ' + ${#temporals.format(imp.importDate, 'dd/MM/yyyy')}">Ngày nhập: 01/11/2026</div>
+        </div>
+    </div>
+
+    <dl class="info">
+        <div><dt>Nguồn hàng</dt><dd th:text="${imp.supplier}">Xưởng may ABC</dd></div>
+        <div><dt>Số chứng từ</dt><dd th:text="${imp.reference != null ? imp.reference : '—'}">HD123</dd></div>
+        <div><dt>Liên hệ</dt><dd th:text="${imp.supplierContact != null ? imp.supplierContact : '—'}">0909 000 000</dd></div>
+        <div><dt>Người lập phiếu</dt><dd th:text="${imp.createdBy != null ? imp.createdBy : '—'}">admin</dd></div>
+        <div class="full" th:if="${imp.note != null}"><dt>Ghi chú</dt><dd th:text="${imp.note}">Ghi chú</dd></div>
+    </dl>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="c">STT</th>
+                <th>Sản phẩm</th>
+                <th>Màu</th>
+                <th class="c">Size</th>
+                <th class="num">SL</th>
+                <th class="num">Giá nhập</th>
+                <th class="num">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="i, st : ${imp.items}">
+                <td class="c" th:text="${st.count}">1</td>
+                <td>
+                    <span th:text="${i.productName}">Áo sơ mi</span>
+                    <span class="code-sub" th:if="${i.productCode != null and !i.productCode.isBlank()}" th:text="'Mã: ' + ${i.productCode}">Mã: KS101</span>
+                </td>
+                <td th:text="${i.color != null ? i.color : '—'}">Olive</td>
+                <td class="c" th:text="${i.size != null ? i.size : '—'}">M</td>
+                <td class="num" th:text="${#numbers.formatInteger(i.quantity, 0, 'POINT')}">10</td>
+                <td class="num" th:text="${#numbers.formatInteger(i.unitCost, 0, 'POINT')} + '₫'">100.000₫</td>
+                <td class="num" th:text="${#numbers.formatInteger(i.lineTotal, 0, 'POINT')} + '₫'">1.000.000₫</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="num">Tổng số lượng (<span th:text="${imp.items.size()}">3</span> dòng)</td>
+                <td class="num" th:text="${#numbers.formatInteger(imp.totalQty, 0, 'POINT')}">40</td>
+                <td colspan="2"></td>
+            </tr>
+            <tr class="grand">
+                <td colspan="6" class="num">TỔNG TIỀN NHẬP</td>
+                <td class="num" th:text="${#numbers.formatInteger(imp.totalCost, 0, 'POINT')} + '₫'">4.000.000₫</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="sign">
+        <div><b>Người lập phiếu</b><span>(Ký, ghi rõ họ tên)</span><div class="space"></div></div>
+        <div><b>Người giao hàng</b><span>(Ký, ghi rõ họ tên)</span><div class="space"></div></div>
+        <div><b>Thủ kho</b><span>(Ký, ghi rõ họ tên)</span><div class="space"></div></div>
+    </div>
+
+    <div class="foot" th:text="'Phiếu tạo lúc ' + ${#temporals.format(imp.createdAt, 'dd/MM/yyyy HH:mm')} + ' · KOSIS Admin'">Phiếu tạo lúc</div>
+</div>
+
+</body>
+</html>
