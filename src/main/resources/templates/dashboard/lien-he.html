@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên hệ - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('contacts', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <h1>Liên hệ</h1>
+                <p>Tin nhắn khách gửi từ trang <b>/contact</b>. Bấm vào một dòng để đọc đầy đủ, <b>trả lời qua email</b> rồi đánh dấu <b>đã xử lý</b>.</p>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${contactAdminMessage != null}" th:text="${contactAdminMessage}"></div>
+        <div hidden data-flash="error" th:if="${contactAdminError != null}" th:text="${contactAdminError}"></div>
+
+        <!-- TỔNG HỢP -->
+        <section class="x-summary">
+            <div class="x-summary-top">
+                <div><b th:text="${totalCount}">0</b>tin nhắn</div>
+                <div class="x-fig" th:if="${totalCount > 0}">Đã xử lý
+                    <b th:text="${handledCount * 100 / totalCount} + '%'">0%</b></div>
+            </div>
+            <div class="x-split" th:if="${totalCount > 0}">
+                <span class="c" th:style="'width:' + ${handledCount * 100.0 / totalCount} + '%'"></span>
+                <span class="w" th:style="'width:' + ${openCount * 100.0 / totalCount} + '%'"></span>
+            </div>
+            <div class="x-split" th:unless="${totalCount > 0}"></div>
+        </section>
+
+        <!-- THẺ LỌC -->
+        <div class="x-tabs" id="ctTabs">
+            <button type="button" class="x-tab active" data-status="all">
+                <span class="ico"><i class="bi bi-chat-left-text"></i></span>
+                <span><span class="num" th:text="${totalCount}">0</span><span class="lbl">Tất cả tin nhắn</span></span>
+            </button>
+            <button type="button" class="x-tab wait" data-status="open">
+                <span class="ico"><i class="bi bi-envelope-exclamation"></i></span>
+                <span><span class="num" th:text="${openCount}">0</span><span class="lbl">Chưa xử lý</span></span>
+            </button>
+            <button type="button" class="x-tab ok" data-status="done">
+                <span class="ico"><i class="bi bi-envelope-check"></i></span>
+                <span><span class="num" th:text="${handledCount}">0</span><span class="lbl">Đã xử lý</span></span>
+            </button>
+        </div>
+
+        <div class="x-table-card">
+            <div class="x-toolbar">
+                <div class="inv-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="ctSearch" placeholder="Tìm theo tên, email, tiêu đề hoặc nội dung..." autocomplete="off">
+                </div>
+                <select class="inv-select" id="ctSort" aria-label="Sắp xếp">
+                    <option value="new">Mới nhất trước</option>
+                    <option value="old">Cũ nhất trước</option>
+                    <option value="open">Chưa xử lý trước</option>
+                </select>
+                <div class="count"><span id="ctShown">0</span> tin nhắn đang hiển thị</div>
+            </div>
+
+            <div class="ct-list" id="ctList">
+                <article class="ct" th:each="m : ${messages}"
+                         th:classappend="${!m.handled} ? 'is-open'"
+                         th:data-status="${m.handled ? 'done' : 'open'}"
+                         th:data-ts="${m.createdAt}"
+                         th:data-search="${#strings.toLowerCase(m.name + ' ' + m.email + ' ' + (m.subject ?: '') + ' ' + m.message)}">
+
+                    <button type="button" class="ct-row" data-toggle aria-expanded="false">
+                        <span class="x-avatar ct-avatar" th:classappend="'c' + ${m.id % 6 + 1}"
+                              th:text="${#strings.isEmpty(m.name) ? '?' : #strings.toUpperCase(#strings.substring(m.name, 0, 1))}">A</span>
+                        <span class="ct-who">
+                            <span class="p-name" th:text="${m.name}">Nguyễn Văn A</span>
+                            <span class="p-code" th:text="${m.email}">email@example.com</span>
+                        </span>
+                        <span class="ct-msg">
+                            <b th:text="${#strings.isEmpty(m.subject) ? '(Không có tiêu đề)' : m.subject}">Tiêu đề</b>
+                            <span th:text="${m.message}">Nội dung xem trước...</span>
+                        </span>
+                        <span class="ct-state">
+                            <span class="status-pill done" th:if="${m.handled}">Đã xử lý</span>
+                            <span class="status-pill processing" th:unless="${m.handled}">Chưa xử lý</span>
+                        </span>
+                        <span class="ct-time x-muted" data-time th:title="${m.createdAtText}" th:text="${m.createdAtText}">03/11/2026 09:00</span>
+                        <i class="bi bi-chevron-down ct-chev"></i>
+                    </button>
+
+                    <div class="ct-detail" hidden>
+                        <div class="ct-meta">
+                            <span><i class="bi bi-envelope"></i><a th:href="'mailto:' + ${m.email}" th:text="${m.email}">email</a></span>
+                            <span th:if="${m.username != null}"><i class="bi bi-person"></i><span th:text="'@' + ${m.username}">@user</span></span>
+                            <span><i class="bi bi-clock"></i><span th:text="${m.createdAtText}">03/11/2026 09:00</span></span>
+                        </div>
+                        <blockquote class="x-quote ct-quote">
+                            <span th:text="${#strings.isEmpty(m.subject) ? '(Không có tiêu đề)' : m.subject}">Tiêu đề</span>
+                            <p th:text="${m.message}">Nội dung đầy đủ</p>
+                        </blockquote>
+                        <div class="ct-actions">
+                            <a class="btn-primary-dark"
+                               th:href="'mailto:' + ${m.email} + '?subject=' + ${#uris.escapeQueryParam('Re: ' + (#strings.isEmpty(m.subject) ? 'Liên hệ KOSIS' : m.subject))}">
+                                <i class="bi bi-reply"></i> Trả lời qua email
+                            </a>
+                            <button type="button" class="x-btn" data-copy th:data-email="${m.email}"><i class="bi bi-clipboard"></i> Sao chép email</button>
+                            <form th:action="@{/dashboard/lien-he/{id}/xu-ly(id=${m.id})}" method="post">
+                                <input type="hidden" name="handled" th:value="${!m.handled}">
+                                <button type="submit" class="x-btn" th:classappend="${m.handled} ? '' : 'gold'">
+                                    <i class="bi" th:classappend="${m.handled} ? 'bi-arrow-counterclockwise' : 'bi-check2-circle'"></i>
+                                    <span th:text="${m.handled ? 'Chuyển về chưa xử lý' : 'Đánh dấu đã xử lý'}">Đánh dấu đã xử lý</span>
+                                </button>
+                            </form>
+                            <span class="ct-by" th:if="${m.handled}">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span th:text="'Đã xử lý bởi ' + ${m.handledBy} + ' · ' + ${m.handledAtText}">Đã xử lý bởi nv · 03/11</span>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="ib-more" id="ctMore" hidden>
+                <button type="button" id="ctMoreBtn">Xem thêm tin nhắn</button>
+            </div>
+
+            <div class="inv-empty" id="ctEmpty" th:hidden="${!messages.isEmpty()}">
+                <i class="bi bi-chat-left-text"></i>
+                <p>Chưa có tin nhắn liên hệ nào.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        var PAGE = 15;
+        var list = document.getElementById('ctList');
+        var cards = Array.prototype.slice.call(list.children);
+        var tabs = document.querySelectorAll('#ctTabs button');
+        var search = document.getElementById('ctSearch');
+        var sortSel = document.getElementById('ctSort');
+        var empty = document.getElementById('ctEmpty');
+        var more = document.getElementById('ctMore');
+        var moreBtn = document.getElementById('ctMoreBtn');
+        var shownEl = document.getElementById('ctShown');
+        var status = 'all', limit = PAGE;
+
+        // Thời gian tương đối; ngày giờ đầy đủ vẫn nằm ở tooltip và trong phần chi tiết
+        function ago(iso) {
+            var t = new Date(iso.slice(0, 19)).getTime();
+            if (isNaN(t)) return null;
+            var s = Math.max(0, (Date.now() - t) / 1000);
+            if (s < 60) return 'Vừa xong';
+            if (s < 3600) return Math.floor(s / 60) + ' phút trước';
+            if (s < 86400) return Math.floor(s / 3600) + ' giờ trước';
+            if (s < 86400 * 7) return Math.floor(s / 86400) + ' ngày trước';
+            return null;
+        }
+        cards.forEach(function (c) {
+            var el = c.querySelector('[data-time]');
+            var txt = ago(c.getAttribute('data-ts') || '');
+            if (el && txt) el.textContent = txt;
+        });
+
+        // Bấm dòng để mở / đóng nội dung đầy đủ
+        list.addEventListener('click', function (e) {
+            var row = e.target.closest('[data-toggle]');
+            if (row) {
+                var card = row.closest('.ct'), d = card.querySelector('.ct-detail');
+                var open = d.hidden;
+                d.hidden = !open;
+                card.classList.toggle('expanded', open);
+                row.setAttribute('aria-expanded', open ? 'true' : 'false');
+                return;
+            }
+            var b = e.target.closest('[data-copy]');
+            if (!b) return;
+            var email = b.getAttribute('data-email');
+            var done = function () {
+                var old = b.innerHTML;
+                b.innerHTML = '<i class="bi bi-check2"></i> Đã sao chép';
+                setTimeout(function () { b.innerHTML = old; }, 1400);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(email).then(done);
+        });
+
+        function sortCards() {
+            var mode = sortSel.value;
+            cards.sort(function (a, b) {
+                var ta = a.getAttribute('data-ts'), tb = b.getAttribute('data-ts');
+                if (mode === 'old') return ta < tb ? -1 : ta > tb ? 1 : 0;
+                if (mode === 'open') {
+                    var oa = a.getAttribute('data-status') === 'open' ? 0 : 1, ob = b.getAttribute('data-status') === 'open' ? 0 : 1;
+                    if (oa !== ob) return oa - ob;
+                }
+                return ta < tb ? 1 : ta > tb ? -1 : 0;
+            });
+            cards.forEach(function (c) { list.appendChild(c); });
+        }
+
+        function apply() {
+            var q = search.value.trim().toLowerCase();
+            var matched = cards.filter(function (c) {
+                return (status === 'all' || c.getAttribute('data-status') === status)
+                    && (!q || c.getAttribute('data-search').indexOf(q) >= 0);
+            });
+            cards.forEach(function (c) { c.hidden = true; });
+            matched.slice(0, limit).forEach(function (c) { c.hidden = false; });
+            shownEl.textContent = Math.min(matched.length, limit);
+            if (cards.length === 0) return;      // chưa có tin nào: giữ thông báo do server render
+            empty.hidden = matched.length > 0;
+            empty.querySelector('p').textContent = 'Không có tin nhắn phù hợp.';
+            more.hidden = matched.length <= limit;
+            if (!more.hidden) moreBtn.textContent = 'Xem thêm (' + (matched.length - limit) + ' tin nhắn)';
+        }
+
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () {
+                tabs.forEach(function (x) { x.classList.remove('active'); });
+                t.classList.add('active');
+                status = t.getAttribute('data-status');
+                limit = PAGE; apply();
+            });
+        });
+        search.addEventListener('input', function () { limit = PAGE; apply(); });
+        sortSel.addEventListener('change', function () { sortCards(); limit = PAGE; apply(); });
+        moreBtn.addEventListener('click', function () { limit += PAGE; apply(); });
+
+        sortCards();
+        apply();
+    })();
+</script>
+</body>
+</html>

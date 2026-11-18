@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ khách hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('customers', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/khach-hang" class="back-link"><i class="bi bi-arrow-left"></i> Danh sách khách hàng</a>
+                <h1>
+                    <span th:text="${#strings.isEmpty(customer.fullName) ? customer.username : customer.fullName}">Nguyễn Văn A</span>
+                    <span class="status-pill done" th:if="${customer.enabled}">Hoạt động</span>
+                    <span class="status-pill rejected" th:unless="${customer.enabled}">Đã khoá</span>
+                </h1>
+                <p>Tài khoản <b th:text="${customer.username}">user</b> · đăng ký <span th:text="${customer.createdAtText}">29/09/2026</span></p>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${customerMessage != null}" th:text="${customerMessage}"></div>
+        <div hidden data-flash="error" th:if="${customerError != null}" th:text="${customerError}"></div>
+
+        <div class="od-grid">
+
+            <div class="od-col">
+                <div class="panel od-card">
+                    <h2>Lịch sử đơn hàng</h2>
+                    <div class="ship-warn danger" th:if="${refusedCount > 0}">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div><b th:text="'Khách này từng không nhận hàng ' + ${refusedCount} + ' đơn'">Khách này từng không nhận hàng 1 đơn</b>
+                            <span>Cân nhắc gọi xác nhận trước khi giao COD hoặc đề nghị chuyển khoản trước.</span></div>
+                    </div>
+                    <p class="od-hint" th:if="${orders.isEmpty()}">Khách này chưa đặt đơn nào.</p>
+                    <table class="inventory-table orders-admin-table cd-orders" th:unless="${orders.isEmpty()}">
+                        <thead>
+                            <tr><th>Mã đơn</th><th>Tổng tiền</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="o : ${orders}">
+                                <td class="order-code" th:text="${o.orderCode}">KS000001</td>
+                                <td class="price-cell" th:text="${#numbers.formatInteger(o.totalAmount, 0, 'POINT')} + '₫'">890.000₫</td>
+                                <td th:text="${o.createdAtText}">29/09/2026 14:30</td>
+                                <td>
+                                    <span class="status-pill review" th:if="${o.awaitingReview}" th:text="${o.statusLabel}">Chờ</span>
+                                    <span class="status-pill done" th:if="${o.confirmed}" th:text="${o.statusLabel}">Đã xác nhận</span>
+                                    <span class="status-pill rejected" th:if="${o.rejected}" th:text="${o.statusLabel}">Bị từ chối</span>
+                                    <span class="status-pill rejected" th:if="${o.refused}">Không nhận hàng</span>
+                                </td>
+                                <td>
+                                    <div class="row-actions">
+                                        <a th:href="@{/dashboard/don-hang/{id}(id=${o.id})}" title="Xem đơn"><i class="bi bi-eye"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="od-col">
+                <div class="panel od-card">
+                    <h2>Thông tin liên hệ</h2>
+                    <div class="user-cell" style="margin-bottom:16px">
+                        <div class="acct-avatar" style="width:56px;height:56px;font-size:20px"><span th:text="${#strings.substring(customer.username, 0, 1)}">A</span><img th:if="${customer.avatarUrl != null}" th:src="${customer.avatarUrl}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div>
+                        <div><b th:text="${customer.username}">user</b><span class="p-code" style="display:block">Ảnh lấy theo email (Gravatar)</span></div>
+                    </div>
+                    <dl class="od-dl">
+                        <div><dt>Họ tên</dt><dd th:text="${#strings.isEmpty(customer.fullName) ? '—' : customer.fullName}">Nguyễn Văn A</dd></div>
+                        <div><dt>Username</dt><dd th:text="${customer.username}">user</dd></div>
+                        <div><dt>Email</dt><dd th:text="${#strings.isEmpty(customer.email) ? '—' : customer.email}">email</dd></div>
+                        <div><dt>Điện thoại</dt><dd th:text="${#strings.isEmpty(customer.phone) ? '—' : customer.phone}">0901234567</dd></div>
+                        <div><dt>Địa chỉ</dt><dd th:text="${#strings.isEmpty(customer.address) ? '—' : customer.address}">Địa chỉ</dd></div>
+                        <div><dt>Số đơn</dt><dd th:text="${orderCount}">0</dd></div>
+                        <div><dt>Không nhận hàng</dt><dd><b th:if="${refusedCount > 0}" style="color:#b3300a" th:text="${refusedCount} + ' đơn'">1 đơn</b><span th:unless="${refusedCount > 0}">Chưa có</span></dd></div>
+                        <div><dt>Tổng mua (đơn đã xác nhận)</dt><dd th:text="${#numbers.formatInteger(totalSpent, 0, 'POINT')} + '₫'">0₫</dd></div>
+                    </dl>
+                </div>
+
+                <div class="panel od-card">
+                    <h2>Sản phẩm yêu thích <small style="font-weight:400;color:var(--muted);font-size:12.5px" th:text="'(' + ${#lists.size(wishlist)} + ')'">(0)</small></h2>
+                    <p class="od-hint" th:if="${#lists.isEmpty(wishlist)}">Khách chưa lưu sản phẩm nào.</p>
+                    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px" th:unless="${#lists.isEmpty(wishlist)}">
+                        <li th:each="p : ${wishlist}" style="font-size:13.5px">
+                            <b th:text="${p.name}">Tên sản phẩm</b>
+                            <span class="p-code" th:text="${p.code}">KS001</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Khoá / mở khoá: chỉ ADMIN thấy (server cũng chặn ở SecurityConfig) -->
+                <div class="panel od-card" sec:authorize="hasRole('ADMIN')">
+                    <h2>Trạng thái tài khoản</h2>
+                    <p class="od-hint" th:if="${customer.enabled}">Khoá tài khoản sẽ không cho khách đăng nhập nữa. Lịch sử đơn hàng vẫn được giữ nguyên.</p>
+                    <p class="od-hint" th:unless="${customer.enabled}">Tài khoản đang bị khoá. Mở khoá để khách đăng nhập lại.</p>
+
+                    <form th:if="${customer.enabled}" th:action="@{/dashboard/khach-hang/{id}/khoa(id=${customer.id})}" method="post"
+                          data-confirm="Khoá tài khoản này? Khách sẽ không đăng nhập được cho tới khi được mở khoá." data-confirm-ok="Khoá tài khoản" data-confirm-danger>
+                        <button type="submit" class="btn-danger od-btn"><i class="bi bi-lock"></i> Khoá tài khoản</button>
+                    </form>
+                    <form th:unless="${customer.enabled}" th:action="@{/dashboard/khach-hang/{id}/mo-khoa(id=${customer.id})}" method="post">
+                        <button type="submit" class="btn-primary-dark od-btn"><i class="bi bi-unlock"></i> Mở khoá tài khoản</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+</body>
+</html>

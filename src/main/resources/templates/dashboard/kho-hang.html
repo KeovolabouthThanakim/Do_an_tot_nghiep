@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+    <style>
+        /* nút xoá bị khoá khi sản phẩm còn tồn kho */
+        .row-actions a.del-locked { position: relative; color: var(--muted); background: var(--bg); border-style: dashed; }
+        .row-actions a.del-locked:hover { background: var(--warn-soft); border-color: var(--accent); color: var(--warn); }
+        .row-actions a.del-locked .lock { position: absolute; right: -3px; bottom: -3px; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 8px; }
+        .cd-stock { display: flex; gap: 10px; align-items: flex-start; text-align: left; margin: -6px 0 18px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--danger); font-size: 13px; line-height: 1.5; }
+        .cd-stock[hidden] { display: none; }
+        .cd-stock a { text-decoration: underline; font-weight: 600; }
+        .cd-stock b { font-size: 15px; }
+        #cdConfirm:disabled { opacity: .45; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('inventory', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <h1>Kho hàng</h1>
+                <p>Quản lý sản phẩm, <b>tồn kho theo từng size</b> và ảnh. Hàng sắp hết được đẩy lên để nhập thêm kịp thời.</p>
+            </div>
+            <div class="x-actions">
+                <a href="/dashboard/kho-hang/nhap-csv" class="x-btn"><i class="bi bi-filetype-csv"></i> Nhập từ CSV</a>
+                <a href="/dashboard/kho-hang/them" class="btn-primary-dark">
+                    <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+                </a>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${inventoryMessage != null}" th:text="${inventoryMessage}"></div>
+        <div hidden data-flash="error" th:if="${inventoryError != null}" th:text="${inventoryError}"></div>
+
+        <!-- TỔNG QUAN KHO: thanh tỷ lệ còn / sắp hết / hết hàng -->
+        <section class="x-summary">
+            <div class="x-summary-top">
+                <div><b th:text="${#numbers.formatInteger(totalUnits, 0, 'POINT')}">0</b>sản phẩm đang có trong kho
+                    <span class="x-muted" th:text="'· ' + ${productCount} + ' mẫu'">· 0 mẫu</span></div>
+                <div class="x-fig">Giá trị tồn (theo giá nhập)
+                    <b th:text="${#numbers.formatInteger(stockCostValue, 0, 'POINT')} + '₫'">0₫</b></div>
+            </div>
+            <div class="x-split" th:if="${productCount > 0}">
+                <span class="c" th:style="'width:' + ${inCount * 100.0 / productCount} + '%'"></span>
+                <span class="w" th:style="'width:' + ${lowCount * 100.0 / productCount} + '%'"></span>
+                <span class="r" th:style="'width:' + ${outCount * 100.0 / productCount} + '%'"></span>
+            </div>
+            <div class="x-split" th:unless="${productCount > 0}"></div>
+            <div class="x-legend row">
+                <div style="--c:var(--ok)"><i></i>Còn hàng <b th:text="${inCount}">0</b></div>
+                <div style="--c:var(--accent)"><i></i><span th:text="'Sắp hết (≤ ' + ${lowStock} + ')'">Sắp hết (≤ 10)</span> <b th:text="${lowCount}">0</b></div>
+                <div style="--c:var(--danger)"><i></i>Hết hàng <b th:text="${outCount}">0</b></div>
+                <div style="--c:var(--muted, #8a8f98)" th:if="${pendingCount > 0}"><i></i>Chờ nhập hàng <b th:text="${pendingCount}">0</b></div>
+            </div>
+        </section>
+
+        <!-- SẢN PHẨM MỚI CHƯA CÓ PHIẾU NHẬP -->
+        <div class="x-alert" th:if="${pendingCount > 0}">
+            <i class="bi bi-hourglass-split"></i>
+            <div>
+                <b th:text="${pendingCount} + ' mẫu đang chờ nhập hàng'">2 mẫu đang chờ nhập hàng</b>
+                &middot; chưa hiện ngoài cửa hàng, sẽ tự lên kệ khi có phiếu nhập đầu tiên
+            </div>
+            <button type="button" class="x-btn" data-go-pending><i class="bi bi-funnel"></i> Xem danh sách</button>
+            <a href="/dashboard/nhap-hang/them" class="x-btn"><i class="bi bi-truck-flatbed"></i> Tạo phiếu nhập</a>
+        </div>
+
+        <!-- CẦN NHẬP THÊM -->
+        <div class="x-alert" th:if="${lowCount + outCount > 0}">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <b th:text="${lowCount + outCount} + ' mẫu cần nhập thêm'">3 mẫu cần nhập thêm</b>
+                &middot; <span th:text="${outCount} + ' đã hết, ' + ${lowCount} + ' sắp hết'">1 đã hết, 2 sắp hết</span>
+            </div>
+            <button type="button" class="x-btn" data-go-need><i class="bi bi-funnel"></i> Xem danh sách</button>
+            <a href="/dashboard/nhap-hang/them" class="x-btn"><i class="bi bi-truck-flatbed"></i> Tạo phiếu nhập</a>
+        </div>
+
+        <!-- THẺ LỌC TÌNH TRẠNG (bấm để lọc bảng) -->
+        <div class="x-tabs" id="invChips" role="group" aria-label="Lọc theo tình trạng kho">
+            <button type="button" class="x-tab active" data-status="all" aria-pressed="true">
+                <span class="ico"><i class="bi bi-box-seam"></i></span>
+                <span><span class="num" th:text="${productCount}">0</span><span class="lbl">Tất cả sản phẩm</span></span>
+            </button>
+            <button type="button" class="x-tab ok" data-status="in" aria-pressed="false">
+                <span class="ico"><i class="bi bi-check2-circle"></i></span>
+                <span><span class="num" th:text="${inCount}">0</span><span class="lbl">Còn hàng</span></span>
+            </button>
+            <button type="button" class="x-tab wait" data-status="low" aria-pressed="false">
+                <span class="ico"><i class="bi bi-exclamation-triangle"></i></span>
+                <span><span class="num" th:text="${lowCount}">0</span><span class="lbl">Sắp hết</span></span>
+            </button>
+            <button type="button" class="x-tab bad" data-status="out" aria-pressed="false">
+                <span class="ico"><i class="bi bi-x-octagon"></i></span>
+                <span><span class="num" th:text="${outCount}">0</span><span class="lbl">Hết hàng</span></span>
+            </button>
+            <button type="button" class="x-tab wait" data-status="pending" aria-pressed="false">
+                <span class="ico"><i class="bi bi-hourglass-split"></i></span>
+                <span><span class="num" th:text="${pendingCount}">0</span><span class="lbl">Chờ nhập hàng</span></span>
+            </button>
+        </div>
+
+        <div class="x-table-card">
+
+            <!-- TÌM KIẾM + LỌC + SẮP XẾP -->
+            <div class="x-toolbar">
+                <div class="inv-search">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="invSearch" aria-label="Tìm sản phẩm" placeholder="Tìm theo tên, mã, loại hoặc đối tượng...">
+                </div>
+                <select id="invCategory" class="inv-select" aria-label="Lọc theo loại">
+                    <option value="">Tất cả loại</option>
+                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">Áo</option>
+                </select>
+                <select id="invGender" class="inv-select" aria-label="Lọc theo đối tượng">
+                    <option value="">Tất cả đối tượng</option>
+                    <option value="MEN">Nam</option>
+                    <option value="WOMEN">Nữ</option>
+                    <option value="KIDS">Trẻ em</option>
+                    <option value="UNISEX">Unisex</option>
+                    <option value="NONE">Chưa chọn</option>
+                </select>
+                <select id="invSort" class="inv-select" aria-label="Sắp xếp">
+                    <option value="new">Mới thêm trước</option>
+                    <option value="stock-asc">Tồn kho: ít &rarr; nhiều</option>
+                    <option value="stock-desc">Tồn kho: nhiều &rarr; ít</option>
+                    <option value="price-desc">Giá bán: cao &rarr; thấp</option>
+                    <option value="price-asc">Giá bán: thấp &rarr; cao</option>
+                </select>
+                <div class="count" role="status" aria-live="polite"><b id="invShown" th:text="${productCount}">0</b> sản phẩm đang hiển thị</div>
+            </div>
+
+            <div class="x-scroll">
+            <table class="x-inv-table">
+                <caption class="sr-only">Danh sách sản phẩm trong kho</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Sản phẩm</th>
+                        <th scope="col">Loại / Dành cho</th>
+                        <th scope="col">Giá bán</th>
+                        <th scope="col">Giá nhập</th>
+                        <th scope="col">Tồn kho</th>
+                        <th scope="col">Nhãn</th>
+                        <th scope="col"><span class="sr-only">Thao tác</span></th>
+                    </tr>
+                </thead>
+                <tbody id="invBody">
+                    <tr th:each="p, st : ${products}"
+                        th:data-status="${p.pendingImport ? 'pending' : (p.stock == 0 ? 'out' : (p.stock <= lowStock ? 'low' : 'in'))}"
+                        th:data-category="${p.category}"
+                        th:data-gender="${p.gender}"
+                        th:data-idx="${st.index}"
+                        th:data-stock="${p.stock}"
+                        th:data-price="${p.price}"
+                        th:data-search="${#strings.toLowerCase(p.name + ' ' + p.code + ' ' + (p.category ?: '') + ' ' + (p.gender == 'MEN' ? 'nam men' : (p.gender == 'WOMEN' ? 'nữ women' : (p.gender == 'KIDS' ? 'trẻ em kids' : (p.gender == 'UNISEX' ? 'unisex' : '')))))}">
+                        <td>
+                            <div class="product-cell">
+                                <!-- Chỉ hiển thị 1 ảnh chính (ảnh đầu tiên); bấm để xem tất cả ảnh -->
+                                <div class="thumb-row"
+                                     th:data-images="${p.images.isEmpty() ? null : #strings.listJoin(p.images, '|')}"
+                                     th:data-name="${p.name}" th:title="${p.images.isEmpty() ? 'Chưa có ảnh' : 'Xem ảnh sản phẩm'}"
+                                     th:attr="role=${p.images.isEmpty() ? null : 'button'},tabindex=${p.images.isEmpty() ? null : '0'},aria-label=${p.images.isEmpty() ? null : 'Xem ảnh ' + p.name}">
+                                    <img th:if="${!p.images.isEmpty()}" th:src="${p.images[0]}" th:alt="${p.name}" width="56" height="56" loading="lazy" decoding="async">
+                                    <span class="slot-empty" th:if="${p.images.isEmpty()}"><i class="bi bi-image"></i></span>
+                                </div>
+                                <div>
+                                    <span class="p-name" th:text="${p.name}">Tên sản phẩm</span>
+                                    <span class="p-code">
+                                        <span th:text="'Mã: ' + ${p.code}">Mã: KS101</span> ·
+                                        <span th:text="${p.images.size()} + ' ảnh'">3 ảnh</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="cat-name" th:text="${p.category != null and !p.category.isEmpty() ? p.category : '—'}">Áo</span>
+                            <span class="gender-tag" th:classappend="${p.gender == null or p.gender.isEmpty()} ? 'none'"
+                                  th:text="${p.gender == 'MEN' ? 'Nam' : (p.gender == 'WOMEN' ? 'Nữ' : (p.gender == 'KIDS' ? 'Trẻ em' : (p.gender == 'UNISEX' ? 'Unisex' : 'Chưa chọn')))}">Nam</span>
+                            <span class="color-dots" th:if="${!p.colorList.isEmpty()}">
+                                <i th:each="c : ${p.colorList}" th:style="'background:' + ${c.hex}" th:title="${c.name}"></i>
+                            </span>
+                        </td>
+                        <td class="price-cell">
+                            <span th:text="${#numbers.formatInteger(p.price, 0, 'POINT')} + '₫'">890.000₫</span>
+                            <span class="old" th:if="${p.oldPrice > 0}" th:text="${#numbers.formatInteger(p.oldPrice, 0, 'POINT')} + '₫'">1.090.000₫</span>
+                        </td>
+                        <td class="price-cell">
+                            <span th:if="${p.importPrice > 0}" th:text="${#numbers.formatInteger(p.importPrice, 0, 'POINT')} + '₫'">600.000₫</span>
+                            <span th:unless="${p.importPrice > 0}" class="x-dash">—</span>
+                            <span class="x-source" th:if="${lastSupplier.containsKey(p.id)}" th:title="'Nguồn nhập gần nhất: ' + ${lastSupplier.get(p.id)}">
+                                <i class="bi bi-shop"></i><span th:text="${lastSupplier.get(p.id)}">Xưởng A</span>
+                            </span>
+                            <!-- Biên lợi nhuận = (giá bán - giá nhập) / giá bán -->
+                            <span class="x-margin" th:if="${p.importPrice > 0 and p.price > 0}"
+                                  th:with="gap=${p.price - p.importPrice}"
+                                  th:classappend="${gap < 0} ? 'loss'"
+                                  th:text="${gap < 0 ? 'Lỗ ' + (-gap * 100 / p.price) : 'Lãi ' + (gap * 100 / p.price)} + '%'">Lãi 32%</span>
+                        </td>
+                        <td>
+                            <div class="x-stock" th:classappend="${p.pendingImport ? '' : (p.stock == 0 ? 'out' : (p.stock <= lowStock ? 'low' : ''))}">
+                                <span class="n" th:text="${p.stock}">20</span>
+                                <span class="stock-pill low" th:if="${p.pendingImport}" title="Chưa có phiếu nhập - chưa bán ngoài cửa hàng">Chờ nhập hàng</span>
+                                <span class="stock-pill" th:if="${!p.pendingImport and p.stock > lowStock}">Còn hàng</span>
+                                <span class="stock-pill low" th:if="${!p.pendingImport and p.stock > 0 and p.stock <= lowStock}">Sắp hết</span>
+                                <span class="stock-pill out" th:if="${!p.pendingImport and p.stock == 0}">Hết hàng</span>
+                            </div>
+                            <!-- Chi tiết tồn kho từng màu / size xem ở trang Tồn kho -->
+                            <a class="x-source" th:if="${p.hasSizes or p.hasColors}"
+                               th:href="@{/dashboard/ton-kho(product=${p.id})}" title="Xem tồn kho chi tiết theo màu / size">
+                                <i class="bi bi-box-arrow-up-right"></i> Xem chi tiết ở Tồn kho
+                            </a>
+                        </td>
+                        <td>
+                            <div class="x-tags">
+                                <span class="section-tag tag-new" th:if="${p.new}">Mới</span>
+                                <span class="section-tag tag-sale" th:if="${p.displayDiscount > 0}" th:text="'-' + ${p.displayDiscount} + '%'">-20%</span>
+                                <span class="x-dash" th:if="${!p.new and p.displayDiscount == 0}">—</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <a th:href="@{/dashboard/nhap-hang/them(product=${p.id})}" th:title="${p.pendingImport ? 'Tạo phiếu nhập để lên kệ bán' : 'Nhập thêm hàng'}" th:attr="aria-label='Nhập thêm hàng: ' + ${p.name}"><i class="bi bi-truck-flatbed"></i></a>
+                                <a th:href="@{'/dashboard/kho-hang/sua/' + ${p.id}}" title="Sửa" th:attr="aria-label='Sửa ' + ${p.name}"><i class="bi bi-pencil"></i></a>
+                                <form th:action="@{'/dashboard/kho-hang/xoa/' + ${p.id}}" method="post" sec:authorize="hasRole('ADMIN')">
+                                    <!-- Còn tồn kho: không cho xoá, dẫn sang trang Tồn kho để xử lý trước (có ghi lịch sử + lý do) -->
+                                    <a th:if="${p.stock > 0}" class="del-locked"
+                                       th:href="@{/dashboard/ton-kho(product=${p.id})}"
+                                       th:title="'Còn ' + ${p.stock} + ' sản phẩm trong kho - xử lý ở trang Tồn kho trước khi xoá'"
+                                       th:attr="aria-label='Không thể xoá ' + ${p.name} + ': còn ' + ${p.stock} + ' sản phẩm trong kho. Mở trang Tồn kho.'">
+                                        <i class="bi bi-trash3"></i><i class="bi bi-lock-fill lock" aria-hidden="true"></i>
+                                    </a>
+                                    <button th:if="${p.stock == 0}" type="button" class="danger js-delete" title="Xoá" th:attr="aria-label='Xoá ' + ${p.name}"
+                                            th:data-name="${p.name}" th:data-code="${p.code}"
+                                            th:data-image="${p.image}" th:data-stock="${p.stock}"
+                                            th:data-stock-url="@{/dashboard/ton-kho(product=${p.id})}">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="inv-empty" id="invEmpty" hidden>
+                <i class="bi bi-search"></i>
+                <p>Không tìm thấy sản phẩm phù hợp.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- POPUP XÁC NHẬN XOÁ -->
+<div class="confirm-modal" id="confirmDelete" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cdTitle">
+    <div class="confirm-box">
+        <div class="confirm-icon"><i class="bi bi-trash3-fill"></i></div>
+        <h3 id="cdTitle">Xoá sản phẩm này?</h3>
+        <p class="confirm-sub">Sản phẩm đã hết hàng trong kho. Xoá sẽ gỡ vĩnh viễn khỏi kho hàng, trang chủ và trang sản phẩm. Không thể hoàn tác.</p>
+
+        <div class="confirm-product">
+            <img id="cdImage" alt="" hidden>
+            <div class="confirm-noimg" id="cdNoImage"><i class="bi bi-image"></i></div>
+            <div>
+                <strong id="cdName"></strong>
+                <span id="cdMeta"></span>
+            </div>
+        </div>
+
+        <!-- Dự phòng: nếu sản phẩm vẫn còn tồn kho (vd. vừa được nhập hàng khi trang đang mở) thì chặn nút xoá -->
+        <p class="cd-stock" id="cdStock" role="alert" hidden>
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Còn <b id="cdStockN">0</b> sản phẩm trong kho. Hãy xử lý ở
+                <a id="cdStockLink" href="/dashboard/ton-kho">trang Tồn kho</a> trước khi xoá.</span>
+        </p>
+
+        <div class="confirm-actions">
+            <button type="button" class="btn-cancel" id="cdCancel">Huỷ, giữ lại</button>
+            <button type="button" class="btn-danger" id="cdConfirm"><i class="bi bi-trash3"></i> Xoá sản phẩm</button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP XEM ẢNH -->
+<div class="gallery-modal" id="gallery" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
+    <div class="gallery-box">
+        <button type="button" class="gallery-close" id="galleryClose" title="Đóng"><i class="bi bi-x-lg"></i></button>
+        <div class="gallery-title" id="galleryTitle"></div>
+        <img class="gallery-main" id="galleryMain" alt="Ảnh sản phẩm đang xem">
+        <div class="gallery-thumbs" id="galleryThumbs"></div>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard-inventory.js}" src="../../static/js/dashboard-inventory.js"></script>
+</body>
+</html>

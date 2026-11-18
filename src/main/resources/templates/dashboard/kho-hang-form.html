@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit} ? 'Sửa sản phẩm - KOSIS Admin' : 'Thêm sản phẩm - KOSIS Admin'">Sản phẩm</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('inventory', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/kho-hang" class="back-link"><i class="bi bi-arrow-left"></i> Kho hàng</a>
+                <h1 th:text="${isEdit} ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'">Thêm sản phẩm mới</h1>
+                <p th:if="${!isEdit}">Có hàng sẵn: nhập <b>số lượng từng màu / size</b> và <b>giá nhập</b> ở mục "Giá &amp; tồn kho" - hệ thống tự tạo phiếu <b>"Tồn đầu kỳ"</b> và sản phẩm <b>lên kệ ngay</b>. Chưa có hàng: để trống, sau khi lưu bạn sẽ được chuyển sang trang <b>Nhập hàng</b> với sản phẩm này đã chọn sẵn. Chọn đúng <b>Loại</b> và <b>Dành cho</b> để sản phẩm xuất hiện ở /men, /women, /kids và bộ lọc danh mục.</p>
+                <p th:if="${isEdit and product.pendingImport}">Sản phẩm này đang <b>Chờ nhập hàng</b> nên chưa hiện ngoài cửa hàng. <a href="/dashboard/nhap-hang/them" th:href="@{/dashboard/nhap-hang/them(product=${product.id})}">Tạo phiếu nhập</a> để cho lên kệ bán.</p>
+                <p th:if="${isEdit and !product.pendingImport}">Thông tin sẽ hiển thị ngay trên cửa hàng sau khi lưu. Tồn kho ở đây chỉ <b>giảm hoặc giữ nguyên</b> được; muốn tăng hãy tạo phiếu ở trang <a href="/dashboard/nhap-hang" th:href="@{/dashboard/nhap-hang}">Nhập hàng</a>. Chọn đúng <b>Loại</b> và <b>Dành cho</b> để sản phẩm xuất hiện ở /men, /women, /kids và bộ lọc danh mục.</p>
+            </div>
+        </div>
+
+        <div hidden data-flash="error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+        <form class="product-form-layout"
+              th:action="${isEdit} ? @{'/dashboard/kho-hang/sua/' + ${product.id}} : @{/dashboard/kho-hang/them}"
+              th:object="${product}" method="post" enctype="multipart/form-data">
+
+            <!-- ============ CỘT TRÁI: THÔNG TIN ============ -->
+            <div class="form-col">
+
+                <section class="form-card">
+                    <h3 class="form-card-title">Thông tin cơ bản</h3>
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="name">Tên sản phẩm</label>
+                            <input type="text" id="name" th:field="*{name}" placeholder="VD: Áo sơ mi Camp xanh rêu" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="code">Mã sản phẩm</label>
+                            <input type="text" id="code" th:field="*{code}" placeholder="VD: KS101" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="category">Loại sản phẩm</label>
+                            <select id="category" th:field="*{category}" required>
+                                <option value="">— Chọn loại —</option>
+                                <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">Áo</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="gender">Dành cho</label>
+                            <select id="gender" th:field="*{gender}" required>
+                                <option value="">— Chọn đối tượng —</option>
+                                <option value="MEN">Nam</option>
+                                <option value="WOMEN">Nữ</option>
+                                <option value="KIDS">Trẻ em</option>
+                                <option value="UNISEX">Unisex (Nam &amp; Nữ)</option>
+                            </select>
+                        </div>
+                        <div class="form-field full">
+                            <label>Màu sắc <small>— chọn màu hoặc gõ mã màu (VD: #f4f4f2), đặt tên và gắn ảnh: khách bấm màu nào ảnh sẽ đổi theo màu đó</small></label>
+                            <input type="hidden" id="colors" th:field="*{colors}">
+                            <div class="color-rows" id="colorRows"></div>
+                            <button type="button" class="btn-add-color" id="addColorBtn"><i class="bi bi-plus-lg"></i> Thêm màu</button>
+                            <p class="color-hint">Mã màu gõ được dạng <b>#f4f4f2</b> hoặc <b>f4f4f2</b> (3 hoặc 6 ký tự). "Ảnh gắn kèm" lấy từ mục "Hình ảnh" ở cột bên phải (đổi thứ tự / xoá ảnh thì ảnh đã gắn sẽ đi theo). Tối đa 12 màu. Không gắn ảnh thì bấm màu chỉ đổi tên màu.</p>
+                        </div>
+                        <div class="form-field full">
+                            <label for="description">Mô tả sản phẩm</label>
+                            <textarea id="description" th:field="*{description}" placeholder="Chất liệu, form dáng, hướng dẫn bảo quản..."></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-card">
+                    <h3 class="form-card-title">Giá &amp; tồn kho</h3>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="importPriceView">Giá nhập hàng <small th:if="${!isEdit}">— giá vốn / cái của tồn đầu kỳ, chỉ cần khi có số lượng</small></label>
+                            <div class="money-box">
+                                <input type="text" inputmode="numeric" id="importPriceView" class="money-input"
+                                       data-target="importPrice" autocomplete="off" maxlength="15" placeholder="0"
+                                       th:required="${isEdit}" th:attr="data-blank-zero=${!isEdit}">
+                                <span>₫</span>
+                            </div>
+                            <input type="hidden" id="importPrice" th:field="*{importPrice}">
+                        </div>
+                        <div class="form-field">
+                            <label for="listPriceView">Giá bán niêm yết <small>— trước khi giảm</small></label>
+                            <div class="money-box">
+                                <input type="text" inputmode="numeric" id="listPriceView" class="money-input"
+                                       data-target="listPrice" autocomplete="off" maxlength="15" placeholder="0" required>
+                                <span>₫</span>
+                            </div>
+                            <input type="hidden" id="listPrice" name="listPrice"
+                                   th:value="${product.oldPrice > 0 ? product.oldPrice : product.price}">
+                        </div>
+                        <div class="form-field">
+                            <label for="discountPercent">Giảm giá (%)</label>
+                            <input type="number" id="discountPercent" th:field="*{discountPercent}" min="0" max="90">
+                        </div>
+                        <div class="form-field">
+                            <label for="discountAmount">Số tiền giảm <small>— tự tính</small></label>
+                            <input type="text" id="discountAmount" class="auto-field" readonly value="0">
+                        </div>
+                        <div class="form-field">
+                            <label for="finalPrice">Giá bán sau giảm <small>— tự tính</small></label>
+                            <input type="text" id="finalPrice" class="auto-field final" readonly value="0">
+                        </div>
+                        <div class="form-field">
+                            <label for="stock">Số lượng tồn kho <small id="stockHint"></small></label>
+                            <input type="number" id="stock" th:field="*{stock}" min="0"
+                                   th:readonly="${isEdit}" required>
+                            <small class="size-qty-note" th:if="${!isEdit}">Tồn đầu kỳ: để 0 nếu chưa có hàng, sau đó tăng bằng phiếu nhập hàng. Sản phẩm có màu / size thì nhập số lượng ở mục "Số lượng từng màu / size" bên dưới.</small>
+                            <small class="size-qty-note" th:if="${isEdit}">Không sửa ở đây: tăng bằng <a th:href="@{/dashboard/nhap-hang/them(product=${product.id})}">phiếu nhập</a>, giảm ở trang <a th:href="@{/dashboard/ton-kho(product=${product.id})}">Tồn kho</a>.</small>
+                        </div>
+                        <div class="price-breakdown full">
+                            <div><span>Giá niêm yết</span><b id="bkList">0₫</b></div>
+                            <div class="minus"><span>Giảm giá</span><b id="bkDiscount">-0₫</b></div>
+                            <div class="total"><span>Giá bán</span><b id="bkFinal">0₫</b></div>
+                            <div><span>Giá nhập</span><b id="bkCost">0₫</b></div>
+                            <div class="profit" id="bkProfitRow"><span>Lợi nhuận / sản phẩm</span><b id="bkProfit">0₫</b></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-card">
+                    <h3 class="form-card-title">Hiển thị &amp; size</h3>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="rating">Đánh giá (1 - 5 sao)</label>
+                            <input type="number" id="rating" th:field="*{rating}" min="1" max="5" step="0.1">
+                        </div>
+                        <div class="form-field full">
+                            <label for="sizes">Size bán <small>— cách nhau bằng dấu phẩy</small></label>
+                            <input type="text" id="sizes" th:field="*{sizes}" maxlength="100"
+                                   placeholder="VD: S, M, L, XL — để trống = tự chọn theo danh mục; nhập dấu - nếu không có size">
+                        </div>
+
+                        <!-- TỒN KHO TỪNG SIZE: ô nhập tự hiện theo ô "Size bán" ở trên -->
+                        <div class="form-field full size-qty" id="sizeQtyCard" hidden>
+                            <label>Số lượng từng màu / size <small>— tổng tồn kho tự cộng</small></label>
+                            <p class="size-qty-note" id="sizeQtyNote"></p>
+                            <div class="size-qty-grid" id="sizeQtyGrid"
+                                 th:attr="data-init=${sizeQtyInit},data-totals=${sizeQtyTotals},data-legacy=${product.legacySizeStock or product.legacyColorStock},data-mode=${isEdit ? 'edit' : 'add'}"></div>
+                            <div class="size-qty-sum">Tổng: <b id="sizeQtySum">0</b> sản phẩm</div>
+                        </div>
+                        <div class="form-field form-check full">
+                            <input type="checkbox" id="isNew" th:field="*{new}" style="width:auto;">
+                            <label for="isNew" style="margin:0;">Gắn nhãn "MỚI"</label>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============ CỘT PHẢI: 3 ẢNH + LƯU ============ -->
+            <aside class="form-side">
+                <section class="form-card">
+                    <h3 class="form-card-title">Hình ảnh <span class="muted" id="galleryCount">0 ảnh</span></h3>
+
+                    <div class="gallery" id="gallery">
+                        <div class="g-card" th:each="img, st : ${product.images}" data-kind="e"
+                             th:data-eidx="${st.index}" th:data-key="'e' + ${st.index}">
+                            <img th:src="${img}" alt="">
+                            <span class="g-tag">Ảnh</span>
+                            <div class="g-actions">
+                                <button type="button" class="g-left" title="Dời sang trái" aria-label="Dời sang trái"><i class="bi bi-chevron-left"></i></button>
+                                <button type="button" class="g-right" title="Dời sang phải" aria-label="Dời sang phải"><i class="bi bi-chevron-right"></i></button>
+                                <button type="button" class="g-del" title="Xoá ảnh" aria-label="Xoá ảnh"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                        <button type="button" class="g-add" id="galleryAdd">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <b>Thêm ảnh</b>
+                            <small>Chọn nhiều ảnh cùng lúc hoặc kéo thả</small>
+                        </button>
+                    </div>
+                    <input type="file" id="galleryPicker" accept="image/*" multiple hidden>
+                    <div id="newImageInputs" hidden></div>
+                    <input type="hidden" name="imageOrder" id="imageOrder" value="">
+
+                    <p class="img-hint">
+                        JPG, PNG, WEBP · tối đa 5MB / ảnh · thêm được nhiều ảnh (tối đa 30). Ảnh đầu tiên là <b>ảnh chính</b>
+                        (hiện ở trang chủ và danh sách), dùng nút mũi tên để đổi thứ tự.
+                        <span th:if="${isEdit}">Ảnh cũ bị xoá chỉ có hiệu lực sau khi bấm Lưu.</span>
+                    </p>
+                    </section>
+
+                <div class="form-actions side">
+                    <button type="submit" class="btn-primary-dark">
+                        <i class="bi bi-check-lg"></i> <span th:text="${isEdit} ? 'Lưu thay đổi' : 'Thêm sản phẩm'">Lưu</span>
+                    </button>
+                    <a href="/dashboard/kho-hang" class="btn-cancel">Huỷ</a>
+                </div>
+            </aside>
+
+        </form>
+
+    </main>
+</div>
+
+<script th:src="@{/js/dashboard-inventory.js}" src="../../static/js/dashboard-inventory.js"></script>
+<script>
+    /* Ô tồn kho: có màu -> bảng "màu x size" (mỗi màu một khối); không có màu -> theo size như trước.
+       Các ô chỉ để XEM: tồn kho chỉ đổi qua phiếu nhập (tăng) hoặc trang Tồn kho (giảm); máy chủ giữ nguyên số đang lưu. */
+    (function () {
+        var sizesInput = document.getElementById('sizes');
+        var catInput = document.getElementById('category');
+        var colorsInput = document.getElementById('colors');
+        var stock = document.getElementById('stock');
+        var card = document.getElementById('sizeQtyCard');
+        var grid = document.getElementById('sizeQtyGrid');
+        var sumEl = document.getElementById('sizeQtySum');
+        var note = document.getElementById('sizeQtyNote');
+        var hint = document.getElementById('stockHint');
+        if (!sizesInput || !card) return;
+
+        function readJson(attr) {
+            try { return JSON.parse(grid.getAttribute(attr) || '{}'); } catch (e) { return {}; }
+        }
+        var init = readJson('data-init');          /* có màu: {"Màu|SIZE": n}; không màu: {"SIZE": n} */
+        var totals = readJson('data-totals');      /* {"SIZE": n} hoặc {"": tổng} - để chia đều khi vừa thêm màu cho sản phẩm cũ */
+        var legacy = grid.getAttribute('data-legacy') === 'true';
+        var isAdd = grid.getAttribute('data-mode') === 'add';
+
+        var splitMode = false;   /* true: sản phẩm chưa chia kho theo màu -> cho nhập số lượng từng màu (tổng mỗi size giữ nguyên) */
+        var splitCheck = document.createElement('p');
+        splitCheck.className = 'size-qty-note';
+        splitCheck.style.color = '#c0392b';
+        if (note && note.parentNode) note.parentNode.insertBefore(splitCheck, note.nextSibling);
+
+        function notify(msg) {
+            if (window.KosisDialog && window.KosisDialog.alert) window.KosisDialog.alert(msg, { type: 'error' });
+            else window.alert(msg);
+        }
+
+        var initLower = {}, initHasVariants = false;
+        Object.keys(init).forEach(function (k) {
+            if (k.indexOf('|') >= 0) { initHasVariants = true; initLower[k.toLowerCase()] = init[k]; }
+        });
+
+        function sizeList() {
+            var raw = (sizesInput.value || '').trim();
+            if (raw === '-') return [];
+            if (raw) {
+                var seen = {}, out = [];
+                raw.split(/[,;\s]+/).forEach(function (t) {
+                    t = t.trim().toUpperCase();
+                    if (t && !seen[t]) { seen[t] = 1; out.push(t); }
+                });
+                return out;
+            }
+            var c = ((catInput && catInput.value) || '').trim().toLowerCase();
+            if (c === 'phụ kiện' || c === 'túi') return [];
+            if (c === 'giày') return ['38', '39', '40', '41', '42', '43', '44'];
+            return ['S', 'M', 'L', 'XL', 'XXL'];
+        }
+
+        /* cùng quy tắc với Product.getColorList(): "Tên:#hex[:N]" */
+        function colorList() {
+            var out = [];
+            ((colorsInput && colorsInput.value) || '').split(',').forEach(function (tok) {
+                var p = tok.trim().split(':');
+                if (p.length >= 2 && p[0].trim() && /^#[0-9a-f]{3,8}$/i.test(p[1].trim())) out.push({ name: p[0].trim(), hex: p[1].trim() });
+            });
+            return out;
+        }
+
+        /* chế độ chia lại: tổng các màu của mỗi size phải bằng tồn kho hiện tại của size đó */
+        function splitProblems() {
+            var probs = [];
+            if (!splitMode) return probs;
+            var sizes = sizeList();
+            (sizes.length ? sizes : ['']).forEach(function (sz) {
+                var want = totals[sz] !== undefined ? totals[sz] : 0;
+                var got = 0;
+                grid.querySelectorAll('input').forEach(function (i) {
+                    if (i.getAttribute('data-size') === sz) got += Math.max(0, parseInt(i.value, 10) || 0);
+                });
+                if (got !== want) probs.push((sz ? 'Size ' + sz : 'Tổng') + ': đã chia ' + got + ' / cần ' + want);
+            });
+            return probs;
+        }
+
+        function recalc() {
+            var sum = 0;
+            grid.querySelectorAll('input').forEach(function (i) { sum += Math.max(0, parseInt(i.value, 10) || 0); });
+            grid.querySelectorAll('[data-group-total]').forEach(function (el) {
+                var t = 0;
+                el.closest('.color-qty-group').querySelectorAll('input').forEach(function (i) { t += Math.max(0, parseInt(i.value, 10) || 0); });
+                el.textContent = 'tổng ' + t;
+            });
+            sumEl.textContent = sum;
+            stock.value = sum;
+            var pr = splitProblems();
+            splitCheck.textContent = pr.length ? 'Chưa khớp tồn kho hiện tại — ' + pr.join(' · ') : '';
+        }
+
+        /* Thêm mới: giữ số đã gõ khi vẽ lại bảng (đổi tên màu, thêm màu...); lần đầu lấy số server gửi lại sau lỗi, không có thì 0 */
+        var typed = {};
+        function snapshotTyped() {
+            grid.querySelectorAll('input').forEach(function (i) {
+                typed[i.getAttribute('data-ci') + '|' + i.getAttribute('data-size')] = i.value;
+            });
+        }
+        function addValue(ci, colorName, sz) {
+            var t = typed[ci + '|' + sz];
+            if (t !== undefined) return t;
+            var lowerKey = colorName ? (colorName + '|' + sz).toLowerCase() : '';
+            var v = colorName ? initLower[lowerKey] : init[sz];
+            return v !== undefined ? v : 0;
+        }
+
+        function sizeInitValue(sz) {
+            if (isAdd) return addValue('', '', sz);
+            if (initHasVariants) {          /* sản phẩm đang chia theo màu nhưng form không còn màu -> cộng các màu lại */
+                var t = 0;
+                Object.keys(initLower).forEach(function (k) { if (k.slice(k.lastIndexOf('|') + 1) === sz) t += initLower[k]; });
+                return t;
+            }
+            return init[sz] !== undefined ? init[sz] : 0;
+        }
+
+        function variantValue(color, sz, idx, n) {
+            if (isAdd) return addValue(String(idx), color.name, sz);
+            if (initHasVariants) {          /* đã có số liệu theo màu: màu / size mới = 0 */
+                var vKey = (color.name + '|' + sz).toLowerCase();
+                var v = initLower[vKey];
+                return v !== undefined ? v : 0;
+            }
+            var base = totals[sz] !== undefined ? totals[sz] : 0;       /* chưa chia theo màu: chia đều cho các màu (giống lúc lưu) */
+            return Math.floor(base / n) + (idx < base % n ? 1 : 0);
+        }
+
+        function makeInput(name, value, label, editable, sz, ci, colorName) {
+            var wrap = document.createElement('label');
+            wrap.className = 'size-qty-item';
+            var cap = document.createElement('span');
+            cap.textContent = label;
+            var inp = document.createElement('input');
+            inp.type = 'number';
+            inp.min = '0';
+            inp.readOnly = !editable;   /* tồn kho chỉ đổi qua phiếu nhập (tăng) hoặc trang Tồn kho (giảm); riêng lần chia màu đầu tiên thì được nhập */
+            inp.setAttribute('data-size', sz || '');
+            inp.setAttribute('data-ci', ci === undefined ? '' : ci);
+            inp.setAttribute('data-color', colorName || '');
+            inp.value = value;
+            inp.name = name;
+            inp.addEventListener('input', recalc);
+            wrap.appendChild(cap);
+            wrap.appendChild(inp);
+            return wrap;
+        }
+
+        function render() {
+            var sizes = sizeList(), colors = colorList();
+            var totalsSum = 0;
+            Object.keys(totals).forEach(function (k) { totalsSum += Math.max(0, Number(totals[k]) || 0); });
+            splitMode = !isAdd && !initHasVariants && colors.length > 0 && totalsSum > 0;
+            if (isAdd) snapshotTyped();
+            grid.innerHTML = '';
+            grid.style.display = colors.length ? 'block' : '';
+            if (!sizes.length && !colors.length) {
+                card.hidden = true;
+                stock.readOnly = false;
+                hint.textContent = '';
+                return;
+            }
+            if (!colors.length) {
+                sizes.forEach(function (sz) { grid.appendChild(makeInput('sizeQty_' + sz, sizeInitValue(sz), 'Size ' + sz, isAdd, sz, '')); });
+            } else {
+                colors.forEach(function (c, ci) {
+                    var group = document.createElement('div');
+                    group.className = 'color-qty-group';
+                    var head = document.createElement('div');
+                    head.className = 'color-qty-head';
+                    var dot = document.createElement('i'); dot.style.background = c.hex;
+                    var nm = document.createElement('b'); nm.textContent = c.name;
+                    var tot = document.createElement('small'); tot.setAttribute('data-group-total', '1');
+                    head.appendChild(dot); head.appendChild(nm); head.appendChild(tot);
+                    var inner = document.createElement('div');
+                    inner.className = 'size-qty-grid';
+                    (sizes.length ? sizes : ['']).forEach(function (sz) {
+                        inner.appendChild(makeInput('varQty_' + ci + '_' + sz, variantValue(c, sz, ci, colors.length), sz ? 'Size ' + sz : 'Số lượng', splitMode || isAdd, sz, String(ci), c.name));
+                    });
+                    group.appendChild(head);
+                    group.appendChild(inner);
+                    grid.appendChild(group);
+                });
+            }
+            card.hidden = false;
+            stock.readOnly = true;
+            hint.textContent = colors.length ? '(tự cộng từ các màu' + (sizes.length ? ' và size' : '') + ')' : '(tự cộng từ các size)';
+            var what = colors.length ? 'từng màu' + (sizes.length ? ' và size' : '') : 'từng size';
+            note.textContent = splitMode
+                ? 'Chia lại tồn kho hiện có cho từng màu: tổng các màu của mỗi size phải bằng tồn kho hiện tại của size đó (không tăng / giảm tổng). Hệ thống đang chia đều sẵn, hãy sửa cho đúng số thật. Chỉ chia được lần này; sau khi lưu, số lượng từng màu đổi qua phiếu nhập (tăng) hoặc trang Tồn kho (giảm).'
+                : isAdd
+                ? 'Nhập số lượng tồn đầu kỳ cho ' + what + ' nếu đã có hàng (kèm Giá nhập ở trên): hệ thống tạo phiếu "Tồn đầu kỳ" và sản phẩm lên kệ ngay. Để 0 ở mọi ô = chưa có hàng, nhập hàng sau.'
+                : legacy
+                ? 'Sản phẩm này trước đây chưa chia tồn kho theo ' + what + '. Hệ thống đang chia đều tổng tồn kho vào từng ô. Số lượng chỉ đổi qua phiếu nhập (tăng) hoặc trang Tồn kho (giảm).'
+                : 'Số lượng ' + what + ' không sửa ở đây: tăng bằng phiếu nhập hàng, giảm ở trang Tồn kho (có ghi lý do). Ô để 0 sẽ hiện "hết" và khách không mua được.';
+            recalc();
+        }
+
+        sizesInput.addEventListener('input', render);
+        if (catInput) catInput.addEventListener('change', render);
+        /* đổi / thêm / xoá màu ở trình chọn màu -> vẽ lại bảng (các dòng màu cập nhật ô ẩn "colors" trước khi sự kiện nổi lên đây) */
+        var colorBox = document.getElementById('colorRows');
+        if (colorBox) {
+            ['input', 'change', 'click'].forEach(function (ev) {
+                colorBox.addEventListener(ev, function () { setTimeout(render, 0); });
+            });
+        }
+        var addColorBtn = document.getElementById('addColorBtn');
+        if (addColorBtn) addColorBtn.addEventListener('click', function () { setTimeout(render, 0); });
+        if (colorsInput && colorsInput.form) {
+            colorsInput.form.addEventListener('submit', function (e) {
+                if (isAdd) {
+                    var qtySum = Math.max(0, parseInt(stock.value, 10) || 0);
+                    var costEl = document.getElementById('importPrice');
+                    if (qtySum > 0 && !(Number(costEl && costEl.value) > 0)) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        var cv = document.getElementById('importPriceView');
+                        if (cv) cv.focus();
+                        notify('Bạn đã nhập số lượng tồn đầu kỳ, vui lòng nhập thêm Giá nhập (giá vốn / cái).');
+                        return;
+                    }
+                }
+                var pr = splitProblems();
+                if (pr.length) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    notify('Số lượng từng màu chưa khớp tồn kho hiện tại. ' + pr.join(' · '));
+                }
+            });
+        }
+        render();
+    })();
+</script>
+
+<script>
+    /* Trình chọn màu: mỗi dòng = ô chọn màu + MÃ MÀU HEX + tên + ảnh gắn kèm -> ghi vào ô ẩn "colors" dạng Tên:#hex:N */
+    (function () {
+        var hidden = document.getElementById('colors');
+        var box = document.getElementById('colorRows');
+        var addBtn = document.getElementById('addColorBtn');
+        if (!hidden || !box) return;
+        var MAXC = 12;
+
+        /* chuẩn hoá mã màu: "f4f4f2" / "#abc" / "#F4F4F2" -> "#f4f4f2"; sai định dạng -> null */
+        function normHex(v) {
+            v = (v || '').trim();
+            if (v.charAt(0) !== '#') v = '#' + v;
+            if (/^#[0-9a-f]{3}$/i.test(v)) v = '#' + v.charAt(1) + v.charAt(1) + v.charAt(2) + v.charAt(2) + v.charAt(3) + v.charAt(3);
+            return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : null;
+        }
+
+        function galleryCards() { return Array.prototype.slice.call(document.querySelectorAll('#gallery .g-card')); }
+
+        function fillOptions(sel, keep) {
+            sel.innerHTML = '';
+            function add(v, t) { var o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); }
+            add('', 'Không gắn ảnh');
+            var found = false;
+            galleryCards().forEach(function (c, i) {
+                add(c.dataset.key, i === 0 ? 'Ảnh 1 (chính)' : 'Ảnh ' + (i + 1));
+                if (c.dataset.key === keep) found = true;
+            });
+            sel.value = found ? keep : '';
+        }
+
+        function sync() {
+            var keys = galleryCards().map(function (c) { return c.dataset.key; });
+            var tokens = [];
+            box.querySelectorAll('.color-row').forEach(function (row) {
+                var name = row.querySelector('.cr-name').value.replace(/[,:|]/g, ' ').trim();
+                if (!name) return;
+                var hex = normHex(row.querySelector('.cr-hex').value) || row.querySelector('.cr-color').value;
+                var t = name + ':' + hex;
+                var idx = keys.indexOf(row.querySelector('.cr-img').value);
+                if (idx >= 0) t += ':' + (idx + 1);
+                tokens.push(t);
+            });
+            hidden.value = tokens.join(',');
+            addBtn.style.display = box.children.length >= MAXC ? 'none' : '';
+        }
+
+        function addRow(name, hex, imgKey) {
+            if (box.children.length >= MAXC) return;
+            var row = document.createElement('div');
+            row.className = 'color-row';
+            row.innerHTML =
+                '<input type="color" class="cr-color" aria-label="Chọn màu">' +
+                '<input type="text" class="cr-hex" maxlength="7" placeholder="#RRGGBB" spellcheck="false" autocomplete="off" aria-label="Mã màu hex">' +
+                '<input type="text" class="cr-name" maxlength="20" placeholder="Tên màu (VD: Trắng)">' +
+                '<select class="cr-img" aria-label="Ảnh gắn với màu"></select>' +
+                '<button type="button" class="cr-del" aria-label="Xoá màu">&times;</button>';
+            var picker = row.querySelector('.cr-color');
+            var hexIn = row.querySelector('.cr-hex');
+            var h = normHex(hex) || '#cccccc';
+            picker.value = h;
+            hexIn.value = h;
+            row.querySelector('.cr-name').value = name || '';
+            row.querySelector('.cr-name').addEventListener('input', function () { this.style.borderColor = ''; });
+            fillOptions(row.querySelector('.cr-img'), imgKey || '');
+
+            picker.addEventListener('input', function () { hexIn.value = picker.value; hexIn.classList.remove('invalid'); });
+            hexIn.addEventListener('input', function () {
+                var n = normHex(hexIn.value);
+                if (n) { picker.value = n; hexIn.classList.remove('invalid'); }
+                else hexIn.classList.toggle('invalid', hexIn.value.trim() !== '');
+            });
+            hexIn.addEventListener('blur', function () {
+                var n = normHex(hexIn.value);
+                if (n) { hexIn.value = n; picker.value = n; hexIn.classList.remove('invalid'); }
+                else { hexIn.value = picker.value; hexIn.classList.remove('invalid'); }
+                sync();
+            });
+            row.addEventListener('input', sync);
+            row.addEventListener('change', sync);
+            row.querySelector('.cr-del').addEventListener('click', function () { row.remove(); sync(); });
+            box.appendChild(row);
+            sync();
+        }
+
+        /* đọc giá trị đã lưu: Tên:#hex hoặc Tên:#hex:N (N = số thứ tự ảnh) */
+        (hidden.value || '').split(',').forEach(function (tok) {
+            var p = tok.trim().split(':');
+            if (p.length >= 2 && p[0].trim()) {
+                var n = parseInt((p[2] || '').trim(), 10);
+                var cards = galleryCards();
+                addRow(p[0].trim(), p[1], (n >= 1 && n <= cards.length) ? cards[n - 1].dataset.key : '');
+            }
+        });
+        addBtn.addEventListener('click', function () { addRow('', '#111111', ''); });
+        if (hidden.form) {
+            /* dòng màu chưa đặt tên sẽ bị bỏ qua khi lưu -> chặn và báo, tránh "đã lưu" mà màu không vào */
+            hidden.form.addEventListener('submit', function (e) {
+                var bad = null;
+                box.querySelectorAll('.color-row').forEach(function (row) {
+                    var nameEl = row.querySelector('.cr-name');
+                    var empty = !nameEl.value.replace(/[,:|]/g, ' ').trim();
+                    nameEl.style.borderColor = empty ? '#c0392b' : '';
+                    if (empty && !bad) bad = nameEl;
+                });
+                if (bad) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    bad.focus();
+                    var msg = 'Có dòng màu chưa đặt tên. Hãy nhập tên màu (VD: Đen) hoặc bấm × để xoá dòng đó.';
+                    if (window.KosisDialog && window.KosisDialog.alert) window.KosisDialog.alert(msg, { type: 'error' });
+                    else window.alert(msg);
+                }
+            });
+            hidden.form.addEventListener('submit', sync);
+        }
+
+        /* thêm / xoá / đổi thứ tự ảnh -> cập nhật danh sách ảnh trong từng dòng màu (giữ đúng ảnh đã chọn) */
+        document.addEventListener('gallerychange', function () {
+            box.querySelectorAll('.cr-img').forEach(function (sel) { fillOptions(sel, sel.value); });
+            sync();
+        });
+        sync();
+    })();
+</script>
+
+
+</body>
+</html>

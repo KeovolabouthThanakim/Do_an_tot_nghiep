@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head('Thanh toán | KOSIS', 'checkout')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: header}"></th:block>
+<main id="main">
+<section class="co-section">
+    <div class="container container--content">
+
+        
+        <ol class="co-steps" aria-label="Các bước đặt hàng">
+            <li class="done"><span class="n"><i class="bi bi-check-lg"></i></span><a th:href="@{/gio-hang}">Giỏ hàng</a></li>
+            <li class="line"></li>
+            <li class="now"><span class="n">2</span>Thanh toán</li>
+            <li class="line"></li>
+            <li><span class="n">3</span>Hoàn tất</li>
+        </ol>
+
+        <div hidden data-flash="error" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/thanh-toan}" method="post" enctype="multipart/form-data" class="co-layout" th:object="${form}" id="checkoutForm">
+
+            
+            <div class="co-main">
+
+                
+                <div class="co-card">
+                    <div class="co-card-head"><span class="num">1</span><h2>Thông tin giao hàng</h2></div>
+
+                    <div class="co-grid">
+                        <div class="co-field">
+                            <label for="receiverName">Họ tên người nhận <em>*</em></label>
+                            <div class="co-input"><i class="bi bi-person"></i>
+                                <input type="text" id="receiverName" th:field="*{receiverName}" maxlength="100" placeholder="Nguyễn Văn A" autocomplete="name" required>
+                            </div>
+                        </div>
+                        <div class="co-field">
+                            <label for="phone">Số điện thoại <em>*</em></label>
+                            <div class="co-input"><i class="bi bi-telephone"></i>
+                                <input type="tel" id="phone" th:field="*{phone}" maxlength="20" placeholder="0901234567" autocomplete="tel" required>
+                            </div>
+                        </div>
+                        <div class="co-field full">
+                            <label for="address">Địa chỉ giao hàng <em>*</em></label>
+                            <div class="co-input"><i class="bi bi-geo-alt"></i>
+                                <input type="text" id="address" th:field="*{address}" maxlength="255"
+                                       placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address" required>
+                            </div>
+                        </div>
+                        <div class="co-field full">
+                            <label for="note">Ghi chú <small>(không bắt buộc)</small></label>
+                            <div class="co-input area"><i class="bi bi-chat-left-text"></i>
+                                <textarea id="note" th:field="*{note}" maxlength="500" rows="3"
+                                          placeholder="VD: giao giờ hành chính, gọi trước khi giao..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="co-card">
+                    <div class="co-card-head"><span class="num">2</span><h2>Phương thức thanh toán</h2></div>
+
+                    <div class="co-pay">
+                        <label class="co-pay-opt">
+                            <input type="radio" name="paymentMethod" value="COD" th:checked="${form.paymentMethod == 'COD'}">
+                            <span class="ico"><i class="bi bi-cash-coin"></i></span>
+                            <span class="txt"><b>Thanh toán khi nhận hàng (COD)</b>
+                                <small th:if="${!depositEnabled}">Trả tiền mặt cho nhân viên giao hàng khi nhận sản phẩm.</small>
+                                <small th:if="${depositEnabled}" th:text="'Chuyển khoản đặt cọc ' + ${depositPercent} + '% (' + ${#numbers.formatInteger(depositAmount, 0, 'POINT')} + ' ₫) trước, phần còn lại trả cho nhân viên giao hàng khi nhận sản phẩm.'">Chuyển khoản đặt cọc 30% trước, phần còn lại trả khi nhận hàng.</small></span>
+                            <span class="tick"><i class="bi bi-check-circle-fill"></i></span>
+                        </label>
+                        <label class="co-pay-opt">
+                            <input type="radio" name="paymentMethod" value="BANK" th:checked="${form.paymentMethod == 'BANK'}">
+                            <span class="ico"><i class="bi bi-bank"></i></span>
+                            <span class="txt"><b>Chuyển khoản ngân hàng (quét mã QR)</b><small>Quét mã QR để chuyển khoản, sau đó tải ảnh bill lên. Nhân viên sẽ kiểm tra và xác nhận đơn.</small></span>
+                            <span class="tick"><i class="bi bi-check-circle-fill"></i></span>
+                        </label>
+                    </div>
+
+                    
+                    <div class="co-bank" id="bankPanel" hidden th:attr="data-deposit=${depositEnabled}">
+                        <p class="co-bank-note" id="codNote" hidden style="margin:0 0 14px">
+                            <i class="bi bi-info-circle"></i>
+                            Đơn COD cần <b>đặt cọc <span th:text="${depositPercent}">30</span>%</b>:
+                            chuyển khoản <b th:text="${#numbers.formatInteger(depositAmount, 0, 'POINT')} + ' ₫'">0 ₫</b> ngay bây giờ,
+                            còn lại <b th:text="${#numbers.formatInteger(codRemaining, 0, 'POINT')} + ' ₫'">0 ₫</b> trả cho nhân viên giao hàng khi nhận hàng.
+                            Nếu bạn không nhận hàng, tiền cọc sẽ không được hoàn lại.
+                        </p>
+                        <div class="co-bank-grid">
+                            <div class="co-bank-qr">
+                                
+                                <div id="qrBox" class="qr-box" th:attr="data-payload=${qrPayload},data-payload-cod=${depositQrPayload}"></div>
+                                
+                                <img th:attr="data-url=${bank.qrUrl(quote.total, transferContent)},data-url-cod=${bank.qrUrl(depositAmount, transferContent)}" alt="Mã QR chuyển khoản" id="qrImg" hidden>
+                                <p class="qr-hint"><i class="bi bi-qr-code-scan"></i> Quét bằng app ngân hàng</p>
+                                <p class="qr-fail" id="qrFail" hidden>Không tải được mã QR. Vui lòng chuyển khoản theo thông tin bên cạnh.</p>
+                            </div>
+                            <dl class="co-bank-info">
+                                <div><dt>Ngân hàng</dt><dd th:text="${bank.bankName}">Vietcombank</dd></div>
+                                <div><dt>Số tài khoản</dt>
+                                    <dd><b id="bankAcc" th:text="${bank.accountNumber}">0123456789</b>
+                                        <button type="button" class="co-copy" data-copy="bankAcc"><i class="bi bi-copy"></i> Sao chép</button></dd></div>
+                                <div><dt>Chủ tài khoản</dt><dd th:text="${bank.accountName}">NGUYEN VAN A</dd></div>
+                                <div><dt>Số tiền</dt>
+                                    <dd><b class="amt" id="bankAmt"
+                                           th:attr="data-full=${#numbers.formatInteger(quote.total, 0, 'POINT')} + ' ₫',data-cod=${#numbers.formatInteger(depositAmount, 0, 'POINT')} + ' ₫'"
+                                           th:text="${#numbers.formatInteger(quote.total, 0, 'POINT')} + ' ₫'">2.670.000 ₫</b></dd></div>
+                                <div><dt>Nội dung CK</dt>
+                                    <dd><b id="bankMemo" th:text="${transferContent}">GS user</b>
+                                        <button type="button" class="co-copy" data-copy="bankMemo"><i class="bi bi-copy"></i> Sao chép</button></dd></div>
+                            </dl>
+                        </div>
+
+                        <div class="co-slip">
+                            <label for="slipFile">Ảnh bill chuyển khoản <em>*</em></label>
+                            <input type="file" id="slipFile" name="slipFile" accept="image/jpeg,image/png,image/webp">
+                            <div class="co-slip-preview" id="slipPreview" hidden>
+                                <img id="slipImg" alt="Xem trước ảnh bill">
+                                <button type="button" id="slipClear"><i class="bi bi-x-lg"></i> Bỏ ảnh</button>
+                            </div>
+                            <p class="co-slip-msg" id="slipMsg"></p>
+                        </div>
+
+                        <p class="co-bank-note"><i class="bi bi-shield-check"></i>
+                            Đơn hàng chỉ được xử lý sau khi <b>nhân viên/admin kiểm tra</b> ảnh bill và xác nhận đã nhận tiền<span id="codNote2" hidden> cọc</span>.</p>
+                    </div>
+                </div>
+
+                <a th:href="@{/gio-hang}" class="co-back"><i class="bi bi-arrow-left"></i> Quay lại giỏ hàng</a>
+            </div>
+
+            
+            <aside class="co-summary">
+                <div class="co-sum-head">
+                    <h2>Đơn hàng của bạn</h2>
+                    <span class="cnt" th:text="${cart.totalQuantity} + ' sản phẩm'">3 sản phẩm</span>
+                </div>
+
+                <div class="co-items">
+                    <div class="co-item" th:each="l : ${cart.lines}">
+                        <div class="thumb">
+                            <img th:src="@{${#strings.isEmpty(l.image) ? '/images/products/placeholder.svg' : l.image}}"
+                                 th:alt="${l.product.name}"
+                                 onerror="this.src='/images/products/placeholder.svg'">
+                            <span class="q" th:text="${l.quantity}">1</span>
+                        </div>
+                        <div class="meta">
+                            <div class="nm" th:text="${l.product.name}">Tên sản phẩm</div>
+                            <div class="sz" th:if="${l.hasSize}">Size: <b th:text="${l.size}">M</b></div>
+                            <div class="sz" th:if="${l.hasColor}">Màu: <b th:text="${l.color}">Olive</b></div>
+                            <div class="unit">
+                                <span th:text="${#numbers.formatInteger(l.product.price, 0, 'POINT')} + ' ₫'">890.000 ₫</span>
+                                <s th:if="${l.product.oldPrice > l.product.price}"
+                                   th:text="${#numbers.formatInteger(l.product.oldPrice, 0, 'POINT')} + ' ₫'">1.090.000 ₫</s>
+                                <b class="off" th:if="${l.product.displayDiscount > 0}" th:text="'-' + ${l.product.displayDiscount} + '%'">-18%</b>
+                            </div>
+                        </div>
+                        <div class="tot" th:text="${#numbers.formatInteger(l.lineTotal, 0, 'POINT')} + ' ₫'">890.000 ₫</div>
+                    </div>
+                </div>
+
+                <!-- Mã giảm giá: bấm "Áp dụng" để xem số tiền mới (server luôn tính lại khi đặt hàng) -->
+                <div class="co-voucher" style="margin:0 0 14px">
+                    <label for="voucherCode" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Mã giảm giá</label>
+                    <div style="display:flex;gap:8px">
+                        <input type="text" id="voucherCode" name="voucherCode" th:value="${form.voucherCode}" maxlength="30"
+                               placeholder="Nhập mã (nếu có)" autocomplete="off" style="flex:1;min-width:0;height:40px;padding:0 12px;border:1px solid #c9c9c9;border-radius:8px;text-transform:uppercase">
+                        <button type="submit" th:formaction="@{/thanh-toan/ap-dung}" formnovalidate data-apply class="co-copy" style="height:40px;padding:0 14px">Áp dụng</button>
+                    </div>
+                    <p th:if="${voucherMessage != null}" th:text="${voucherMessage}" style="margin:6px 0 0;font-size:12.5px;color:#1a7f37">Đã áp dụng mã</p>
+                    <p th:if="${voucherError != null}" th:text="${voucherError}" style="margin:6px 0 0;font-size:12.5px;color:#b3261e">Lỗi</p>
+                    <p th:if="${voucherMessage != null}" style="margin:4px 0 0">
+                        <button type="button" data-voucher-clear style="background:none;border:0;padding:0;font-size:12.5px;color:#777;text-decoration:underline;cursor:pointer">Bỏ mã</button>
+                    </p>
+
+                    <!-- Danh sách mã dùng được: nút xám + bảng xổ xuống giống menu "Danh mục sản phẩm"; bấm một mã để áp dụng ngay -->
+                    <div class="co-vdrop" th:if="${!voucherOptions.empty}" data-vdrop>
+                        <button type="button" class="co-vbtn" aria-haspopup="true" aria-expanded="false" aria-controls="voucherMenu" data-vdrop-toggle>
+                            <svg class="ico co-vico" aria-hidden="true"><use href="#i-list"/></svg>
+                            <span class="co-vlabel" th:if="${voucherMessage == null}">Chọn mã giảm giá</span>
+                            <span class="co-vlabel" th:if="${voucherMessage != null}">Đang dùng: <b th:text="${form.voucherCode}">NOEL2026</b></span>
+                            <span class="co-vcount" th:text="${#lists.size(voucherOptions)}">5</span>
+                            <svg class="ico ico-caret co-vcaret" aria-hidden="true"><use href="#i-caret"/></svg>
+                        </button>
+                        <div class="co-vmenu" id="voucherMenu" role="menu" hidden>
+                            <button type="button" class="co-vitem" role="menuitem" th:each="o : ${voucherOptions}"
+                                    th:attr="data-voucher=${o.voucher.code}, aria-disabled=${!o.eligible}"
+                                    th:classappend="${(!o.eligible ? 'is-locked ' : '') + (voucherMessage != null and form.voucherCode != null and #strings.equalsIgnoreCase(form.voucherCode, o.voucher.code) ? 'is-on' : '')}">
+                                <span class="co-vtop">
+                                    <span class="co-vcode" th:text="${o.voucher.code}">WELCOME10</span>
+                                    <b class="co-vsave" th:if="${o.eligible}" th:text="'-' + ${#numbers.formatInteger(o.discount, 0, 'POINT')} + ' ₫'">-50.000 ₫</b>
+                                    <i class="bi bi-check-lg co-vtick" th:if="${voucherMessage != null and form.voucherCode != null and #strings.equalsIgnoreCase(form.voucherCode, o.voucher.code)}"></i>
+                                </span>
+                                <span class="co-vdesc" th:text="${o.voucher.description}">Mô tả</span>
+                                <span class="co-vsub">
+                                    <em th:unless="${o.eligible}" th:text="'Mua thêm ' + ${#numbers.formatInteger(o.missing, 0, 'POINT')} + ' ₫ để dùng'">Mua thêm</em>
+                                    <small th:if="${o.voucher.expiresAt != null}" th:text="'HSD ' + ${#temporals.format(o.voucher.expiresAt, 'dd/MM/yyyy')}">HSD</small>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="co-rows">
+                    <div class="row"><span>Tạm tính</span>
+                        <b th:text="${#numbers.formatInteger(cart.subtotal + cart.savings, 0, 'POINT')} + ' ₫'">2.670.000 ₫</b></div>
+                    <div class="row save" th:if="${cart.savings > 0}"><span>Giảm giá sản phẩm</span>
+                        <b th:text="'-' + ${#numbers.formatInteger(cart.savings, 0, 'POINT')} + ' ₫'">-200.000 ₫</b></div>
+                    <div class="row save" th:if="${quote.discount > 0}"><span th:text="'Mã giảm giá (' + ${quote.voucherCode} + ')'">Mã giảm giá</span>
+                        <b th:text="'-' + ${#numbers.formatInteger(quote.discount, 0, 'POINT')} + ' ₫'">-50.000 ₫</b></div>
+                    <div class="row"><span>Phí vận chuyển</span>
+                        <b class="free" th:if="${quote.shipping == 0}">Miễn phí</b>
+                        <b th:if="${quote.shipping > 0}" th:text="${#numbers.formatInteger(quote.shipping, 0, 'POINT')} + ' ₫'">30.000 ₫</b></div>
+                </div>
+                <p class="co-note" th:if="${pricing.remainingForFreeShipping(quote.subtotal - quote.discount) > 0}" style="margin:0 0 10px">
+                    <i class="bi bi-truck"></i> Mua thêm <b th:text="${#numbers.formatInteger(pricing.remainingForFreeShipping(quote.subtotal - quote.discount), 0, 'POINT')} + ' ₫'">0 ₫</b> để được miễn phí vận chuyển.</p>
+
+                <div class="co-total">
+                    <span>Tổng cộng</span>
+                    <span class="amount" th:text="${#numbers.formatInteger(quote.total, 0, 'POINT')} + ' ₫'">2.670.000 ₫</span>
+                </div>
+                <div class="co-rows" id="codRows" hidden th:if="${depositEnabled}" style="margin-top:8px">
+                    <div class="row"><span th:text="'Đặt cọc ngay (' + ${depositPercent} + '%)'">Đặt cọc ngay</span>
+                        <b th:text="${#numbers.formatInteger(depositAmount, 0, 'POINT')} + ' ₫'">0 ₫</b></div>
+                    <div class="row"><span>Trả khi nhận hàng</span>
+                        <b th:text="${#numbers.formatInteger(codRemaining, 0, 'POINT')} + ' ₫'">0 ₫</b></div>
+                </div>
+                <div class="co-saved" th:if="${cart.savings > 0}">
+                    <i class="bi bi-tag-fill"></i> Bạn tiết kiệm được
+                    <b th:text="${#numbers.formatInteger(cart.savings, 0, 'POINT')} + ' ₫'">200.000 ₫</b>
+                </div>
+
+                <button type="submit" class="co-submit" id="coSubmit"><i class="bi bi-lock-fill"></i> Xác nhận đặt hàng</button>
+                <p class="co-note"><i class="bi bi-shield-check"></i> Thông tin của bạn được bảo mật. Bằng việc đặt hàng, bạn đồng ý với điều khoản mua hàng của cửa hàng.</p>
+            </aside>
+        </form>
+
+    </div>
+</section>
+</main>
+<th:block th:replace="~{fragments/layout :: footer}"></th:block>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+    (function () {
+        var form = document.getElementById('checkoutForm');
+        var btn = document.getElementById('coSubmit');
+        var panel = document.getElementById('bankPanel');
+        var slip = document.getElementById('slipFile');
+        var msg = document.getElementById('slipMsg');
+        var preview = document.getElementById('slipPreview');
+        var previewImg = document.getElementById('slipImg');
+        var MAX = 5 * 1024 * 1024;
+
+        var depositOn = panel.getAttribute('data-deposit') === 'true';
+        var codNote = document.getElementById('codNote');
+        var codNote2 = document.getElementById('codNote2');
+        var codRows = document.getElementById('codRows');
+        var bankAmt = document.getElementById('bankAmt');
+
+        function method() {
+            var r = form.querySelector('input[name="paymentMethod"]:checked');
+            return r ? r.value : '';
+        }
+        /* Cần chuyển khoản + ảnh bill khi: chọn "Chuyển khoản", HOẶC chọn COD mà cửa hàng bắt đặt cọc */
+        function needsTransfer() {
+            var m = method();
+            return m === 'BANK' || (m === 'COD' && depositOn);
+        }
+        function syncPay() {
+            var need = needsTransfer();
+            var cod = method() === 'COD' && depositOn;
+            panel.hidden = !need;
+            slip.required = need;
+            if (codNote) codNote.hidden = !cod;
+            if (codNote2) codNote2.hidden = !cod;
+            if (codRows) codRows.hidden = !cod;
+            if (bankAmt) bankAmt.textContent = bankAmt.getAttribute(cod ? 'data-cod' : 'data-full');
+            if (need) drawQr(cod);
+        }
+
+        /* Vẽ QR VietQR (đúng số tiền: cả đơn nếu chuyển khoản, tiền cọc nếu COD); không vẽ được -> ảnh dự phòng, rồi mới báo khách chuyển tay */
+        function drawQr(cod) {
+            var box = document.getElementById('qrBox');
+            var img = document.getElementById('qrImg');
+            var fail = document.getElementById('qrFail');
+            var payload = box.getAttribute(cod ? 'data-payload-cod' : 'data-payload');
+            function fallback() {
+                box.hidden = true;
+                fail.hidden = true;
+                img.hidden = false;
+                img.onerror = function () { img.hidden = true; fail.hidden = false; };
+                img.src = img.getAttribute(cod ? 'data-url-cod' : 'data-url');
+            }
+            img.hidden = true;
+            if (!payload || typeof qrcode !== 'function') { fallback(); return; }
+            try {
+                var q = qrcode(0, 'M');
+                q.addData(payload);
+                q.make();
+                box.hidden = false;
+                fail.hidden = true;
+                box.innerHTML = q.createImgTag(6, 12);      /* ô 6px, viền trắng 12px */
+                var drawn = box.querySelector('img');
+                if (drawn) { drawn.alt = 'Mã QR chuyển khoản'; drawn.style.width = '100%'; drawn.style.height = 'auto'; }
+            } catch (e) { fallback(); }
+        }
+
+        form.querySelectorAll('input[name="paymentMethod"]').forEach(function (r) {
+            r.addEventListener('change', syncPay);
+        });
+        syncPay();
+
+        /* Sao chép số tài khoản / nội dung chuyển khoản */
+        document.querySelectorAll('.co-copy').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var text = document.getElementById(b.getAttribute('data-copy')).textContent.trim();
+                var done = function () {
+                    var old = b.innerHTML;
+                    b.innerHTML = '<i class="bi bi-check2"></i> Đã chép';
+                    setTimeout(function () { b.innerHTML = old; }, 1500);
+                };
+                if (navigator.clipboard) navigator.clipboard.writeText(text).then(done);
+            });
+        });
+
+        /* Kiểm tra + xem trước ảnh bill */
+        function clearSlip() {
+            slip.value = '';
+            preview.hidden = true;
+            previewImg.removeAttribute('src');
+        }
+        function checkSlip() {
+            msg.textContent = '';
+            var f = slip.files && slip.files[0];
+            if (!f) { clearSlip(); return false; }
+            if (['image/jpeg', 'image/png', 'image/webp'].indexOf(f.type) < 0) {
+                msg.textContent = 'Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.';
+                clearSlip(); return false;
+            }
+            if (f.size > MAX) {
+                msg.textContent = 'Ảnh quá lớn (tối đa 5MB), vui lòng chọn ảnh nhỏ hơn.';
+                clearSlip(); return false;
+            }
+            previewImg.src = URL.createObjectURL(f);
+            preview.hidden = false;
+            return true;
+        }
+        slip.addEventListener('change', checkSlip);
+        document.getElementById('slipClear').addEventListener('click', function () { clearSlip(); msg.textContent = ''; });
+
+        form.addEventListener('submit', function (e) {
+            /* Bấm "Áp dụng" mã giảm giá: chỉ tính lại tiền, không kiểm tra bill / không khoá nút đặt hàng */
+            if (e.submitter && e.submitter.hasAttribute('data-apply')) return;
+            if (needsTransfer() && !checkSlip()) {
+                e.preventDefault();
+                if (!msg.textContent) msg.textContent = 'Vui lòng tải lên ảnh bill chuyển khoản trước khi đặt hàng.';
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            if (!form.checkValidity()) return;
+            /* Chống bấm đặt hàng 2 lần */
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+        });
+    })();
+
+    // Chọn mã giảm giá từ danh sách / bỏ mã: điền vào ô mã rồi gửi form "Áp dụng" (server tính lại tiền)
+    (function () {
+        var form = document.getElementById('checkoutForm');
+        var input = document.getElementById('voucherCode');
+        var applyBtn = form && form.querySelector('[data-apply]');
+        if (!form || !input || !applyBtn) return;
+        function apply(code) {
+            input.value = code;
+            if (form.requestSubmit) form.requestSubmit(applyBtn); else applyBtn.click();
+        }
+        document.querySelectorAll('[data-voucher]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (b.getAttribute('aria-disabled') === 'true') return;
+                apply(b.getAttribute('data-voucher'));
+            });
+        });
+        var clear = document.querySelector('[data-voucher-clear]');
+        if (clear) clear.addEventListener('click', function () { apply(''); });
+    })();
+
+    // Menu xổ xuống chọn mã giảm giá: bấm nút để mở/đóng, bấm ra ngoài hoặc Esc để đóng
+    (function () {
+        var box = document.querySelector('[data-vdrop]');
+        if (!box) return;
+        var btn = box.querySelector('[data-vdrop-toggle]');
+        var menu = box.querySelector('.co-vmenu');
+        function set(open) {
+            menu.hidden = !open;
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            box.classList.toggle('is-open', open);
+        }
+        btn.addEventListener('click', function () { set(menu.hidden); });
+        document.addEventListener('click', function (e) { if (!box.contains(e.target)) set(false); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+    })();
+</script>
+</body>
+</html>

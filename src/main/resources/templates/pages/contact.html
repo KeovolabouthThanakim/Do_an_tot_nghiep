@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head('Liên hệ | KOSIS', 'pages')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: header}"></th:block>
+<main id="main">
+<div class="container container--content">
+    <div class="page-head"><p class="eyebrow">HỖ TRỢ KHÁCH HÀNG</p><h1 class="display">Liên hệ với KOSIS</h1><p>Bạn cần hỏi về đơn hàng, kích cỡ hay giao hàng? Chúng tôi thường phản hồi trong vòng một ngày làm việc.</p></div>
+
+    <!-- Kênh liên hệ nhanh -->
+    <div class="ct-channels">
+        <a class="ct-ch" th:if="${!#strings.isEmpty(contactEmail)}" th:href="'mailto:' + ${contactEmail}">
+            <i class="bi bi-envelope" aria-hidden="true"></i><b>Email</b>
+            <span th:text="${contactEmail}">hello@kosis.example</span><em>Gửi email <i class="bi bi-arrow-up-right"></i></em>
+        </a>
+        <a class="ct-ch" th:if="${!#strings.isEmpty(contactPhone)}" th:href="'tel:' + ${#strings.replace(contactPhone, ' ', '')}">
+            <i class="bi bi-telephone" aria-hidden="true"></i><b>Điện thoại</b>
+            <span th:text="${contactPhone}">1900 1234</span><em>Gọi ngay <i class="bi bi-arrow-up-right"></i></em>
+        </a>
+        <a class="ct-ch" th:if="${!#strings.isEmpty(contactAddress)}" th:href="@{https://www.google.com/maps/search/(api=1,query=${contactAddress})}" target="_blank" rel="noopener">
+            <i class="bi bi-geo-alt" aria-hidden="true"></i><b>Showroom</b>
+            <span th:text="${contactAddress}">123 đường Atelier, Quận 1, TP. Hồ Chí Minh</span><em>Xem bản đồ <i class="bi bi-arrow-up-right"></i></em>
+        </a>
+        <div class="ct-ch ct-ch--static" th:if="${!#strings.isEmpty(contactHours)}">
+            <i class="bi bi-clock" aria-hidden="true"></i><b>Giờ làm việc</b>
+            <span th:text="${contactHours}">Thứ 2 – Thứ 7, 9:00–18:00</span><em>Phản hồi trong 1 ngày làm việc</em>
+        </div>
+    </div>
+
+    <div class="ct-main">
+        <!-- Form -->
+        <form class="ct-form" th:action="@{/contact}" method="post">
+            <h2>Gửi tin nhắn</h2>
+            <p class="ct-form__sub">Chọn chủ đề để chúng tôi chuyển đến đúng người hỗ trợ.</p>
+            <div hidden data-flash="success" th:if="${contactMessage != null}" th:text="${contactMessage}"></div>
+            <div hidden data-flash="error" th:if="${contactError != null}" th:text="${contactError}"></div>
+
+            <div class="ct-topics" role="group" aria-label="Chủ đề nhanh">
+                <button type="button" data-topic="Đơn hàng"><i class="bi bi-bag"></i> Đơn hàng</button>
+                <button type="button" data-topic="Kích cỡ / tư vấn"><i class="bi bi-rulers"></i> Kích cỡ</button>
+                <button type="button" data-topic="Giao hàng"><i class="bi bi-truck"></i> Giao hàng</button>
+                <button type="button" data-topic="Đổi trả / hoàn tiền"><i class="bi bi-arrow-repeat"></i> Đổi trả</button>
+                <button type="button" data-topic="Hợp tác / khác"><i class="bi bi-chat-dots"></i> Khác</button>
+            </div>
+
+            <div class="ct-row">
+                <div class="field"><label for="c-name">Họ và tên</label><input id="c-name" name="name" th:value="${form.name}" required maxlength="120" autocomplete="name"></div>
+                <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" th:value="${form.email}" required maxlength="190" autocomplete="email"></div>
+            </div>
+            <div class="field"><label for="c-sub">Tiêu đề</label><input id="c-sub" name="subject" th:value="${form.subject}" maxlength="200" placeholder="Đơn hàng, kích cỡ, giao hàng…"></div>
+            <div class="field">
+                <label for="c-msg">Nội dung</label>
+                <textarea id="c-msg" name="message" rows="6" required maxlength="3000" th:text="${form.message}" data-counter="#c-count"></textarea>
+                <small class="ct-count"><span id="c-count">0</span> / 3000</small>
+            </div>
+            <!-- Ô bẫy bot: ẩn với người thật, bot tự điền thì tin nhắn bị bỏ qua -->
+            <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+            <button class="btn btn--dark" type="submit"><i class="bi bi-send"></i> Gửi tin nhắn</button>
+            <p class="ct-note">Tin nhắn được gửi trực tiếp đến đội ngũ KOSIS. Chúng tôi phản hồi qua email bạn cung cấp.</p>
+        </form>
+
+        <!-- Cột phải -->
+        <aside class="ct-side">
+            <div class="ct-photo">
+                <img th:src="@{/images/editorial/kosis-fabric-brand-detail.jpg}" alt="" loading="lazy">
+                <p>Ghé showroom để thử đồ và nhận tư vấn trực tiếp.</p>
+            </div>
+            <div class="ct-help">
+                <h3>Cần câu trả lời nhanh?</h3>
+                <a th:href="@{/faq}"><i class="bi bi-question-circle"></i><span>Câu hỏi thường gặp</span><i class="bi bi-chevron-right"></i></a>
+                <a th:href="@{/shipping}"><i class="bi bi-truck"></i><span>Vận chuyển &amp; giao hàng</span><i class="bi bi-chevron-right"></i></a>
+                <a th:href="@{/returns}"><i class="bi bi-arrow-repeat"></i><span>Đổi trả &amp; hoàn tiền</span><i class="bi bi-chevron-right"></i></a>
+                <a th:href="@{/don-hang-cua-toi}"><i class="bi bi-box-seam"></i><span>Theo dõi đơn hàng của tôi</span><i class="bi bi-chevron-right"></i></a>
+            </div>
+        </aside>
+    </div>
+</div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer}"></th:block>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

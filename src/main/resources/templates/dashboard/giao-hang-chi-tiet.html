@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giao hàng đơn hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('shipping', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <a href="/dashboard/giao-hang" class="back-link"><i class="bi bi-arrow-left"></i> Danh sách giao hàng</a>
+                <h1>
+                    Giao hàng đơn <span th:text="${order.orderCode}">KS000001</span>
+                    <span class="status-pill review" th:if="${order.preparing}" th:text="${order.shippingLabel}">Chuẩn bị</span>
+                    <span class="status-pill shipping" th:if="${order.shipping}" th:text="${order.shippingLabel}">Đang vận chuyển</span>
+                    <span class="status-pill arrived" th:if="${order.arrived}" th:text="${order.shippingLabel}">Chờ khách xác nhận</span>
+                    <span class="status-pill done" th:if="${order.delivered}" th:text="${order.shippingLabel}">Đã giao</span>
+                    <span class="status-pill rejected" th:if="${order.failed}" th:text="${order.shippingLabel}">Không thành công</span>
+                </h1>
+                <p>Đặt lúc <span th:text="${order.createdAtText}">02/11/2026 14:30</span>
+                    · <a th:href="@{/dashboard/don-hang/{id}(id=${order.id})}" style="text-decoration:underline">Xem chi tiết &amp; hóa đơn</a></p>
+            </div>
+        </div>
+
+        <div hidden data-flash="success" th:if="${orderMessage != null}" th:text="${orderMessage}"></div>
+        <div hidden data-flash="error" th:if="${orderError != null}" th:text="${orderError}"></div>
+
+        <th:block th:replace="~{fragments/shipping :: refuseBanner(${refuseCount}, ${order})}"></th:block>
+
+        <div class="od-grid">
+
+            <!-- ============ TRÁI: người nhận + sản phẩm cần giao ============ -->
+            <div class="od-col">
+                <div class="panel od-card">
+                    <h2>Giao tới</h2>
+                    <dl class="od-dl">
+                        <div><dt>Người nhận</dt><dd th:text="${order.receiverName}">Nguyễn Văn A</dd></div>
+                        <div><dt>Điện thoại</dt><dd><a th:href="'tel:' + ${order.phone}" th:text="${order.phone}">0901234567</a></dd></div>
+                        <div><dt>Địa chỉ</dt><dd th:text="${order.address}">Địa chỉ</dd></div>
+                        <div th:if="${order.note != null and !#strings.isEmpty(order.note)}"><dt>Ghi chú của khách</dt><dd th:text="${order.note}">Ghi chú</dd></div>
+                    </dl>
+                </div>
+
+                <div class="panel od-card">
+                    <h2>Hàng cần giao</h2>
+                    <div class="od-item" th:each="it : ${order.items}">
+                        <img th:src="${#strings.isEmpty(it.image) ? '/images/products/placeholder.jpg' : it.image}" th:alt="${it.productName}"
+                             onerror="this.src='https://placehold.co/120x120/f7f7f7/222222?text=Product'">
+                        <div class="od-item-meta">
+                            <strong th:text="${it.productName}">Tên sản phẩm</strong>
+                            <span th:text="(${#strings.isEmpty(it.variantText)} ? '' : ${it.variantText} + ' · ') + 'SL: ' + ${it.quantity}">SL</span>
+                        </div>
+                        <b th:text="${#numbers.formatInteger(it.lineTotal, 0, 'POINT')} + '₫'">890.000₫</b>
+                    </div>
+                    <div class="od-total"><span>Giá trị đơn</span><b th:text="${#numbers.formatInteger(order.totalAmount, 0, 'POINT')} + '₫'">2.670.000₫</b></div>
+                    <div class="ship-cod" th:if="${!order.bank}">
+                        <i class="bi bi-cash-coin"></i> Thu hộ (COD) khi giao:
+                        <b th:text="${#numbers.formatInteger(order.codDue, 0, 'POINT')} + '₫'">2.670.000₫</b>
+                        <small th:if="${order.codDeposit}" th:text="'(khách đã cọc ' + ${#numbers.formatInteger(order.depositAmount, 0, 'POINT')} + '₫)'"></small>
+                    </div>
+                    <div class="ship-cod paid" th:if="${order.bank}">
+                        <i class="bi bi-check2-circle"></i> Khách đã chuyển khoản - <b>không thu tiền</b> khi giao
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ PHẢI: tiến trình + chọn vận chuyển ============ -->
+            <div class="od-col">
+                <div class="panel od-card">
+                    <h2><i class="bi bi-truck"></i> Tiến trình giao hàng</h2>
+                    <th:block th:replace="~{fragments/shipping :: steps(${order})}"></th:block>
+                    <th:block th:replace="~{fragments/shipping :: info(${order})}"></th:block>
+                    <div class="ship-wait" th:if="${order.arrived}">
+                        <i class="bi bi-hourglass-split"></i>
+                        <span>Vận chuyển báo đã giao tới khách. Đang chờ khách xác nhận - nếu khách không phản hồi, hệ thống tự chuyển sang
+                            <b>đã giao thành công</b> vào ngày <b th:text="${order.autoDeadlineText(autoDays)}">08/11/2026</b>.</span>
+                    </div>
+                    <p class="od-hint" th:if="${order.delivered}">Khách đã nhận hàng. Đơn hoàn tất.</p>
+                    <p class="od-hint" th:if="${order.refused}">Khách không nhận hàng - đã tính vào lịch sử của khách. Hàng hoàn về cửa hàng thì nhớ nhập lại kho. Có thể giao lại bằng form bên dưới.</p>
+                    <p class="od-hint" th:if="${order.returned}">Giao không thành công. Hàng hoàn về cửa hàng thì nhớ nhập lại kho. Có thể giao lại bằng form bên dưới.</p>
+                </div>
+
+                <div class="panel od-card" th:unless="${order.delivered or order.arrived}">
+                    <h2 th:text="${order.shipping} ? 'Đơn vị vận chuyển' : (${order.failed} ? 'Giao lại đơn hàng' : 'Chọn đơn vị vận chuyển')">Chọn đơn vị vận chuyển</h2>
+                    <form th:action="@{/dashboard/giao-hang/{id}/van-chuyen(id=${order.id})}" method="post" class="ship-form" style="border-top:0;padding-top:0">
+                        <label for="carrier">Đơn vị vận chuyển</label>
+                        <select id="carrier" name="carrier" required>
+                            <option value="" th:selected="${order.carrier == null}">-- Chọn đơn vị vận chuyển --</option>
+                            <option th:each="c : ${carriers}" th:value="${c.name()}" th:text="${c.label}"
+                                    th:attr="data-needs-code=${c.needsCode}"
+                                    th:selected="${order.carrier == c.name()}">GHN</option>
+                        </select>
+                        <label for="trackingCode">Mã vận đơn <small id="trackingHint"></small></label>
+                        <input type="text" id="trackingCode" name="trackingCode" maxlength="60" autocomplete="off"
+                               th:value="${order.trackingCode}" placeholder="VD: GHN123456789">
+                        <label for="shipNote">Ghi chú giao hàng <small>(không bắt buộc)</small></label>
+                        <textarea id="shipNote" name="note" rows="2" maxlength="300" placeholder="VD: gọi khách trước khi giao" th:text="${order.shipping} ? ${order.shippingNote} : ''"></textarea>
+                        <button type="submit" class="btn-primary-dark od-btn">
+                            <i class="bi bi-send-check"></i>
+                            <span th:text="${order.shipping} ? 'Lưu thông tin vận chuyển' : 'Giao cho đơn vị vận chuyển'">Giao cho đơn vị vận chuyển</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Kết quả giao hàng: khi đang vận chuyển hoặc đã tới nơi -->
+                <div class="panel od-card" th:if="${order.shipping or order.arrived}">
+                    <h2>Kết quả giao hàng</h2>
+
+                    <form th:if="${order.shipping}" th:action="@{/dashboard/giao-hang/{id}/da-toi-noi(id=${order.id})}" method="post"
+                          data-confirm="Ghi nhận vận chuyển đã giao tới khách? Đơn sẽ chờ khách xác nhận, quá hạn không phản hồi thì tự hoàn tất." data-confirm-ok="Ghi nhận đã tới nơi">
+                        <button type="submit" class="btn-primary-dark od-btn ship-arrive"><i class="bi bi-box-arrow-in-down"></i> Vận chuyển báo đã giao tới khách</button>
+                        <p class="ship-sub">Chờ khách bấm xác nhận. Không phản hồi trong <b th:text="${autoDays}">5</b> ngày thì hệ thống tự hoàn tất.</p>
+                    </form>
+
+                    <form th:action="@{/dashboard/giao-hang/{id}/da-giao(id=${order.id})}" method="post"
+                          data-confirm="Xác nhận khách đã nhận hàng của đơn này?" data-confirm-ok="Đã giao thành công">
+                        <button type="submit" class="btn-primary-dark od-btn ship-ok"><i class="bi bi-patch-check"></i> Khách đã nhận hàng</button>
+                    </form>
+
+                    <form th:action="@{/dashboard/giao-hang/{id}/hoan-hang(id=${order.id})}" method="post" class="od-reject"
+                          data-confirm="Ghi nhận đơn này giao không thành công? Tồn kho sẽ không tự cộng lại." data-confirm-ok="Ghi nhận" data-confirm-danger>
+                        <label>Giao không thành công <em>*</em></label>
+                        <label class="ship-radio"><input type="radio" name="type" value="REFUSED" checked>
+                            <span><b>Khách không nhận hàng</b><small>từ chối nhận, không nghe máy, không có mặt - tính vào lịch sử cảnh báo của khách</small></span></label>
+                        <label class="ship-radio"><input type="radio" name="type" value="RETURNED">
+                            <span><b>Lý do khác</b><small>sai địa chỉ, thất lạc, hư hỏng... - không tính là khách từ chối</small></span></label>
+                        <textarea id="shipReason" name="reason" rows="2" maxlength="300" required
+                                  placeholder="Ghi rõ lý do. VD: Khách không nghe máy 3 lần / khách từ chối nhận..."></textarea>
+                        <button type="submit" class="btn-danger od-btn"><i class="bi bi-arrow-return-left"></i> Ghi nhận giao không thành công</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script th:unless="${order.delivered}">
+    (function () {
+        var sel = document.getElementById('carrier');
+        var code = document.getElementById('trackingCode');
+        var hint = document.getElementById('trackingHint');
+        if (!sel || !code) return;
+        function sync() {
+            var opt = sel.options[sel.selectedIndex];
+            var needs = opt && opt.getAttribute('data-needs-code') === 'true';
+            code.required = needs;
+            hint.textContent = needs ? '(bắt buộc)' : '(không bắt buộc)';
+        }
+        sel.addEventListener('change', sync);
+        sync();
+    })();
+</script>
+</body>
+</html>

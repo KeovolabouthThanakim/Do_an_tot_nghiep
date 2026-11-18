@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng - KOSIS Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard/style.css}" href="../../static/css/dashboard/style.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard/pages.css}" href="../../static/css/dashboard/pages.css">
+    <link rel="stylesheet" th:href="@{/css/kosis/dialog.css}">
+    <style>
+        .x-export-wrap { position: relative; flex: none; }
+        .x-export { display: inline-flex; align-items: center; gap: 7px; height: 42px; box-sizing: border-box; padding: 0 18px; border-radius: 999px;
+                    border: 1px solid var(--dark); background: var(--dark); color: #fff; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .x-export:hover { opacity: .88; }
+        .x-export-pop { position: absolute; right: 0; top: 50px; z-index: 30; width: 340px; max-width: calc(100vw - 40px); padding: 18px; background: var(--surface, #fff);
+                        border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 18px 40px rgba(0,0,0,.14); }
+        .x-export-pop[hidden] { display: none; }
+        .x-export-pop h3 { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+        .x-export-pop label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 12px; }
+        .x-export-pop input, .x-export-pop select { height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+                        font: inherit; font-size: 14px; color: var(--text); background: var(--bg); }
+        .x-export-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .x-export-quick { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
+        .x-export-quick button { height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font: inherit; font-size: 12px; cursor: pointer; }
+        .x-export-quick button:hover { border-color: var(--dark); }
+        .x-export-go { width: 100%; height: 42px; border-radius: var(--radius-sm); border: 0; background: var(--dark); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+        .x-export-hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+        /* ===== Bảng đơn hàng (thiết kế lại) ===== */
+        .od-t { border-collapse: separate; border-spacing: 0; }
+        .od-t thead th { padding: 11px 20px; }
+        .od-t thead th.r, .od-t td.r { text-align: right; }
+        .od-t tbody td { padding: 16px 20px; }
+        .od-t tbody tr { cursor: pointer; }
+        .od-t tbody tr:hover { background: #faf8f5; }
+        .od-t .od-id { display: block; font-weight: 700; font-size: 14px; letter-spacing: .02em; }
+        .od-t .od-time { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .od-t .x-person { gap: 11px; }
+        .od-t .x-avatar { flex-basis: 34px; height: 34px; font-size: 13px; }
+        .od-t .x-person .p-code { margin-top: 1px; font-variant-numeric: tabular-nums; }
+        /* thanh toán: chip nhỏ gọn, không còn khối xám lớn */
+        .od-t .od-pay { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px 0 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+        .od-t .od-pay i { font-size: 13px; }
+        .od-t .od-pay.bank { background: #eaf1fb; color: #2b5fa8; }
+        .od-t .od-pay.cod { background: var(--warn-soft, #f6efe4); color: var(--warn, #8a6a3b); }
+        .od-t .od-sub { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .od-t .od-sub i { font-size: 12px; }
+        .od-t .od-sub.ok { color: #3f6b4f; }
+        .od-t .od-total { display: block; font-weight: 700; font-size: 14.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .od-t .od-due { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        /* trạng thái: chấm màu + chữ, kèm tình trạng giao hàng */
+        .od-t .od-st { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .od-t .od-st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .od-t .od-st.wait { color: #b7791f; }
+        .od-t .od-st.ok { color: #2f7a4d; }
+        .od-t .od-st.bad { color: #b3361e; }
+        .od-t .od-ship { display: block; margin: 3px 0 0 15px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .od-t .od-go { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface, #fff);
+                       color: var(--text); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .od-t tbody tr:hover .od-go { background: var(--dark); border-color: var(--dark); color: #fff; }
+        @media (max-width: 900px) { .od-t thead th, .od-t tbody td { padding-left: 14px; padding-right: 14px; } }
+    </style>
+    <script th:src="@{/js/kosis-dialog.js}" defer></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <div th:replace="~{dashboard/sidebar :: sidebar('orders', ${username}, ${role})}"></div>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-topbar">
+            <div>
+                <h1>Đơn hàng</h1>
+                <p>Kiểm tra ảnh bill và <b>xác nhận từng đơn</b> trước khi xử lý. Đơn chuyển khoản chỉ được xác nhận sau khi tiền đã về tài khoản.</p>
+            </div>
+
+            <!-- Xuất file: chọn khoảng ngày, trạng thái, thanh toán, giao hàng -->
+            <div class="x-export-wrap">
+                <button type="button" class="x-export" id="odExportBtn" aria-expanded="false"><i class="bi bi-download"></i> Xuất file</button>
+                <form class="x-export-pop" id="odExportPop" hidden method="get" th:action="@{/dashboard/don-hang/export}">
+                    <h3>Xuất danh sách đơn hàng</h3>
+                    <div class="x-export-row">
+                        <label>Từ ngày <input type="date" name="from" id="exFrom"></label>
+                        <label>Đến ngày <input type="date" name="to" id="exTo"></label>
+                    </div>
+                    <div class="x-export-quick">
+                        <button type="button" data-range="today">Hôm nay</button>
+                        <button type="button" data-range="yesterday">Hôm qua</button>
+                        <button type="button" data-range="7">7 ngày</button>
+                        <button type="button" data-range="month">Tháng này</button>
+                        <button type="button" data-range="all">Tất cả</button>
+                    </div>
+                    <label>Trạng thái đơn
+                        <select name="status" id="exStatus">
+                            <option value="all">Tất cả</option>
+                            <option value="waiting">Chờ kiểm tra</option>
+                            <option value="confirmed">Đã xác nhận</option>
+                            <option value="rejected">Bị từ chối / đã huỷ</option>
+                        </select></label>
+                    <label>Hình thức thanh toán
+                        <select name="payment">
+                            <option value="all">Tất cả</option>
+                            <option value="BANK">Chuyển khoản</option>
+                            <option value="COD">COD (gồm COD + cọc)</option>
+                        </select></label>
+                    <label>Tình trạng giao hàng
+                        <select name="ship">
+                            <option value="all">Tất cả</option>
+                            <option value="PREPARING">Đang chuẩn bị hàng</option>
+                            <option value="SHIPPING">Đang vận chuyển</option>
+                            <option value="ARRIVED">Đã tới nơi</option>
+                            <option value="DELIVERED">Đã giao thành công</option>
+                            <option value="REFUSED">Khách không nhận hàng</option>
+                            <option value="RETURNED">Giao không thành công</option>
+                        </select></label>
+                    <label>Từ khoá (mã đơn / tên / SĐT)
+                        <input type="text" name="q" id="exQ" placeholder="Để trống = tất cả"></label>
+                    <button type="submit" class="x-export-go"><i class="bi bi-download"></i> Tải file CSV</button>
+                    <p class="x-export-hint">Ngày tính theo ngày đặt hàng. Để trống cả 2 ô ngày = mọi ngày. Mở file bằng Excel.</p>
+                </form>
+            </div>
+        </div>
+
+        <div hidden data-flash="error" th:if="${orderError != null}" th:text="${orderError}"></div>
+
+        <!-- TỔNG HỢP: thanh tỷ lệ trạng thái -->
+        <section class="x-summary">
+            <div class="x-summary-top">
+                <div><b th:text="${totalCount}">0</b>đơn hàng</div>
+                <div>Chờ kiểm tra · Đã xác nhận · Bị từ chối</div>
+            </div>
+            <div class="x-split" th:if="${totalCount > 0}">
+                <span class="w" th:style="'width:' + ${waitingCount * 100.0 / totalCount} + '%'"></span>
+                <span class="c" th:style="'width:' + ${confirmedCount * 100.0 / totalCount} + '%'"></span>
+                <span class="r" th:style="'width:' + ${rejectedCount * 100.0 / totalCount} + '%'"></span>
+            </div>
+            <div class="x-split" th:unless="${totalCount > 0}"></div>
+        </section>
+
+        <!-- THẺ LỌC TRẠNG THÁI (bấm để lọc bảng) -->
+        <div class="x-tabs" id="odChips">
+            <button type="button" class="x-tab active" data-status="all">
+                <span class="ico"><i class="bi bi-bag-check"></i></span>
+                <span><span class="num" th:text="${totalCount}">0</span><span class="lbl">Tất cả đơn</span></span>
+            </button>
+            <button type="button" class="x-tab wait" data-status="waiting">
+                <span class="ico"><i class="bi bi-hourglass-split"></i></span>
+                <span><span class="num" th:text="${waitingCount}">0</span><span class="lbl">Chờ kiểm tra</span></span>
+            </button>
+            <button type="button" class="x-tab ok" data-status="confirmed">
+                <span class="ico"><i class="bi bi-check2-circle"></i></span>
+                <span><span class="num" th:text="${confirmedCount}">0</span><span class="lbl">Đã xác nhận</span></span>
+            </button>
+            <button type="button" class="x-tab bad" data-status="rejected">
+                <span class="ico"><i class="bi bi-x-octagon"></i></span>
+                <span><span class="num" th:text="${rejectedCount}">0</span><span class="lbl">Bị từ chối</span></span>
+            </button>
+        </div>
+
+        <div class="x-table-card">
+            <div class="x-toolbar">
+                <div class="inv-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="odSearch" placeholder="Tìm theo mã đơn, tên hoặc số điện thoại...">
+                </div>
+                <div class="count"><span id="odShown">0</span> đơn đang hiển thị</div>
+            </div>
+
+            <div class="x-scroll">
+            <table class="od-t">
+                <thead>
+                    <tr>
+                        <th>Đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Thanh toán</th>
+                        <th class="r">Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="odBody">
+                    <tr th:each="o : ${orders}"
+                        th:data-status="${o.awaitingReview ? 'waiting' : (o.confirmed ? 'confirmed' : 'rejected')}"
+                        th:data-search="${#strings.toLowerCase(o.orderCode + ' ' + o.receiverName + ' ' + o.phone)}"
+                        th:data-href="@{/dashboard/don-hang/{id}(id=${o.id})}"
+                        th:classappend="${o.awaitingReview} ? 'x-row-wait' : ''">
+                        <td>
+                            <span class="od-id" th:text="${o.orderCode}">KS000001</span>
+                            <span class="od-time" th:text="${o.createdAtText}">29/09/2026 14:30</span>
+                        </td>
+                        <td>
+                            <div class="x-person">
+                                <span class="x-avatar" th:text="${o.receiverName != null and !#strings.isEmpty(o.receiverName)} ? ${#strings.toUpperCase(#strings.substring(o.receiverName, 0, 1))} : '?'">N</span>
+                                <div>
+                                    <span class="p-name" th:text="${o.receiverName}">Nguyễn Văn A</span>
+                                    <span class="p-code" th:text="${o.phone}">0901234567</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="od-pay" th:classappend="${o.bank} ? 'bank' : 'cod'">
+                                <i class="bi" th:classappend="${o.bank} ? 'bi-bank' : 'bi-cash-coin'"></i>
+                                <span th:text="${o.bank} ? 'Chuyển khoản' : (${o.codDeposit} ? 'COD + cọc' : 'COD')">COD</span>
+                            </span>
+                            <span class="od-sub" th:if="${o.hasTransfer and !o.hasSlip}"><i class="bi bi-exclamation-circle"></i> Chưa có bill</span>
+                        </td>
+                        <td class="r">
+                            <span class="od-total" th:text="${#numbers.formatInteger(o.totalAmount, 0, 'POINT')} + '₫'">890.000₫</span>
+                            <span class="od-due" th:if="${o.codDeposit}" th:text="'Thu khi giao ' + ${#numbers.formatInteger(o.codDue, 0, 'POINT')} + '₫'">Thu khi giao</span>
+                        </td>
+                        <td>
+                            <span class="od-st wait" th:if="${o.awaitingReview}" th:text="${o.statusLabel}">Chờ</span>
+                            <span class="od-st ok" th:if="${o.confirmed}" th:text="${o.statusLabel}">Đã xác nhận</span>
+                            <span class="od-st bad" th:if="${o.rejected}" th:text="${o.statusLabel}">Bị từ chối</span>
+                            <span class="od-ship" th:if="${o.confirmed}" th:text="${o.shippingLabel}">Đang chuẩn bị hàng</span>
+                        </td>
+                        <td class="r">
+                            <a class="od-go" th:href="@{/dashboard/don-hang/{id}(id=${o.id})}" title="Xem / kiểm tra">Xem <i class="bi bi-arrow-right"></i></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="inv-empty" id="odEmpty" th:hidden="${!orders.isEmpty()}">
+                <i class="bi bi-inbox"></i>
+                <p>Không có đơn hàng nào.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        var rows = Array.prototype.slice.call(document.querySelectorAll('#odBody tr'));
+        var chips = document.querySelectorAll('#odChips button');
+        var shownEl = document.getElementById('odShown');
+        var search = document.getElementById('odSearch');
+        var empty = document.getElementById('odEmpty');
+        var status = 'all';
+        function apply() {
+            var q = search.value.trim().toLowerCase();
+            var shown = 0;
+            rows.forEach(function (r) {
+                var ok = (status === 'all' || r.getAttribute('data-status') === status)
+                      && (!q || r.getAttribute('data-search').indexOf(q) >= 0);
+                r.style.display = ok ? '' : 'none';
+                if (ok) shown++;
+            });
+            empty.hidden = shown > 0;
+            shownEl.textContent = shown;
+        }
+        chips.forEach(function (c) {
+            c.addEventListener('click', function () {
+                chips.forEach(function (x) { x.classList.remove('active'); });
+                c.classList.add('active');
+                status = c.getAttribute('data-status');
+                apply();
+            });
+        });
+        search.addEventListener('input', apply);
+        /* Bấm vào cả dòng để mở đơn (bấm link thì đi theo link) */
+        document.getElementById('odBody').addEventListener('click', function (e) {
+            if (e.target.closest('a')) return;
+            var tr = e.target.closest('tr');
+            if (tr && tr.getAttribute('data-href')) window.location.href = tr.getAttribute('data-href');
+        });
+        /* Xuất file: bảng chọn ở góc trên bên phải, điền sẵn theo bộ lọc + từ khoá đang xem */
+        var btn = document.getElementById('odExportBtn');
+        var pop = document.getElementById('odExportPop');
+        var exFrom = document.getElementById('exFrom');
+        var exTo = document.getElementById('exTo');
+        function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = pop.hidden;
+            pop.hidden = !open;
+            btn.setAttribute('aria-expanded', open);
+            if (open) {
+                document.getElementById('exStatus').value = status;
+                document.getElementById('exQ').value = search.value.trim();
+            }
+        });
+        pop.addEventListener('click', function (e) { e.stopPropagation(); });
+        document.addEventListener('click', function () { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') pop.hidden = true; });
+        pop.querySelectorAll('[data-range]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var t = new Date(), r = b.getAttribute('data-range');
+                if (r === 'all') { exFrom.value = ''; exTo.value = ''; return; }
+                if (r === 'today') { exFrom.value = exTo.value = iso(t); return; }
+                if (r === 'yesterday') { t.setDate(t.getDate() - 1); exFrom.value = exTo.value = iso(t); return; }
+                if (r === 'month') { exFrom.value = iso(new Date(t.getFullYear(), t.getMonth(), 1)); exTo.value = iso(t); return; }
+                exTo.value = iso(t); t.setDate(t.getDate() - (parseInt(r, 10) - 1)); exFrom.value = iso(t);
+            });
+        });
+        pop.addEventListener('submit', function (e) {
+            if (exFrom.value && exTo.value && exFrom.value > exTo.value) { e.preventDefault(); alert('"Từ ngày" phải trước hoặc bằng "Đến ngày".'); return; }
+            pop.hidden = true;
+        });
+        apply();
+    })();
+</script>
+</body>
+</html>
