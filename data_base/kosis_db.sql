@@ -21,7 +21,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '1a94c028-47dd-11f1-9613-1a71ec4aaf8d:1-1327';
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '1a94c028-47dd-11f1-9613-1a71ec4aaf8d:1-1413';
 
 --
 -- Table structure for table `contact_messages`
@@ -232,7 +232,7 @@ CREATE TABLE `product_categories` (
   `show_in_menu` bit(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKfl075bwasjwsxybk4x174befx` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -241,6 +241,7 @@ CREATE TABLE `product_categories` (
 
 LOCK TABLES `product_categories` WRITE;
 /*!40000 ALTER TABLE `product_categories` DISABLE KEYS */;
+INSERT INTO `product_categories` VALUES (1,'Áo khoác',0,_binary ''),(2,'Áo',1,_binary ''),(3,'Áo thể thao',2,_binary ''),(4,'Quần',3,_binary ''),(5,'Giày',4,_binary ''),(6,'Túi',5,_binary ''),(7,'Phụ kiện',6,_binary '');
 /*!40000 ALTER TABLE `product_categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -276,7 +277,7 @@ CREATE TABLE `products` (
   `pending_import` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK57ivhy5aj3qfmdvl6vxdfjs4p` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -285,6 +286,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
+INSERT INTO `products` VALUES (1,'Áo thể thao','KS201','Áo đấu bóng đá PSG phiên bản sân khách, màu trắng sọc dọc xanh đỏ. Vải thun lạnh thoáng khí, thấm hút mồ hôi tốt.',0,'/uploads/products/ks201.webp',_binary '','Áo đấu PSG sân khách',0,450000,0,NULL,40,NULL,NULL,230000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'MEN','/uploads/products/ks201.webp',_binary '\0'),(2,'Áo thể thao','KS202','Áo đấu bóng đá PSG phiên bản sân nhà, xanh dương sọc đỏ trắng đặc trưng. Chất liệu nhẹ, co giãn, thoáng khí.',10,'/uploads/products/ks202.webp',_binary '','Áo đấu PSG sân nhà',450000,405000,0,NULL,40,NULL,NULL,230000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'MEN','/uploads/products/ks202.webp',_binary '\0'),(3,'Áo thể thao','KS203','Áo đấu bóng đá Barcelona sân nhà, sọc xanh garnet. Vải thun lạnh, form thể thao ôm vừa.',0,'/uploads/products/ks203.webp',_binary '\0','Áo đấu Barcelona sân nhà',0,450000,0,NULL,50,NULL,NULL,230000,'S,M,L,XL','S:10,M:15,L:15,XL:10',NULL,'MEN','/uploads/products/ks203.webp',_binary '\0'),(4,'Áo thể thao','KS204','Áo đấu Barcelona phiên bản đặc biệt màu đen phối gradient tím. Vải nhẹ, thoáng, thấm hút mồ hôi.',15,'/uploads/products/ks204.png',_binary '','Áo đấu Barcelona phiên bản đen tím',480000,408000,0,NULL,30,NULL,NULL,240000,'S,M,L,XL','S:6,M:9,L:9,XL:6',NULL,'MEN','/uploads/products/ks204.png',_binary '\0'),(5,'Áo thể thao','KS205','Áo đấu Manchester United sân nhà, màu đỏ cổ polo. Chất vải thun thoáng khí, bền màu.',0,'/uploads/products/ks205.png',_binary '\0','Áo đấu Manchester United sân nhà',0,420000,0,NULL,40,NULL,NULL,210000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'MEN','/uploads/products/ks205.png',_binary '\0'),(6,'Áo thể thao','KS206','Áo đấu Manchester United sân khách, màu xanh dương cổ chữ V. Vải nhẹ, mát, thấm hút tốt.',20,'/uploads/products/ks206.jpg',_binary '\0','Áo đấu Manchester United sân khách',420000,336000,0,NULL,30,NULL,NULL,210000,'S,M,L,XL','S:6,M:9,L:9,XL:6',NULL,'MEN','/uploads/products/ks206.jpg',_binary '\0'),(7,'Áo thể thao','KS207','Áo đấu Real Madrid sân nhà màu trắng, cổ và tay phối hồng. Chất liệu nhẹ, co giãn nhẹ, thoáng khí.',0,'/uploads/products/ks207.jpg',_binary '','Áo đấu Real Madrid sân nhà',0,450000,0,NULL,50,NULL,NULL,230000,'S,M,L,XL','S:10,M:15,L:15,XL:10',NULL,'MEN','/uploads/products/ks207.jpg',_binary '\0'),(8,'Áo','KS208','Áo nỉ cổ tròn màu đen, in chữ lớn phía sau lưng. Nỉ bông mềm, form rộng, mặc ấm và dễ phối đồ.',0,'/uploads/products/ks208.jpg',_binary '','Áo nỉ đen Parc des Princes',0,520000,0,NULL,30,NULL,NULL,260000,'S,M,L,XL','S:6,M:9,L:9,XL:6',NULL,'UNISEX','/uploads/products/ks208.jpg',_binary '\0'),(9,'Áo','KS209','Áo thun trắng in dòng chữ PARIS và sọc xanh đỏ trước ngực. Cotton dày dặn, form rộng thoải mái.',0,'/uploads/products/ks209.jpg',_binary '','Áo thun trắng Paris',0,290000,0,NULL,60,NULL,NULL,120000,'S,M,L,XL','S:12,M:18,L:18,XL:12',NULL,'UNISEX','/uploads/products/ks209.jpg',_binary '\0'),(10,'Áo','KS210','Áo nỉ cổ tròn tay raglan màu xanh bạc hà nhẹ nhàng. Nỉ mềm, dày vừa, phù hợp mặc hằng ngày.',10,'/uploads/products/ks210.webp',_binary '\0','Áo nỉ xanh bạc hà',490000,441000,0,NULL,30,NULL,NULL,240000,'S,M,L,XL','S:6,M:9,L:9,XL:6',NULL,'WOMEN','/uploads/products/ks210.webp',_binary '\0'),(11,'Áo','KS211','Áo hoodie màu xanh rêu đậm có túi kangaroo, logo nhỏ thêu ngực. Nỉ bông dày dặn, giữ ấm tốt.',0,'/uploads/products/ks211.webp',_binary '','Áo hoodie xanh rêu',0,590000,0,NULL,40,NULL,NULL,300000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'UNISEX','/uploads/products/ks211.webp',_binary '\0'),(12,'Áo','KS212','Áo hoodie xanh rêu đậm in dòng chữ Don\'t forget to love phía trước. Nỉ bông mềm, form rộng.',0,'/uploads/products/ks212.webp',_binary '','Áo hoodie xanh rêu in Don\'t forget to love',0,620000,0,NULL,40,NULL,NULL,310000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'UNISEX','/uploads/products/ks212.webp',_binary '\0'),(13,'Áo','KS213','Áo nỉ cổ tròn màu xanh rêu đậm in dòng chữ Don\'t forget to love. Nỉ mềm, bo tay và gấu chắc chắn.',10,'/uploads/products/ks213.webp',_binary '\0','Áo nỉ xanh rêu in Don\'t forget to love',520000,468000,0,NULL,30,NULL,NULL,260000,'S,M,L,XL','S:6,M:9,L:9,XL:6',NULL,'UNISEX','/uploads/products/ks213.webp',_binary '\0'),(14,'Áo khoác','KS214','Áo khoác track jacket màu xanh rêu đậm, cổ cao phối kem, khoá kéo suốt thân. Phong cách thể thao tối giản.',0,'/uploads/products/ks214.webp',_binary '','Áo khoác track jacket xanh rêu',0,790000,0,NULL,25,NULL,NULL,400000,'S,M,L,XL','S:5,M:8,L:8,XL:4',NULL,'UNISEX','/uploads/products/ks214.webp',_binary '\0'),(15,'Áo','KS215','Áo polo màu olive xám, cổ bẻ có khuy, tay ngắn. Vải thun mịn, thoáng, mặc đi làm hoặc đi chơi đều hợp.',0,'/uploads/products/ks215.webp',_binary '\0','Áo polo olive',0,350000,0,NULL,40,NULL,NULL,160000,'S,M,L,XL','S:8,M:12,L:12,XL:8',NULL,'MEN','/uploads/products/ks215.webp',_binary '\0');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -397,7 +399,7 @@ CREATE TABLE `stock_import_items` (
   KEY `FK84ssm6oagrorxmjygggpkloqt` (`stock_import_id`),
   KEY `idx_stock_import_items_product` (`product_id`),
   CONSTRAINT `FK84ssm6oagrorxmjygggpkloqt` FOREIGN KEY (`stock_import_id`) REFERENCES `stock_imports` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -406,6 +408,7 @@ CREATE TABLE `stock_import_items` (
 
 LOCK TABLES `stock_import_items` WRITE;
 /*!40000 ALTER TABLE `stock_import_items` DISABLE KEYS */;
+INSERT INTO `stock_import_items` VALUES (1,'KS201',1,'Áo đấu PSG sân khách',8,'S',230000,1,NULL),(2,'KS201',1,'Áo đấu PSG sân khách',12,'M',230000,1,NULL),(3,'KS201',1,'Áo đấu PSG sân khách',12,'L',230000,1,NULL),(4,'KS201',1,'Áo đấu PSG sân khách',8,'XL',230000,1,NULL),(5,'KS202',2,'Áo đấu PSG sân nhà',8,'S',230000,1,NULL),(6,'KS202',2,'Áo đấu PSG sân nhà',12,'M',230000,1,NULL),(7,'KS202',2,'Áo đấu PSG sân nhà',12,'L',230000,1,NULL),(8,'KS202',2,'Áo đấu PSG sân nhà',8,'XL',230000,1,NULL),(9,'KS203',3,'Áo đấu Barcelona sân nhà',10,'S',230000,1,NULL),(10,'KS203',3,'Áo đấu Barcelona sân nhà',15,'M',230000,1,NULL),(11,'KS203',3,'Áo đấu Barcelona sân nhà',15,'L',230000,1,NULL),(12,'KS203',3,'Áo đấu Barcelona sân nhà',10,'XL',230000,1,NULL),(13,'KS204',4,'Áo đấu Barcelona phiên bản đen tím',6,'S',240000,1,NULL),(14,'KS204',4,'Áo đấu Barcelona phiên bản đen tím',9,'M',240000,1,NULL),(15,'KS204',4,'Áo đấu Barcelona phiên bản đen tím',9,'L',240000,1,NULL),(16,'KS204',4,'Áo đấu Barcelona phiên bản đen tím',6,'XL',240000,1,NULL),(17,'KS205',5,'Áo đấu Manchester United sân nhà',8,'S',210000,1,NULL),(18,'KS205',5,'Áo đấu Manchester United sân nhà',12,'M',210000,1,NULL),(19,'KS205',5,'Áo đấu Manchester United sân nhà',12,'L',210000,1,NULL),(20,'KS205',5,'Áo đấu Manchester United sân nhà',8,'XL',210000,1,NULL),(21,'KS206',6,'Áo đấu Manchester United sân khách',6,'S',210000,1,NULL),(22,'KS206',6,'Áo đấu Manchester United sân khách',9,'M',210000,1,NULL),(23,'KS206',6,'Áo đấu Manchester United sân khách',9,'L',210000,1,NULL),(24,'KS206',6,'Áo đấu Manchester United sân khách',6,'XL',210000,1,NULL),(25,'KS207',7,'Áo đấu Real Madrid sân nhà',10,'S',230000,1,NULL),(26,'KS207',7,'Áo đấu Real Madrid sân nhà',15,'M',230000,1,NULL),(27,'KS207',7,'Áo đấu Real Madrid sân nhà',15,'L',230000,1,NULL),(28,'KS207',7,'Áo đấu Real Madrid sân nhà',10,'XL',230000,1,NULL),(29,'KS208',8,'Áo nỉ đen Parc des Princes',6,'S',260000,2,NULL),(30,'KS208',8,'Áo nỉ đen Parc des Princes',9,'M',260000,2,NULL),(31,'KS208',8,'Áo nỉ đen Parc des Princes',9,'L',260000,2,NULL),(32,'KS208',8,'Áo nỉ đen Parc des Princes',6,'XL',260000,2,NULL),(33,'KS209',9,'Áo thun trắng Paris',12,'S',120000,2,NULL),(34,'KS209',9,'Áo thun trắng Paris',18,'M',120000,2,NULL),(35,'KS209',9,'Áo thun trắng Paris',18,'L',120000,2,NULL),(36,'KS209',9,'Áo thun trắng Paris',12,'XL',120000,2,NULL),(37,'KS210',10,'Áo nỉ xanh bạc hà',6,'S',240000,2,NULL),(38,'KS210',10,'Áo nỉ xanh bạc hà',9,'M',240000,2,NULL),(39,'KS210',10,'Áo nỉ xanh bạc hà',9,'L',240000,2,NULL),(40,'KS210',10,'Áo nỉ xanh bạc hà',6,'XL',240000,2,NULL),(41,'KS211',11,'Áo hoodie xanh rêu',8,'S',300000,2,NULL),(42,'KS211',11,'Áo hoodie xanh rêu',12,'M',300000,2,NULL),(43,'KS211',11,'Áo hoodie xanh rêu',12,'L',300000,2,NULL),(44,'KS211',11,'Áo hoodie xanh rêu',8,'XL',300000,2,NULL),(45,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love',8,'S',310000,2,NULL),(46,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love',12,'M',310000,2,NULL),(47,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love',12,'L',310000,2,NULL),(48,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love',8,'XL',310000,2,NULL),(49,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love',6,'S',260000,2,NULL),(50,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love',9,'M',260000,2,NULL),(51,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love',9,'L',260000,2,NULL),(52,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love',6,'XL',260000,2,NULL),(53,'KS214',14,'Áo khoác track jacket xanh rêu',5,'S',400000,3,NULL),(54,'KS214',14,'Áo khoác track jacket xanh rêu',8,'M',400000,3,NULL),(55,'KS214',14,'Áo khoác track jacket xanh rêu',8,'L',400000,3,NULL),(56,'KS214',14,'Áo khoác track jacket xanh rêu',4,'XL',400000,3,NULL),(57,'KS215',15,'Áo polo olive',8,'S',160000,3,NULL),(58,'KS215',15,'Áo polo olive',12,'M',160000,3,NULL),(59,'KS215',15,'Áo polo olive',12,'L',160000,3,NULL),(60,'KS215',15,'Áo polo olive',8,'XL',160000,3,NULL);
 /*!40000 ALTER TABLE `stock_import_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -427,7 +430,7 @@ CREATE TABLE `stock_imports` (
   `supplier_contact` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_stock_imports_date` (`import_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -436,6 +439,7 @@ CREATE TABLE `stock_imports` (
 
 LOCK TABLES `stock_imports` WRITE;
 /*!40000 ALTER TABLE `stock_imports` DISABLE KEYS */;
+INSERT INTO `stock_imports` VALUES (1,'2026-11-10 09:00:00.000000','admin','2026-11-10','Lô áo đấu bóng đá các CLB (PSG, Barcelona, Man United, Real Madrid)','HD-TL-1108','Xưởng áo đấu Thiên Long','0901 234 567 - Q. Tân Bình, TP.HCM'),(2,'2026-11-12 09:00:00.000000','admin','2026-11-12','Lô áo nỉ, hoodie, áo thun','HD-MP-1211','Xưởng nỉ & hoodie Minh Phát','0912 345 678 - Q. Gò Vấp, TP.HCM'),(3,'2026-11-14 09:00:00.000000','admin','2026-11-14','Lô áo khoác và áo polo','HD-HG-0514','Xưởng may Hoàng Gia','0933 456 789 - Q. 12, TP.HCM');
 /*!40000 ALTER TABLE `stock_imports` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -462,7 +466,7 @@ CREATE TABLE `stock_movements` (
   PRIMARY KEY (`id`),
   KEY `idx_stock_movements_product` (`product_id`),
   KEY `idx_stock_movements_created` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -471,6 +475,7 @@ CREATE TABLE `stock_movements` (
 
 LOCK TABLES `stock_movements` WRITE;
 /*!40000 ALTER TABLE `stock_movements` DISABLE KEYS */;
+INSERT INTO `stock_movements` VALUES (1,'2026-11-10 09:00:00.000000','admin',8,'KS201',1,'Áo đấu PSG sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(2,'2026-11-10 09:00:00.000000','admin',12,'KS201',1,'Áo đấu PSG sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(3,'2026-11-10 09:00:00.000000','admin',12,'KS201',1,'Áo đấu PSG sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(4,'2026-11-10 09:00:00.000000','admin',8,'KS201',1,'Áo đấu PSG sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(5,'2026-11-10 09:00:00.000000','admin',8,'KS202',2,'Áo đấu PSG sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(6,'2026-11-10 09:00:00.000000','admin',12,'KS202',2,'Áo đấu PSG sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(7,'2026-11-10 09:00:00.000000','admin',12,'KS202',2,'Áo đấu PSG sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(8,'2026-11-10 09:00:00.000000','admin',8,'KS202',2,'Áo đấu PSG sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(9,'2026-11-10 09:00:00.000000','admin',10,'KS203',3,'Áo đấu Barcelona sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(10,'2026-11-10 09:00:00.000000','admin',15,'KS203',3,'Áo đấu Barcelona sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(11,'2026-11-10 09:00:00.000000','admin',15,'KS203',3,'Áo đấu Barcelona sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(12,'2026-11-10 09:00:00.000000','admin',10,'KS203',3,'Áo đấu Barcelona sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(13,'2026-11-10 09:00:00.000000','admin',6,'KS204',4,'Áo đấu Barcelona phiên bản đen tím','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(14,'2026-11-10 09:00:00.000000','admin',9,'KS204',4,'Áo đấu Barcelona phiên bản đen tím','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(15,'2026-11-10 09:00:00.000000','admin',9,'KS204',4,'Áo đấu Barcelona phiên bản đen tím','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(16,'2026-11-10 09:00:00.000000','admin',6,'KS204',4,'Áo đấu Barcelona phiên bản đen tím','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(17,'2026-11-10 09:00:00.000000','admin',8,'KS205',5,'Áo đấu Manchester United sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(18,'2026-11-10 09:00:00.000000','admin',12,'KS205',5,'Áo đấu Manchester United sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(19,'2026-11-10 09:00:00.000000','admin',12,'KS205',5,'Áo đấu Manchester United sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(20,'2026-11-10 09:00:00.000000','admin',8,'KS205',5,'Áo đấu Manchester United sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(21,'2026-11-10 09:00:00.000000','admin',6,'KS206',6,'Áo đấu Manchester United sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(22,'2026-11-10 09:00:00.000000','admin',9,'KS206',6,'Áo đấu Manchester United sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(23,'2026-11-10 09:00:00.000000','admin',9,'KS206',6,'Áo đấu Manchester United sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(24,'2026-11-10 09:00:00.000000','admin',6,'KS206',6,'Áo đấu Manchester United sân khách','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(25,'2026-11-10 09:00:00.000000','admin',10,'KS207',7,'Áo đấu Real Madrid sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','S','IMPORT',NULL),(26,'2026-11-10 09:00:00.000000','admin',15,'KS207',7,'Áo đấu Real Madrid sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','M','IMPORT',NULL),(27,'2026-11-10 09:00:00.000000','admin',15,'KS207',7,'Áo đấu Real Madrid sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','L','IMPORT',NULL),(28,'2026-11-10 09:00:00.000000','admin',10,'KS207',7,'Áo đấu Real Madrid sân nhà','Nhập từ Xưởng áo đấu Thiên Long','Phiếu nhập #1','XL','IMPORT',NULL),(29,'2026-11-12 09:00:00.000000','admin',6,'KS208',8,'Áo nỉ đen Parc des Princes','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(30,'2026-11-12 09:00:00.000000','admin',9,'KS208',8,'Áo nỉ đen Parc des Princes','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(31,'2026-11-12 09:00:00.000000','admin',9,'KS208',8,'Áo nỉ đen Parc des Princes','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(32,'2026-11-12 09:00:00.000000','admin',6,'KS208',8,'Áo nỉ đen Parc des Princes','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(33,'2026-11-12 09:00:00.000000','admin',12,'KS209',9,'Áo thun trắng Paris','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(34,'2026-11-12 09:00:00.000000','admin',18,'KS209',9,'Áo thun trắng Paris','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(35,'2026-11-12 09:00:00.000000','admin',18,'KS209',9,'Áo thun trắng Paris','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(36,'2026-11-12 09:00:00.000000','admin',12,'KS209',9,'Áo thun trắng Paris','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(37,'2026-11-12 09:00:00.000000','admin',6,'KS210',10,'Áo nỉ xanh bạc hà','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(38,'2026-11-12 09:00:00.000000','admin',9,'KS210',10,'Áo nỉ xanh bạc hà','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(39,'2026-11-12 09:00:00.000000','admin',9,'KS210',10,'Áo nỉ xanh bạc hà','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(40,'2026-11-12 09:00:00.000000','admin',6,'KS210',10,'Áo nỉ xanh bạc hà','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(41,'2026-11-12 09:00:00.000000','admin',8,'KS211',11,'Áo hoodie xanh rêu','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(42,'2026-11-12 09:00:00.000000','admin',12,'KS211',11,'Áo hoodie xanh rêu','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(43,'2026-11-12 09:00:00.000000','admin',12,'KS211',11,'Áo hoodie xanh rêu','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(44,'2026-11-12 09:00:00.000000','admin',8,'KS211',11,'Áo hoodie xanh rêu','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(45,'2026-11-12 09:00:00.000000','admin',8,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(46,'2026-11-12 09:00:00.000000','admin',12,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(47,'2026-11-12 09:00:00.000000','admin',12,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(48,'2026-11-12 09:00:00.000000','admin',8,'KS212',12,'Áo hoodie xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(49,'2026-11-12 09:00:00.000000','admin',6,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','S','IMPORT',NULL),(50,'2026-11-12 09:00:00.000000','admin',9,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','M','IMPORT',NULL),(51,'2026-11-12 09:00:00.000000','admin',9,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','L','IMPORT',NULL),(52,'2026-11-12 09:00:00.000000','admin',6,'KS213',13,'Áo nỉ xanh rêu in Don\'t forget to love','Nhập từ Xưởng nỉ & hoodie Minh Phát','Phiếu nhập #2','XL','IMPORT',NULL),(53,'2026-11-14 09:00:00.000000','admin',5,'KS214',14,'Áo khoác track jacket xanh rêu','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','S','IMPORT',NULL),(54,'2026-11-14 09:00:00.000000','admin',8,'KS214',14,'Áo khoác track jacket xanh rêu','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','M','IMPORT',NULL),(55,'2026-11-14 09:00:00.000000','admin',8,'KS214',14,'Áo khoác track jacket xanh rêu','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','L','IMPORT',NULL),(56,'2026-11-14 09:00:00.000000','admin',4,'KS214',14,'Áo khoác track jacket xanh rêu','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','XL','IMPORT',NULL),(57,'2026-11-14 09:00:00.000000','admin',8,'KS215',15,'Áo polo olive','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','S','IMPORT',NULL),(58,'2026-11-14 09:00:00.000000','admin',12,'KS215',15,'Áo polo olive','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','M','IMPORT',NULL),(59,'2026-11-14 09:00:00.000000','admin',12,'KS215',15,'Áo polo olive','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','L','IMPORT',NULL),(60,'2026-11-14 09:00:00.000000','admin',8,'KS215',15,'Áo polo olive','Nhập từ Xưởng may Hoàng Gia','Phiếu nhập #3','XL','IMPORT',NULL);
 /*!40000 ALTER TABLE `stock_movements` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -495,7 +500,7 @@ CREATE TABLE `users` (
   `avatar_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -504,7 +509,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'mailler','$2a$10$KGeQp.L3I8pUW6oEOxnH8.Y.MfZQL15vMhBN1WhKtLE9JqvhoRjEe','Quản trị viên','keovorrabout22@gmail.com','ADMIN',1,'Văn phòng Grand Sport Shop','123456789',NULL,'/uploads/avatars/b9e9c9f6-3f3d-4b1f-9b5a-c50f5c1ea203.jpg'),(8,'Thanakim','$2a$10$wCf/8GsE9QCI92.EPkvkCOiGaFcdHSm64Yox5I/7LB/r8WmX.acXC','Link keovolabouth','thanakimmail17@gmail.com','USER',1,'KTX Đại học Nghệ An','123456789',NULL,NULL);
+INSERT INTO `users` VALUES (1,'mailler','$2a$10$KGeQp.L3I8pUW6oEOxnH8.Y.MfZQL15vMhBN1WhKtLE9JqvhoRjEe','Quản trị viên','keovorrabout22@gmail.com','ADMIN',1,'Văn phòng Grand Sport Shop','0932490710',NULL,'/uploads/avatars/b9e9c9f6-3f3d-4b1f-9b5a-c50f5c1ea203.jpg'),(9,'admin01','$2a$10$Wbp/Z1woyMAgcHU7gL.bMueoEP/6OG3CB3jcNb5alXkb8i2EDZ796','Vayakone Sonya','vayakone09@gmail.com','ADMIN',1,NULL,'0705907412','2026-11-19 02:10:44.762818',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -530,7 +535,7 @@ CREATE TABLE `vouchers` (
   `used_count` int NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_voucher_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -539,6 +544,7 @@ CREATE TABLE `vouchers` (
 
 LOCK TABLES `vouchers` WRITE;
 /*!40000 ALTER TABLE `vouchers` DISABLE KEYS */;
+INSERT INTO `vouchers` VALUES (1,_binary '','WELCOME10','2026-11-19 02:05:19.000000','Chào bạn mới: giảm 10% cho đơn từ 300.000₫ (tối đa 50.000₫)','PERCENT',10,'2027-01-31 23:59:59.000000',50000,300000,500,0),(2,_binary '','FREESHIP30','2026-11-19 02:05:19.000000','Hỗ trợ phí vận chuyển 30.000₫ cho đơn từ 200.000₫','FIXED',30000,'2026-12-31 23:59:59.000000',0,200000,300,0),(3,_binary '','KOSIS50K','2026-11-19 02:05:19.000000','Giảm 50.000₫ cho đơn từ 600.000₫','FIXED',50000,'2026-12-31 23:59:59.000000',0,600000,200,0),(4,_binary '','NOEL2026','2026-11-19 02:05:19.000000','Mừng Giáng sinh: giảm 12% cho đơn từ 500.000₫ (tối đa 100.000₫)','PERCENT',12,'2026-12-26 23:59:59.000000',100000,500000,150,0),(5,_binary '','SALE15','2026-11-19 02:05:19.000000','Giảm 15% cho đơn từ 800.000₫ (tối đa 150.000₫)','PERCENT',15,'2026-12-15 23:59:59.000000',150000,800000,100,0),(6,_binary '','TET2027','2026-11-19 02:05:19.000000','Đón Tết: giảm 20% cho đơn từ 1.000.000₫ (tối đa 250.000₫)','PERCENT',20,'2027-02-15 23:59:59.000000',250000,1000000,50,0);
 /*!40000 ALTER TABLE `vouchers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -556,7 +562,7 @@ CREATE TABLE `wishlist_items` (
   `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_wishlist_user_product` (`username`,`product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -586,4 +592,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-16  0:35:02
+-- Dump completed on 2026-11-19  2:30:39

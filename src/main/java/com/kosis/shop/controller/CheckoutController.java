@@ -81,6 +81,9 @@ public class CheckoutController {
             form.setPhone(u.getPhone());
             form.setAddress(u.getAddress());
         });
+        // Tự chọn sẵn mã giảm nhiều nhất mà đơn đang dùng được (khách vẫn đổi mã khác hoặc bấm "Bỏ mã" được)
+        Voucher best = voucherService.bestFor(cart.getSubtotal());
+        if (best != null) form.setVoucherCode(best.getCode());
         return renderCheckout(model, cart, form, null, principal.getName());
     }
 
@@ -202,6 +205,7 @@ public class CheckoutController {
         String memo = transferContent(username);
         PricingService.Quote quote = buildQuote(cart.getSubtotal(), form, model);
         model.addAttribute("quote", quote);
+        model.addAttribute("voucherOptions", voucherService.available(cart.getSubtotal()));   // các mã khách có thể chọn
         model.addAttribute("transferContent", memo);
         model.addAttribute("qrPayload", bank.qrPayload(quote.getTotal(), memo));   // dữ liệu QR VietQR, vẽ ngay trên trình duyệt
         // Đặt cọc COD: số tiền cọc / còn lại + QR riêng cho số tiền cọc

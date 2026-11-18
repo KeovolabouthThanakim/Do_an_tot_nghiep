@@ -97,7 +97,7 @@ public class ShopController {
                       @RequestParam(defaultValue = "1") int page, Model model) {
         return listing(model, ProductSpecs.genderOrUnisex("MEN"), "/men", "Nam", "KOSIS DÀNH CHO NAM",
                 "Phom dáng thoải mái, lớp áo tiện dụng và những món cơ bản hằng ngày.",
-                "/images/collections/model-mens-editorial", category, sort, page, null, "men");
+                "/images/collections/mens-fashion", category, sort, page, null, "men");
     }
 
     @GetMapping("/women")

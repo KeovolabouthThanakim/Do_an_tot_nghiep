@@ -9,7 +9,6 @@
     <!-- ===== 1. HERO ===== -->
     <section class="hero" aria-label="Chiến dịch Thu Đông 2026">
         <picture class="hero__bg">
-            <source type="image/webp" th:srcset="@{/images/hero/hero-fashion-campaign.webp}">
             <img th:src="@{/images/hero/hero-fashion-campaign.jpg}" alt="Người mẫu mặc áo khoác kẻ caro và đeo hoa tai vòng vàng" fetchpriority="high">
         </picture>
         <div class="hero__shade"></div>
@@ -49,13 +48,13 @@
             </header>
 
             <div class="reveal" data-panel="men" role="tabpanel">
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsMen}, '/images/collections/model-mens-editorial.webp', '/images/collections/model-utility-look.webp', '/images/collections/model-cap-streetwear.webp', '/men', 'Nam')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsMen}, '/images/collections/model-mens-editorial.jpg', '/images/collections/model-utility-look.jpg', '/images/collections/Urban-Minimalist-in-Black.jpg', '/men', 'Nam')}"></div>
             </div>
             <div class="reveal" data-panel="women" role="tabpanel" hidden>
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsWomen}, '/images/collections/model-womens-editorial.webp', '/images/collections/model-beige-coat-street.webp', '/images/collections/model-womens-bag-look.webp', '/women', 'Nữ')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsWomen}, '/images/collections/model-womens-editorial.jpg', '/images/collections/model-beige-coat-street.jpg', '/images/collections/model-womens-bag-look.jpg', '/women', 'Nữ')}"></div>
             </div>
             <div class="reveal" data-panel="kids" role="tabpanel" hidden>
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsKids}, '/images/collections/kids-fashion-look.webp', null, null, '/kids', 'Trẻ em')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsKids}, '/images/collections/kids-fashion-look.jpg', null, null, '/kids', 'Trẻ em')}"></div>
             </div>
         </div>
     </section>
@@ -91,7 +90,7 @@
             </header>
             <div class="editorial__grid">
                 <a class="ed-photo reveal" th:href="@{/kids}" aria-label="Mua đồ trẻ em">
-                    <img th:src="@{/images/collections/model-blue-jacket-look.webp}" alt="Người mẫu nhí mặc áo nỉ khóa kéo màu xanh và quần ống rộng" loading="lazy">
+                    <img th:src="@{/images/collections/model-blue-jacket-look.jpg}" alt="Người mẫu nhí mặc áo nỉ khóa kéo màu xanh và quần ống rộng" loading="lazy">
                     <span class="btn btn--dark btn--sm">Đồ trẻ em <i class="bi bi-arrow-up-right"></i></span>
                 </a>
                 <div class="ed-dark reveal" style="--d:.1s" data-editorial>
@@ -102,9 +101,9 @@
                     <h3>Bộ sưu tập hoài niệm dành cho <span data-ed-word>nữ</span></h3>
                     <div class="ed-dark__row">
                         <span class="avatars" aria-hidden="true">
-                            <img th:src="@{/images/collections/model-womens-editorial.webp}" alt="" style="object-position:top">
-                            <img th:src="@{/images/collections/model-mens-editorial.webp}" alt="" style="object-position:top">
-                            <img th:src="@{/images/collections/model-beige-coat-street.webp}" alt="" style="object-position:top">
+                            <img th:src="@{/images/collections/model-womens-editorial.jpg}" alt="" style="object-position:top">
+                            <img th:src="@{/images/collections/model-mens-editorial.jpg}" alt="" style="object-position:top">
+                            <img th:src="@{/images/collections/model-beige-coat-street.jpg}" alt="" style="object-position:top">
                         </span>
                         <span>Free size đến XL</span>
                     </div>
@@ -152,14 +151,14 @@
 
     <!-- ===== 6. FULL-WIDTH CAMPAIGN ===== -->
     <section class="campaign" aria-labelledby="campaign-title">
-        <div class="campaign__bg" aria-hidden="true"><img th:src="@{/images/collections/model-womens-editorial.webp}" alt=""></div>
-        <div class="campaign__photo"><img th:src="@{/images/collections/model-womens-editorial.webp}" alt="Người mẫu mặc blazer màu kem và áo cổ lọ gân" loading="lazy"></div>
+        <div class="campaign__bg" aria-hidden="true"><img th:src="@{/images/collections/womens-fashion-portrait.jpg}" alt=""></div>
+        <div class="campaign__photo"><img th:src="@{/images/collections/womens-fashion-portrait.jpg}" alt="Người mẫu mặc blazer màu kem và áo cổ lọ gân" loading="lazy"></div>
         <div class="campaign__inner reveal">
             <div class="social-proof">
                 <span class="avatars" aria-hidden="true">
-                    <img th:src="@{/images/collections/model-mens-editorial.webp}" alt="" style="object-position:top">
-                    <img th:src="@{/images/collections/model-womens-bag-look.webp}" alt="" style="object-position:top">
-                    <img th:src="@{/images/collections/model-black-hoodie.webp}" alt="" style="object-position:top">
+                    <img th:src="@{/images/collections/model-mens-editorial.jpg}" alt="" style="object-position:top">
+                    <img th:src="@{/images/collections/model-womens-bag-look.jpg}" alt="" style="object-position:top">
+                    <img th:src="@{/images/collections/model-black-hoodie.jpg}" alt="" style="object-position:top">
                 </span>
                 <span>+97k khách hàng hài lòng</span>
             </div>

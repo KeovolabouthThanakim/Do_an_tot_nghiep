@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -126,5 +127,34 @@ class VoucherServiceTest {
         service.release(null);
         service.release("  ");
         verify(repository, never()).findByCodeForUpdate(anyString());
+    }
+
+    @Test
+    void availableListsEligibleFirstBestDiscountOnTop() {
+        Voucher small = voucher("SMALL");           // 50.000 cố định
+        Voucher pct = voucher("PCT");
+        pct.setDiscountType(Voucher.PERCENT);
+        pct.setDiscountValue(20);                   // 20% của 450.000 = 90.000
+        Voucher locked = voucher("LOCKED");
+        locked.setMinOrder(1_000_000);
+        Voucher off = voucher("OFF");
+        off.setActive(false);
+        when(repository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(small, locked, off, pct));
+
+        List<VoucherService.Option> opts = service.available(450_000);
+
+        assertEquals(List.of("PCT", "SMALL", "LOCKED"), opts.stream().map(o -> o.getVoucher().getCode()).toList());
+        assertTrue(opts.get(0).isEligible());
+        assertFalse(opts.get(2).isEligible());
+        assertEquals(550_000, opts.get(2).getMissing());
+        assertEquals("PCT", service.bestFor(450_000).getCode());
+    }
+
+    @Test
+    void bestForIsNullWhenNothingUsable() {
+        Voucher locked = voucher("LOCKED");
+        locked.setMinOrder(1_000_000);
+        when(repository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(locked));
+        assertNull(service.bestFor(450_000));
     }
 }

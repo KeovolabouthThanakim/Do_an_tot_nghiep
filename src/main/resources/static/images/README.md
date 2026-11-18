@@ -10,7 +10,7 @@ Folders follow the project brief: `logo/ hero/ products/ collections/ editorial/
 | `editorial/` | Texture and campaign detail photos |
 | `logo/` | `kosis-logo.svg` (the header uses live text so it stays crisp) |
 
-Every photo exists as `.webp` (used by the site) and `.jpg` (fallback).
+Every photo is a `.jpg` (the site no longer uses `.webp`).
 
 **Important – resolution.** The supplied source images are small crops (the hero was 504 px wide,
 most products ~130-190 px). They were cleaned (slivers removed, backgrounds whitened, text removed

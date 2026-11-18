@@ -7,7 +7,7 @@
 <main id="main">
     <!-- Banner (gender / sale / gift pages) or plain heading (search) -->
     <section class="banner" th:if="${heroImage != null}">
-        <img th:src="@{${heroImage + '.webp'}}" alt="" fetchpriority="high">
+        <img th:src="@{${heroImage + '.jpg'}}" alt="" fetchpriority="high">
         <div class="banner__in">
             <p class="eyebrow" th:text="${pageEyebrow}">KOSIS</p>
             <h1 class="display" th:text="${pageTitle}">Collection</h1>

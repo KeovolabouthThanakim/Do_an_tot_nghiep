@@ -170,6 +170,36 @@
                     </div>
                     <p th:if="${voucherMessage != null}" th:text="${voucherMessage}" style="margin:6px 0 0;font-size:12.5px;color:#1a7f37">Đã áp dụng mã</p>
                     <p th:if="${voucherError != null}" th:text="${voucherError}" style="margin:6px 0 0;font-size:12.5px;color:#b3261e">Lỗi</p>
+                    <p th:if="${voucherMessage != null}" style="margin:4px 0 0">
+                        <button type="button" data-voucher-clear style="background:none;border:0;padding:0;font-size:12.5px;color:#777;text-decoration:underline;cursor:pointer">Bỏ mã</button>
+                    </p>
+
+                    <!-- Danh sách mã dùng được: nút xám + bảng xổ xuống giống menu "Danh mục sản phẩm"; bấm một mã để áp dụng ngay -->
+                    <div class="co-vdrop" th:if="${!voucherOptions.empty}" data-vdrop>
+                        <button type="button" class="co-vbtn" aria-haspopup="true" aria-expanded="false" aria-controls="voucherMenu" data-vdrop-toggle>
+                            <svg class="ico co-vico" aria-hidden="true"><use href="#i-list"/></svg>
+                            <span class="co-vlabel" th:if="${voucherMessage == null}">Chọn mã giảm giá</span>
+                            <span class="co-vlabel" th:if="${voucherMessage != null}">Đang dùng: <b th:text="${form.voucherCode}">NOEL2026</b></span>
+                            <span class="co-vcount" th:text="${#lists.size(voucherOptions)}">5</span>
+                            <svg class="ico ico-caret co-vcaret" aria-hidden="true"><use href="#i-caret"/></svg>
+                        </button>
+                        <div class="co-vmenu" id="voucherMenu" role="menu" hidden>
+                            <button type="button" class="co-vitem" role="menuitem" th:each="o : ${voucherOptions}"
+                                    th:attr="data-voucher=${o.voucher.code}, aria-disabled=${!o.eligible}"
+                                    th:classappend="${(!o.eligible ? 'is-locked ' : '') + (voucherMessage != null and form.voucherCode != null and #strings.equalsIgnoreCase(form.voucherCode, o.voucher.code) ? 'is-on' : '')}">
+                                <span class="co-vtop">
+                                    <span class="co-vcode" th:text="${o.voucher.code}">WELCOME10</span>
+                                    <b class="co-vsave" th:if="${o.eligible}" th:text="'-' + ${#numbers.formatInteger(o.discount, 0, 'POINT')} + ' ₫'">-50.000 ₫</b>
+                                    <i class="bi bi-check-lg co-vtick" th:if="${voucherMessage != null and form.voucherCode != null and #strings.equalsIgnoreCase(form.voucherCode, o.voucher.code)}"></i>
+                                </span>
+                                <span class="co-vdesc" th:text="${o.voucher.description}">Mô tả</span>
+                                <span class="co-vsub">
+                                    <em th:unless="${o.eligible}" th:text="'Mua thêm ' + ${#numbers.formatInteger(o.missing, 0, 'POINT')} + ' ₫ để dùng'">Mua thêm</em>
+                                    <small th:if="${o.voucher.expiresAt != null}" th:text="'HSD ' + ${#temporals.format(o.voucher.expiresAt, 'dd/MM/yyyy')}">HSD</small>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="co-rows">
@@ -334,6 +364,42 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
         });
+    })();
+
+    // Chọn mã giảm giá từ danh sách / bỏ mã: điền vào ô mã rồi gửi form "Áp dụng" (server tính lại tiền)
+    (function () {
+        var form = document.getElementById('checkoutForm');
+        var input = document.getElementById('voucherCode');
+        var applyBtn = form && form.querySelector('[data-apply]');
+        if (!form || !input || !applyBtn) return;
+        function apply(code) {
+            input.value = code;
+            if (form.requestSubmit) form.requestSubmit(applyBtn); else applyBtn.click();
+        }
+        document.querySelectorAll('[data-voucher]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (b.getAttribute('aria-disabled') === 'true') return;
+                apply(b.getAttribute('data-voucher'));
+            });
+        });
+        var clear = document.querySelector('[data-voucher-clear]');
+        if (clear) clear.addEventListener('click', function () { apply(''); });
+    })();
+
+    // Menu xổ xuống chọn mã giảm giá: bấm nút để mở/đóng, bấm ra ngoài hoặc Esc để đóng
+    (function () {
+        var box = document.querySelector('[data-vdrop]');
+        if (!box) return;
+        var btn = box.querySelector('[data-vdrop-toggle]');
+        var menu = box.querySelector('.co-vmenu');
+        function set(open) {
+            menu.hidden = !open;
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            box.classList.toggle('is-open', open);
+        }
+        btn.addEventListener('click', function () { set(menu.hidden); });
+        document.addEventListener('click', function (e) { if (!box.contains(e.target)) set(false); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
     })();
 </script>
 </body>
