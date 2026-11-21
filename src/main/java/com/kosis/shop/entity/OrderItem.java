@@ -1,5 +1,6 @@
 package com.kosis.shop.entity;
 
+import com.kosis.shop.config.I18n;
 import jakarta.persistence.*;
 
 /** Một dòng sản phẩm trong đơn hàng (đã chụp lại tên/giá/ảnh tại thời điểm đặt) */
@@ -59,7 +60,7 @@ public class OrderItem {
         if (size != null && !size.isBlank()) sb.append("Size ").append(size);
         if (color != null && !color.isBlank()) {
             if (sb.length() > 0) sb.append(" · ");
-            sb.append("Màu ").append(color);
+            sb.append(I18n.t("item.color", "Màu {0}", color));
         }
         return sb.toString();
     }

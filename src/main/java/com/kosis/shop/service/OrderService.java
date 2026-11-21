@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.cart.Cart;
 import com.kosis.shop.entity.Carrier;
 import com.kosis.shop.entity.Order;
@@ -64,7 +65,7 @@ public class OrderService {
     @Transactional
     public Order placeOrder(String username, CheckoutForm form, Cart cart, String slipFile) {
         if (cart.isEmpty()) {
-            throw new IllegalStateException("Giỏ hàng đang trống.");
+            throw new IllegalStateException(I18n.t("order.cart.empty", "Giỏ hàng đang trống."));
         }
 
         Order order = new Order();
@@ -89,9 +90,9 @@ public class OrderService {
         }
         for (Long pid : productIds) {
             Product locked = productRepository.findByIdForUpdate(pid)
-                    .orElseThrow(() -> new IllegalStateException("Có sản phẩm trong giỏ không còn được bán. Vui lòng kiểm tra lại giỏ hàng."));
+                    .orElseThrow(() -> new IllegalStateException(I18n.t("order.cart.unavailable", "Có sản phẩm trong giỏ không còn được bán. Vui lòng kiểm tra lại giỏ hàng.")));
             if (locked.isPendingImport()) {
-                throw new IllegalStateException("Có sản phẩm trong giỏ không còn được bán. Vui lòng kiểm tra lại giỏ hàng.");
+                throw new IllegalStateException(I18n.t("order.cart.unavailable", "Có sản phẩm trong giỏ không còn được bán. Vui lòng kiểm tra lại giỏ hàng."));
             }
             products.put(pid, locked);
         }
@@ -101,13 +102,13 @@ public class OrderService {
             int qty = e.getValue();
             String colorOfLine = Cart.colorOf(e.getKey());
             int have = p.getStockOf(size, colorOfLine);
-            String label = "Sản phẩm \"" + p.getName() + "\""
-                    + (size.isEmpty() ? "" : " (size " + size + ")")
-                    + (colorOfLine.isEmpty() ? "" : " (màu " + colorOfLine + ")");
+            String label = I18n.t("order.label.product", "Sản phẩm \"{0}\"", p.getName())
+                    + (size.isEmpty() ? "" : " " + I18n.t("order.label.size", "(size {0})", size))
+                    + (colorOfLine.isEmpty() ? "" : " " + I18n.t("order.label.color", "(màu {0})", colorOfLine));
             if (have < qty) {
                 throw new IllegalStateException(have <= 0
-                        ? label + " vừa hết hàng."
-                        : label + " chỉ còn " + have + " trong kho.");
+                        ? I18n.t("order.stock.out", "{0} vừa hết hàng.", label)
+                        : I18n.t("order.stock.low", "{0} chỉ còn {1} trong kho.", label, have));
             }
             p.adjustStock(size, colorOfLine, -qty);
         }
@@ -157,7 +158,7 @@ public class OrderService {
         order.setDepositAmount(deposit);
         if (bank || deposit > 0) {
             if (deposit > 0 && (slipFile == null || slipFile.isBlank())) {
-                throw new IllegalStateException("Đơn COD cần đặt cọc trước: vui lòng chuyển khoản tiền cọc và tải ảnh bill.");
+                throw new IllegalStateException(I18n.t("order.cod.deposit.required", "Đơn COD cần đặt cọc trước: vui lòng chuyển khoản tiền cọc và tải ảnh bill."));
             }
             order.setSlipImage(slipFile);
             order.setStatus(Order.STATUS_PAYMENT_REVIEW);
@@ -269,7 +270,7 @@ public class OrderService {
     @Transactional
     public Order confirm(Long id, String staff) {
         Order o = orderRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!o.isAwaitingReview()) {
             throw new IllegalStateException("Đơn hàng này đã được xử lý rồi (" + o.getStatusLabel() + ").");
         }
@@ -350,7 +351,7 @@ public class OrderService {
             throw new IllegalStateException("Lý do quá dài (tối đa 300 ký tự).");
         }
         Order o = orderRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!o.isAwaitingReview()) {
             throw new IllegalStateException("Đơn hàng này đã được xử lý rồi (" + o.getStatusLabel() + ").");
         }
@@ -373,23 +374,23 @@ public class OrderService {
     @Transactional
     public Order cancelByCustomer(Long id, String username) {
         Order o = orderRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!Objects.equals(o.getUsername(), username)) {
-            throw new IllegalStateException("Không tìm thấy đơn hàng.");
+            throw new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng."));
         }
         if (!o.isCustomerCanCancel()) {
             throw new IllegalStateException(o.isRejected()
-                    ? "Đơn này đã được huỷ hoặc bị từ chối rồi."
-                    : "Đơn này đã được cửa hàng xác nhận nên không tự huỷ được. Vui lòng liên hệ cửa hàng để được hỗ trợ.");
+                    ? I18n.t("order.already.cancelled", "Đơn này đã được huỷ hoặc bị từ chối rồi.")
+                    : I18n.t("order.cannot.cancel", "Đơn này đã được cửa hàng xác nhận nên không tự huỷ được. Vui lòng liên hệ cửa hàng để được hỗ trợ."));
         }
         restoreStock(o);
         voucherService.release(o.getVoucherCode());
         o.setStatus(Order.STATUS_REJECTED);
         o.setReviewedBy(Order.CANCELLED_BY_CUSTOMER);
         o.setReviewedAt(LocalDateTime.now());
-        o.setRejectReason(o.isBank() ? "Khách tự huỷ đơn (đơn chuyển khoản: cửa hàng sẽ hoàn tiền nếu bạn đã chuyển)"
-                : o.isCodDeposit() ? "Khách tự huỷ đơn (đơn COD đặt cọc: cửa hàng sẽ liên hệ xử lý tiền cọc nếu bạn đã chuyển)"
-                : "Khách tự huỷ đơn");
+        o.setRejectReason(o.isBank() ? I18n.t("order.cancel.reason.bank", "Khách tự huỷ đơn (đơn chuyển khoản: cửa hàng sẽ hoàn tiền nếu bạn đã chuyển)")
+                : o.isCodDeposit() ? I18n.t("order.cancel.reason.cod", "Khách tự huỷ đơn (đơn COD đặt cọc: cửa hàng sẽ liên hệ xử lý tiền cọc nếu bạn đã chuyển)")
+                : I18n.t("order.cancel.reason", "Khách tự huỷ đơn"));
         return orderRepository.save(o);
     }
 
@@ -397,7 +398,7 @@ public class OrderService {
 
     private Order confirmedOrder(Long id) {
         Order o = orderRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!o.isConfirmed()) {
             throw new IllegalStateException("Chỉ đơn đã được xác nhận mới giao hàng được.");
         }
@@ -501,15 +502,15 @@ public class OrderService {
     @Transactional
     public Order confirmReceivedByCustomer(Long id, String username) {
         Order o = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!Objects.equals(o.getUsername(), username)) {
-            throw new IllegalStateException("Không tìm thấy đơn hàng.");
+            throw new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng."));
         }
         if (o.isDelivered()) {
-            throw new IllegalStateException("Đơn này đã được xác nhận nhận hàng rồi.");
+            throw new IllegalStateException(I18n.t("order.already.received", "Đơn này đã được xác nhận nhận hàng rồi."));
         }
         if (!o.isCustomerCanConfirm()) {
-            throw new IllegalStateException("Đơn này chưa được giao cho đơn vị vận chuyển nên chưa thể xác nhận nhận hàng.");
+            throw new IllegalStateException(I18n.t("order.not.shipped.yet", "Đơn này chưa được giao cho đơn vị vận chuyển nên chưa thể xác nhận nhận hàng."));
         }
         finishDelivered(o, "@customer");
         return orderRepository.save(o);
@@ -563,7 +564,7 @@ public class OrderService {
     @Transactional
     public boolean restockAfterReturn(Long id) {
         Order o = orderRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (o.isStockRestored()) return false;
         restoreStock(o);
         orderRepository.save(o);

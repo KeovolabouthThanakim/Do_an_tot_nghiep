@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.Order;
 import com.kosis.shop.service.OrderNotifier;
 import com.kosis.shop.entity.ReturnRequest;
@@ -78,7 +79,7 @@ public class MyOrdersController {
         try {
             Order o = orderService.cancelByCustomer(id, principal.getName());
             orderNotifier.cancelled(o);
-            ra.addFlashAttribute("orderMessage", "Đơn " + o.getOrderCode() + " đã được huỷ.");
+            ra.addFlashAttribute("orderMessage", I18n.t("orders.cancelled.msg", "Đơn {0} đã được huỷ.", o.getOrderCode()));
             return "redirect:/don-hang-cua-toi?tab=rejected";
         } catch (IllegalStateException e) {
             ra.addFlashAttribute("orderError", e.getMessage());
@@ -91,7 +92,7 @@ public class MyOrdersController {
     public String confirmReceived(@PathVariable Long id, Principal principal, RedirectAttributes ra) {
         try {
             Order o = orderService.confirmReceivedByCustomer(id, principal.getName());
-            ra.addFlashAttribute("orderMessage", "Cảm ơn bạn! Đơn " + o.getOrderCode() + " đã được xác nhận là đã nhận hàng. Bạn có thể bấm \"Đánh giá sản phẩm\" ở từng món để chấm sao.");
+            ra.addFlashAttribute("orderMessage", I18n.t("orders.received.thanks", "Cảm ơn bạn! Đơn {0} đã được xác nhận là đã nhận hàng. Bạn có thể bấm \"Đánh giá sản phẩm\" ở từng món để chấm sao.", o.getOrderCode()));
         } catch (IllegalStateException e) {
             ra.addFlashAttribute("orderError", e.getMessage());
         }
@@ -105,10 +106,9 @@ public class MyOrdersController {
         try {
             ReturnRequest r = returnService.request(id, principal.getName(), reason);
             Order o = orderService.findById(id);
-            orderNotifier.custom(o, "KOSIS - Đã nhận yêu cầu trả hàng đơn " + o.getOrderCode(),
-                    "Chúng tôi đã nhận yêu cầu trả hàng của bạn.\nLý do: " + r.getReason()
-                            + "\nNhân viên sẽ xem xét và phản hồi bạn sớm. Bạn đừng gửi hàng về trước khi yêu cầu được duyệt.");
-            ra.addFlashAttribute("orderMessage", "Đã gửi yêu cầu trả hàng cho đơn " + r.getOrderCode() + ". Cửa hàng sẽ phản hồi sớm.");
+            orderNotifier.custom(o, I18n.t("orders.return.mail.subject", "KOSIS - Đã nhận yêu cầu trả hàng đơn {0}", o.getOrderCode()),
+                    I18n.t("orders.return.mail.body", "Chúng tôi đã nhận yêu cầu trả hàng của bạn.\nLý do: {0}\nNhân viên sẽ xem xét và phản hồi bạn sớm. Bạn đừng gửi hàng về trước khi yêu cầu được duyệt.", r.getReason()));
+            ra.addFlashAttribute("orderMessage", I18n.t("orders.return.sent", "Đã gửi yêu cầu trả hàng cho đơn {0}. Cửa hàng sẽ phản hồi sớm.", r.getOrderCode()));
         } catch (IllegalStateException e) {
             ra.addFlashAttribute("orderError", e.getMessage());
         }

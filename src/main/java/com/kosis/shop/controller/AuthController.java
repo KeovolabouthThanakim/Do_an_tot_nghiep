@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.User;
 import com.kosis.shop.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,27 +37,27 @@ public class AuthController {
                              @RequestParam(value = "passwordReset", required = false) String passwordReset,
                              Model model) {
         if ("ratelimit".equals(error)) {
-            model.addAttribute("errorMessage", "Bạn thử đăng nhập quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.rate.limit", "Bạn thử đăng nhập quá nhiều lần. Vui lòng đợi vài phút rồi thử lại."));
         } else if ("denied".equals(error)) {
             // đã đăng nhập nhưng không đủ quyền vào trang vừa mở (khác với sai mật khẩu)
-            model.addAttribute("errorMessage", "Tài khoản của bạn không có quyền truy cập trang này.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.forbidden", "Tài khoản của bạn không có quyền truy cập trang này."));
         } else if (error != null) {
-            model.addAttribute("errorMessage", "Sai tên đăng nhập hoặc mật khẩu!");
+            model.addAttribute("errorMessage", I18n.t("auth.error.bad.credentials", "Sai tên đăng nhập hoặc mật khẩu!"));
         }
         if (required != null) {
-            model.addAttribute("infoMessage", "Vui lòng đăng nhập để tiếp tục.");
+            model.addAttribute("infoMessage", I18n.t("auth.info.login.required", "Vui lòng đăng nhập để tiếp tục."));
         }
         if (renamed != null) {
-            model.addAttribute("infoMessage", "Tên đăng nhập đã được đổi. Vui lòng đăng nhập lại bằng tên mới.");
+            model.addAttribute("infoMessage", I18n.t("auth.info.username.changed", "Tên đăng nhập đã được đổi. Vui lòng đăng nhập lại bằng tên mới."));
         }
         if (logout != null) {
-            model.addAttribute("logoutMessage", "Bạn đã đăng xuất thành công.");
+            model.addAttribute("logoutMessage", I18n.t("auth.logout.success", "Bạn đã đăng xuất thành công."));
         }
         if (passwordReset != null) {
-            model.addAttribute("successMessage", "Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.");
+            model.addAttribute("successMessage", I18n.t("auth.success.password.reset", "Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới."));
         }
         if (registered != null) {
-            model.addAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
+            model.addAttribute("successMessage", I18n.t("auth.success.registered", "Đăng ký thành công! Vui lòng đăng nhập."));
         }
         return "auth/login";
     }
@@ -64,7 +65,7 @@ public class AuthController {
     @GetMapping("/register")
     public String registerPage(@RequestParam(value = "error", required = false) String error, Model model) {
         if ("ratelimit".equals(error)) {
-            model.addAttribute("errorMessage", "Bạn đăng ký quá nhiều lần. Vui lòng thử lại sau.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.register.rate.limit", "Bạn đăng ký quá nhiều lần. Vui lòng thử lại sau."));
         }
         model.addAttribute("user", new User());
         return "auth/register";
@@ -77,30 +78,30 @@ public class AuthController {
     @PostMapping("/register")
     public String register(@ModelAttribute User user, Model model) {
         if (user.getUsername() == null || user.getUsername().isBlank()) {
-            model.addAttribute("errorMessage", "Vui lòng nhập tên đăng nhập.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.username.required", "Vui lòng nhập tên đăng nhập."));
             return "auth/register";
         }
         user.setUsername(user.getUsername().trim());
         if (user.getPassword() == null || user.getPassword().length() < 6) {
-            model.addAttribute("errorMessage", "Mật khẩu phải có ít nhất 6 ký tự.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.password.short", "Mật khẩu phải có ít nhất 6 ký tự."));
             return "auth/register";
         }
         String email = user.getEmail() == null ? "" : user.getEmail().trim();
         if (email.isEmpty()) {
-            model.addAttribute("errorMessage", "Vui lòng nhập email.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.email.required", "Vui lòng nhập email."));
             return "auth/register";
         }
         String phone = normalizeVnPhone(user.getPhone());
         if (phone == null) {
-            model.addAttribute("errorMessage", "Số điện thoại không hợp lệ. Nhập 10 số, VD: 0901234567.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.phone.invalid", "Số điện thoại không hợp lệ. Nhập 10 số, VD: 0901234567."));
             return "auth/register";
         }
         if (userRepository.existsByUsernameIgnoreCase(user.getUsername())) {
-            model.addAttribute("errorMessage", "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.username.taken", "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác."));
             return "auth/register";
         }
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            model.addAttribute("errorMessage", "Email này đã được dùng cho tài khoản khác.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.email.taken", "Email này đã được dùng cho tài khoản khác."));
             return "auth/register";
         }
 
@@ -116,7 +117,7 @@ public class AuthController {
         try {
             userRepository.save(u);
         } catch (DataIntegrityViolationException e) {
-            model.addAttribute("errorMessage", "Tên đăng nhập hoặc email đã tồn tại, vui lòng thử lại.");
+            model.addAttribute("errorMessage", I18n.t("auth.error.exists", "Tên đăng nhập hoặc email đã tồn tại, vui lòng thử lại."));
             return "auth/register";
         }
         return "redirect:/login?registered=true";

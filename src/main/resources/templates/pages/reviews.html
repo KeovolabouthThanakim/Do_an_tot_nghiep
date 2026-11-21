@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
-<head th:replace="~{fragments/layout :: head('Điểm đánh giá | KOSIS', 'shop')}"></head>
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head(#{title.reviews}, 'shop')}"></head>
 <body>
 <th:block th:replace="~{fragments/layout :: header}"></th:block>
 <main id="main">
 <div class="container container--content">
     <div class="page-head">
-        <p class="eyebrow">ĐÁNH GIÁ CỦA KHÁCH</p>
-        <h1 class="display">Điểm đánh giá</h1>
-        <p>Nhận xét thật từ khách hàng đã nhận sản phẩm tại KOSIS.</p>
+        <p class="eyebrow">[[#{reviews.customer.reviews}]]</p>
+        <h1 class="display">[[#{common.ratings}]]</h1>
+        <p>[[#{reviews.honest.reviews.from.customers.who}]]</p>
     </div>
 
-    <section class="rvp" aria-label="Điểm đánh giá của khách hàng">
+    <section class="rvp" aria-label="Điểm đánh giá của khách hàng" th:aria-label="#{reviews.customer.ratings}">
 
         <th:block>
             <!-- Thẻ xếp hạng shop -->
             <div class="rvp-tier">
                 <div class="rvp-tier__main">
-                    <p class="rvp-tier__label">Xếp hạng cửa hàng</p>
+                    <p class="rvp-tier__label">[[#{reviews.store.rating}]]</p>
                     <div class="rvp-tier__grade" th:text="${tier}">AA+</div>
                     <div class="rvp-tier__line"></div>
                     <p class="rvp-tier__meta">
@@ -25,7 +25,7 @@
                         <span class="stars" aria-hidden="true"><i th:each="i : ${#numbers.sequence(1,5)}"
                               th:class="${avgRating >= i ? 'bi bi-star-fill' : (avgRating >= i - 0.5 ? 'bi bi-star-half' : 'bi bi-star')}"></i></span>
                     </p>
-                    <p class="rvp-tier__avg"><span th:if="${totalCount == 0}">Chưa có đánh giá nào</span><span th:if="${totalCount > 0}">Trung bình từ <b th:text="${#numbers.formatInteger(totalCount, 0, 'POINT')}">120</b> đánh giá</span></p>
+                    <p class="rvp-tier__avg"><span th:if="${totalCount == 0}">[[#{reviews.no.reviews.yet}]]</span><span th:if="${totalCount > 0}">[[#{reviews.average.from}]] <b th:text="${#numbers.formatInteger(totalCount, 0, numSep)}">120</b> [[#{reviews.reviews.2}]]</span></p>
                 </div>
                 <i class="bi bi-trophy-fill rvp-tier__icon" aria-hidden="true"></i>
             </div>
@@ -34,23 +34,23 @@
             <div class="rvp-stats">
                 <div class="rvp-stat">
                     <i class="bi bi-star" aria-hidden="true"></i>
-                    <p>Điểm trung bình</p>
-                    <b th:text="${avgText}">4.6</b><small>/ 5 sao</small>
+                    <p>[[#{reviews.average.rating}]]</p>
+                    <b th:text="${avgText}">4.6</b><small>[[#{reviews.5.stars}]]</small>
                 </div>
                 <div class="rvp-stat">
                     <i class="bi bi-emoji-smile" aria-hidden="true"></i>
-                    <p>Khách hài lòng (4–5 sao)</p>
+                    <p>[[#{reviews.satisfied.customers.4.5.stars}]]</p>
                     <b th:text="${satisfiedPercent}">92</b><small>%</small>
                 </div>
                 <div class="rvp-stat">
                     <i class="bi bi-chat-quote" aria-hidden="true"></i>
-                    <p>Có viết nhận xét</p>
+                    <p>[[#{reviews.with.a.written.comment}]]</p>
                     <b th:text="${commentPercent}">64</b><small>%</small>
                 </div>
                 <div class="rvp-stat">
                     <i class="bi bi-calendar-check" aria-hidden="true"></i>
-                    <p>Đánh giá trong 30 ngày</p>
-                    <b th:text="${last30Count}">18</b><small>lượt</small>
+                    <p>[[#{reviews.reviews.in.the.last.30}]]</p>
+                    <b th:text="${last30Count}">18</b><small>[[#{reviews.reviews}]]</small>
                 </div>
             </div>
 
@@ -66,41 +66,41 @@
 
             <!-- Tiêu đề danh sách + bộ lọc -->
             <div class="rvp-toolbar">
-                <h2>Ý kiến của khách hàng</h2>
+                <h2>[[#{reviews.customer.opinions}]]</h2>
                 <form th:action="@{/danh-gia}" method="get" class="rvp-period">
                     <input type="hidden" name="sao" th:value="${activeStar}" th:if="${activeStar != null}">
-                    <label class="sr-only" for="rv-period">Khoảng thời gian</label>
+                    <label class="sr-only" for="rv-period">[[#{reviews.time.period}]]</label>
                     <select id="rv-period" name="ky" data-autosubmit>
                         <option th:each="d : ${periods}" th:value="${d}" th:selected="${d == activePeriod}"
-                                th:text="${d == 0 ? 'Tất cả thời gian' : (d == 30 ? '1 tháng gần nhất' : (d == 90 ? '3 tháng gần nhất' : '6 tháng gần nhất'))}">1 tháng gần nhất</option>
+                                th:text="${d == 0} ? #{reviews.period.all} : (${d == 30} ? #{misc.last.month} : (${d == 90} ? #{reviews.period.90} : #{reviews.period.180}))">1 tháng gần nhất</option>
                     </select>
                 </form>
             </div>
 
             <div class="rvp-filter">
-                <a th:href="@{/danh-gia(ky=${activePeriod})}" th:classappend="${activeStar == null} ? 'is-active'">Tất cả</a>
+                <a th:href="@{/danh-gia(ky=${activePeriod})}" th:classappend="${activeStar == null} ? 'is-active'">[[#{common.all}]]</a>
                 <a th:each="star : ${starLevels}" th:href="@{/danh-gia(sao=${star}, ky=${activePeriod})}"
-                   th:classappend="${activeStar != null and activeStar == star} ? 'is-active'" th:text="${star} + ' sao'">5 sao</a>
+                   th:classappend="${activeStar != null and activeStar == star} ? 'is-active'" th:text="#{reviews.stars.n(${star})}">5 sao</a>
             </div>
 
             <div class="rvp-empty" th:if="${totalCount == 0}">
                 <i class="bi bi-star" aria-hidden="true"></i>
-                <p>Hiện chưa có khách hàng nào đánh giá.</p>
-                <small>Khách đã nhận hàng có thể chấm sao ngay trong mục “Đơn hàng của tôi”.</small>
+                <p>[[#{reviews.no.customers.have.left.a}]]</p>
+                <small>[[#{reviews.customers.who.have.received.their}]]</small>
             </div>
-            <p class="rv-empty" th:if="${totalCount > 0 and #lists.isEmpty(reviews)}">Không có đánh giá nào khớp với bộ lọc này.</p>
+            <p class="rv-empty" th:if="${totalCount > 0 and #lists.isEmpty(reviews)}">[[#{reviews.no.reviews.match.this.filter}]]</p>
 
             <ul class="rvp-list" th:if="${!#lists.isEmpty(reviews)}">
                 <li class="rvp-item" th:each="r : ${reviews}">
-                    <div class="rvp-score" th:classappend="'rvp-score--' + ${r.rating}" th:text="${r.rating * 2}" title="Điểm trên thang 10">10</div>
+                    <div class="rvp-score" th:classappend="'rvp-score--' + ${r.rating}" th:text="${r.rating * 2}" title="Điểm trên thang 10" th:title="#{reviews.score.out.of.10}">10</div>
                     <div class="rvp-body">
                         <p class="rvp-who"><b th:text="${r.maskedName}">kh***</b> · <span th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}">20/10/2026 16:22</span></p>
                         <p class="rvp-text" th:if="${!#strings.isEmpty(r.comment)}" th:text="${r.comment}">Nhận xét</p>
-                        <p class="rvp-text rvp-nocomment" th:if="${#strings.isEmpty(r.comment)}">Khách chỉ chấm sao.</p>
+                        <p class="rvp-text rvp-nocomment" th:if="${#strings.isEmpty(r.comment)}">[[#{reviews.this.customer.only.left.a}]]</p>
                         <a class="rvp-prod" th:href="@{'/san-pham/' + ${r.productId}}">
                             <img th:src="@{${#strings.isEmpty(productImages.get(r.productId)) ? '/images/products/placeholder.svg' : productImages.get(r.productId)}}"
                                  th:alt="${productNames.get(r.productId)}" onerror="this.onerror=null;this.src='/images/products/placeholder.svg'">
-                            <span th:text="${productNames.get(r.productId) != null ? productNames.get(r.productId) : 'Sản phẩm'}">Tên sản phẩm</span>
+                            <span th:text="${productNames.get(r.productId)} ?: #{receipt.product}">Tên sản phẩm</span>
                         </a>
                     </div>
                     <i class="rvp-face bi" aria-hidden="true"

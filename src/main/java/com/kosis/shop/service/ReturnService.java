@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.Order;
 import com.kosis.shop.entity.ReturnRequest;
 import com.kosis.shop.repository.OrderRepository;
@@ -55,23 +56,23 @@ public class ReturnService {
     @Transactional
     public ReturnRequest request(Long orderId, String username, String reason) {
         Order o = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng.")));
         if (!Objects.equals(o.getUsername(), username)) {
-            throw new IllegalStateException("Không tìm thấy đơn hàng.");
+            throw new IllegalStateException(I18n.t("order.not.found", "Không tìm thấy đơn hàng."));
         }
         if (!o.isConfirmed() || !o.isDelivered()) {
-            throw new IllegalStateException("Chỉ đơn đã giao thành công mới gửi được yêu cầu trả hàng.");
+            throw new IllegalStateException(I18n.t("return.only.delivered", "Chỉ đơn đã giao thành công mới gửi được yêu cầu trả hàng."));
         }
         if (returnRepository.findByOrderId(orderId).isPresent()) {
-            throw new IllegalStateException("Đơn này đã có yêu cầu trả hàng rồi.");
+            throw new IllegalStateException(I18n.t("return.already.requested", "Đơn này đã có yêu cầu trả hàng rồi."));
         }
         if (!o.canRequestReturn(getWindowDays())) {
             // số ngày của CHÍNH đơn này (đã chụp lúc đặt hàng), không phải cài đặt hiện tại
-            throw new IllegalStateException("Đã quá " + o.effectiveReturnDays(getWindowDays()) + " ngày kể từ khi nhận hàng nên không thể gửi yêu cầu trả hàng.");
+            throw new IllegalStateException(I18n.t("return.window.passed", "Đã quá {0} ngày kể từ khi nhận hàng nên không thể gửi yêu cầu trả hàng.", o.effectiveReturnDays(getWindowDays())));
         }
         String why = clean(reason, 500);
         if (why.length() < 5) {
-            throw new IllegalStateException("Vui lòng nhập lý do trả hàng (ít nhất 5 ký tự).");
+            throw new IllegalStateException(I18n.t("return.reason.required", "Vui lòng nhập lý do trả hàng (ít nhất 5 ký tự)."));
         }
         ReturnRequest r = new ReturnRequest();
         r.setOrderId(o.getId());

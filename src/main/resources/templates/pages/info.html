@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head th:replace="~{fragments/layout :: head(${page.title + ' | KOSIS'}, 'pages')}"></head>
 <body>
 <th:block th:replace="~{fragments/layout :: header}"></th:block>

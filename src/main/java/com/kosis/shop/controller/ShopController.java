@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.ContactMessage;
 import com.kosis.shop.entity.NewsletterSubscriber;
 import com.kosis.shop.entity.Order;
@@ -87,48 +88,48 @@ public class ShopController {
         }
         model.addAttribute("showGenderTabs", true);
         model.addAttribute("activeGender", g);
-        return listing(model, base, "/collections", "Tất cả sản phẩm", "KOSIS SEASONS",
-                "Toàn bộ sản phẩm của mùa này, gói gọn ở một nơi.",
+        return listing(model, base, "/collections", I18n.t("shop.all.title", "Tất cả sản phẩm"), I18n.t("shop.all.eyebrow", "KOSIS SEASONS"),
+                I18n.t("shop.all.lede", "Toàn bộ sản phẩm của mùa này, gói gọn ở một nơi."),
                 "/images/collections/model-beige-coat-street", category, sort, page, null, "collections");
     }
 
     @GetMapping("/men")
     public String men(@RequestParam(required = false) String category, @RequestParam(required = false) String sort,
                       @RequestParam(defaultValue = "1") int page, Model model) {
-        return listing(model, ProductSpecs.genderOrUnisex("MEN"), "/men", "Nam", "KOSIS DÀNH CHO NAM",
-                "Phom dáng thoải mái, lớp áo tiện dụng và những món cơ bản hằng ngày.",
+        return listing(model, ProductSpecs.genderOrUnisex("MEN"), "/men", I18n.t("shop.men.title", "Nam"), I18n.t("shop.men.eyebrow", "KOSIS DÀNH CHO NAM"),
+                I18n.t("shop.men.lede", "Phom dáng thoải mái, lớp áo tiện dụng và những món cơ bản hằng ngày."),
                 "/images/collections/mens-fashion", category, sort, page, null, "men");
     }
 
     @GetMapping("/women")
     public String women(@RequestParam(required = false) String category, @RequestParam(required = false) String sort,
                         @RequestParam(defaultValue = "1") int page, Model model) {
-        return listing(model, ProductSpecs.genderOrUnisex("WOMEN"), "/women", "Nữ", "KOSIS DÀNH CHO NỮ",
-                "Form dáng mềm mại, gam màu nhã nhặn và thiết kế bền lâu.",
+        return listing(model, ProductSpecs.genderOrUnisex("WOMEN"), "/women", I18n.t("shop.women.title", "Nữ"), I18n.t("shop.women.eyebrow", "KOSIS DÀNH CHO NỮ"),
+                I18n.t("shop.women.lede", "Form dáng mềm mại, gam màu nhã nhặn và thiết kế bền lâu."),
                 "/images/collections/model-womens-editorial", category, sort, page, null, "women");
     }
 
     @GetMapping("/kids")
     public String kids(@RequestParam(required = false) String category, @RequestParam(required = false) String sort,
                        @RequestParam(defaultValue = "1") int page, Model model) {
-        return listing(model, ProductSpecs.genderOnly("KIDS"), "/kids", "Trẻ em", "KOSIS DÀNH CHO TRẺ EM",
-                "Những món cơ bản dễ mặc, bền bỉ cho tủ đồ của bé.",
+        return listing(model, ProductSpecs.genderOnly("KIDS"), "/kids", I18n.t("shop.kids.title", "Trẻ em"), I18n.t("shop.kids.eyebrow", "KOSIS DÀNH CHO TRẺ EM"),
+                I18n.t("shop.kids.lede", "Những món cơ bản dễ mặc, bền bỉ cho tủ đồ của bé."),
                 "/images/collections/kids-fashion-look", category, sort, page, null, "kids");
     }
 
     @GetMapping("/sale")
     public String sale(@RequestParam(required = false) String category, @RequestParam(required = false) String sort,
                        @RequestParam(defaultValue = "1") int page, Model model) {
-        return listing(model, ProductSpecs.onSale(), "/sale", "Giảm đến 50%", "ƯU ĐÃI THEO MÙA",
-                "Những món chọn lọc với mức giá tốt nhất trong mùa.",
+        return listing(model, ProductSpecs.onSale(), "/sale", I18n.t("shop.sale.title", "Giảm đến 50%"), I18n.t("shop.sale.eyebrow", "ƯU ĐÃI THEO MÙA"),
+                I18n.t("shop.sale.lede", "Những món chọn lọc với mức giá tốt nhất trong mùa."),
                 "/images/collections/model-cap-streetwear", category, sort, page, null, "sale");
     }
 
     @GetMapping("/gifts")
     public String gifts(@RequestParam(required = false) String category, @RequestParam(required = false) String sort,
                         @RequestParam(defaultValue = "1") int page, Model model) {
-        return listing(model, ProductSpecs.categoryIn(List.of("Phụ kiện", "Túi")), "/gifts", "Quà tặng", "GỢI Ý QUÀ TẶNG",
-                "Túi xách, đồng hồ và những món nhỏ đáng để mở quà.",
+        return listing(model, ProductSpecs.categoryIn(List.of("Phụ kiện", "Túi")), "/gifts", I18n.t("shop.gifts.title", "Quà tặng"), I18n.t("shop.gifts.eyebrow", "GỢI Ý QUÀ TẶNG"),
+                I18n.t("shop.gifts.lede", "Túi xách, đồng hồ và những món nhỏ đáng để mở quà."),
                 "/images/editorial/kosis-fabric-brand-detail", category, sort, page, null, "gifts");
     }
 
@@ -141,9 +142,9 @@ public class ShopController {
         Specification<Product> base = needle.isEmpty() ? ProductSpecs.none() : ProductSpecs.keyword(needle);
         model.addAttribute("searchPage", true);
         model.addAttribute("popularSearches", HomeController.buildPopularSearches());
-        String title = needle.isEmpty() ? "Tìm kiếm" : "Kết quả cho \u201C" + needle + "\u201D";
-        return listing(model, base, "/search", title, "TÌM KIẾM",
-                needle.isEmpty() ? "Nhập tên sản phẩm, danh mục hoặc màu sắc để bắt đầu." : null,
+        String title = needle.isEmpty() ? I18n.t("shop.search.title", "Tìm kiếm") : I18n.t("shop.search.results", "Kết quả cho “{0}”", needle);
+        return listing(model, base, "/search", title, I18n.t("shop.search.eyebrow", "TÌM KIẾM"),
+                needle.isEmpty() ? I18n.t("shop.search.lede", "Nhập tên sản phẩm, danh mục hoặc màu sắc để bắt đầu.") : null,
                 null, category, sort, page, needle, "search");
     }
 
@@ -209,11 +210,11 @@ public class ShopController {
         User user = userRepository.findByUsername(principal.getName()).orElse(null);
         if (user == null) return "redirect:/login?required=true";
         if (fullName.isBlank() || fullName.trim().length() > 100) {
-            ra.addFlashAttribute("accountError", "Vui lòng nhập họ và tên (tối đa 100 ký tự).");
+            ra.addFlashAttribute("accountError", I18n.t("account.error.name", "Vui lòng nhập họ và tên (tối đa 100 ký tự)."));
             return "redirect:/account";
         }
         if (!email.isBlank() && !EMAIL.matcher(email.trim()).matches()) {
-            ra.addFlashAttribute("accountError", "Email chưa hợp lệ.");
+            ra.addFlashAttribute("accountError", I18n.t("account.error.email", "Email chưa hợp lệ."));
             return "redirect:/account";
         }
         user.setFullName(fullName.trim());
@@ -221,7 +222,7 @@ public class ShopController {
         user.setAddress(address.trim());
         if (!email.isBlank()) user.setEmail(email.trim());
         userRepository.save(user);
-        ra.addFlashAttribute("accountMessage", "Đã lưu thông tin của bạn.");
+        ra.addFlashAttribute("accountMessage", I18n.t("account.saved", "Đã lưu thông tin của bạn."));
         return "redirect:/account";
     }
 
@@ -232,15 +233,15 @@ public class ShopController {
     public ResponseEntity<Map<String, Object>> subscribe(@RequestParam(defaultValue = "") String email) {
         String e = email.trim().toLowerCase(Locale.ROOT);
         if (e.length() > 190 || !EMAIL.matcher(e).matches()) {
-            return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "Vui lòng nhập địa chỉ email hợp lệ."));
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "message", I18n.t("newsletter.error.email", "Vui lòng nhập địa chỉ email hợp lệ.")));
         }
         if (newsletterRepository.existsByEmailIgnoreCase(e)) {
-            return ResponseEntity.ok(Map.of("ok", true, "message", "Email này đã đăng ký rồi. Cảm ơn bạn!"));
+            return ResponseEntity.ok(Map.of("ok", true, "message", I18n.t("newsletter.already", "Email này đã đăng ký rồi. Cảm ơn bạn!")));
         }
         newsletterRepository.save(new NewsletterSubscriber(e));
-        emailService.send(e, "Chào mừng bạn đến với KOSIS",
-                "Cảm ơn bạn đã đăng ký nhận tin từ KOSIS!\n\nChúng tôi sẽ gửi đến bạn những bộ sưu tập mới và ưu đãi sớm nhất.\n\nKOSIS");
-        return ResponseEntity.ok(Map.of("ok", true, "message", "Chào mừng bạn đến với cộng đồng KOSIS. Hãy kiểm tra hộp thư nhé."));
+        emailService.send(e, I18n.t("newsletter.mail.subject", "Chào mừng bạn đến với KOSIS"),
+                I18n.t("newsletter.mail.body", "Cảm ơn bạn đã đăng ký nhận tin từ KOSIS!\n\nChúng tôi sẽ gửi đến bạn những bộ sưu tập mới và ưu đãi sớm nhất.\n\nKOSIS"));
+        return ResponseEntity.ok(Map.of("ok", true, "message", I18n.t("newsletter.welcome", "Chào mừng bạn đến với cộng đồng KOSIS. Hãy kiểm tra hộp thư nhé.")));
     }
 
     // ==================== About / Contact / info pages ====================
@@ -281,7 +282,7 @@ public class ShopController {
                                 Principal principal, RedirectAttributes ra) {
         // Bot điền ô ẩn -> giả vờ thành công, không lưu
         if (website != null && !website.isBlank()) {
-            ra.addFlashAttribute("contactMessage", "Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn.");
+            ra.addFlashAttribute("contactMessage", I18n.t("contact.thanks.bot", "Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn."));
             return "redirect:/contact";
         }
         String n = name == null ? "" : name.trim();
@@ -291,13 +292,13 @@ public class ShopController {
 
         String error = null;
         if (n.isEmpty() || n.length() > ContactMessage.MAX_NAME) {
-            error = "Vui lòng nhập họ tên (tối đa " + ContactMessage.MAX_NAME + " ký tự).";
+            error = I18n.t("contact.error.name", "Vui lòng nhập họ tên (tối đa {0} ký tự).", ContactMessage.MAX_NAME);
         } else if (e.length() > ContactMessage.MAX_EMAIL || !EMAIL.matcher(e).matches()) {
-            error = "Vui lòng nhập địa chỉ email hợp lệ.";
+            error = I18n.t("newsletter.error.email", "Vui lòng nhập địa chỉ email hợp lệ.");
         } else if (sub.length() > ContactMessage.MAX_SUBJECT) {
-            error = "Tiêu đề quá dài (tối đa " + ContactMessage.MAX_SUBJECT + " ký tự).";
+            error = I18n.t("contact.error.subject", "Tiêu đề quá dài (tối đa {0} ký tự).", ContactMessage.MAX_SUBJECT);
         } else if (msg.isEmpty() || msg.length() > ContactMessage.MAX_MESSAGE) {
-            error = "Vui lòng nhập nội dung (tối đa " + ContactMessage.MAX_MESSAGE + " ký tự).";
+            error = I18n.t("contact.error.message", "Vui lòng nhập nội dung (tối đa {0} ký tự).", ContactMessage.MAX_MESSAGE);
         }
 
         ContactMessage cm = new ContactMessage();
@@ -320,7 +321,7 @@ public class ShopController {
             emailService.send(notifyEmail, "[KOSIS] Tin nhắn liên hệ mới: " + (sub.isEmpty() ? "(không có tiêu đề)" : sub),
                     "Từ: " + n + " <" + e + ">\n\n" + msg + "\n\n— Xem và xử lý tại /dashboard/lien-he");
         }
-        ra.addFlashAttribute("contactMessage", "Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn và sẽ phản hồi trong vòng một ngày làm việc.");
+        ra.addFlashAttribute("contactMessage", I18n.t("contact.thanks", "Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn và sẽ phản hồi trong vòng một ngày làm việc."));
         return "redirect:/contact";
     }
 
@@ -346,54 +347,105 @@ public class ShopController {
         public List<InfoSection> getSections() { return sections; }
     }
 
-    private static final Map<String, InfoPage> INFO = new LinkedHashMap<>();
-    static {
-        INFO.put("shipping", new InfoPage("HỖ TRỢ KHÁCH HÀNG", "Thông tin vận chuyển",
-                "Đơn hàng KOSIS đến tay bạn như thế nào và khi nào.", List.of(
-                new InfoSection("Thời gian giao hàng", "Đơn hàng được chuẩn bị trong 1\u20132 ngày làm việc. Giao hàng tiêu chuẩn mất 2\u20134 ngày làm việc trên toàn quốc."),
-                new InfoSection("Phí vận chuyển", "Phí vận chuyển và mức đơn hàng được miễn phí vận chuyển hiển thị ở giỏ hàng và trang thanh toán trước khi bạn đặt hàng."),
-                new InfoSection("Theo dõi đơn hàng", "Khi bưu kiện rời kho, chúng tôi sẽ liên hệ theo số điện thoại bạn cung cấp lúc thanh toán."))));
-        INFO.put("returns", new InfoPage("HỖ TRỢ KHÁCH HÀNG", "Đổi trả & hoàn tiền",
-                "Đổi ý? Chúng tôi giúp bạn việc đó thật đơn giản.", List.of(
-                new InfoSection("Đổi trả trong @@RETURN_DAYS@@ ngày", "Sản phẩm chưa sử dụng, còn nguyên tem mác có thể trả trong vòng @@RETURN_DAYS@@ ngày kể từ khi nhận hàng. Bạn gửi yêu cầu ngay tại mục Đơn hàng của tôi (đơn đã giao thành công), cửa hàng sẽ duyệt và hướng dẫn gửi hàng về."),
-                new InfoSection("Sản phẩm lỗi", "Nếu sản phẩm bị hư hỏng hoặc lỗi, hãy liên hệ kèm hình ảnh, chúng tôi sẽ đổi sản phẩm mới miễn phí."),
-                new InfoSection("Hoàn tiền", "Khoản hoàn tiền được chuyển về phương thức thanh toán ban đầu trong 5\u20137 ngày làm việc."))));
-        INFO.put("faq", new InfoPage("HỖ TRỢ KHÁCH HÀNG", "Câu hỏi thường gặp",
-                "Giải đáp nhanh những câu hỏi chúng tôi nhận được nhiều nhất.", List.of(
-                new InfoSection("Tôi thanh toán bằng cách nào?", "Bạn có thể chuyển khoản toàn bộ (quét mã QR ở bước thanh toán và tải ảnh bill lên) hoặc chọn thanh toán khi nhận hàng (COD). Với COD, bạn cần chuyển khoản đặt cọc một phần giá trị đơn trước (số tiền hiển thị ở bước thanh toán), phần còn lại trả cho nhân viên giao hàng khi nhận hàng. Nếu bạn không nhận hàng mà không có lý do chính đáng, tiền cọc sẽ không được hoàn lại."),
-                new InfoSection("Khi nào đơn chuyển khoản được xác nhận?", "Nhân viên sẽ kiểm tra ảnh bill và xác nhận đơn. Bạn có thể theo dõi trạng thái tại mục Đơn hàng của tôi."),
-                new InfoSection("Làm sao chọn kích cỡ?", "Trang sản phẩm có liệt kê các kích cỡ còn hàng. Nếu phân vân giữa hai size, bạn nên chọn size lớn hơn với áo khoác."),
-                new InfoSection("Tôi có cần tài khoản không?", "Bạn có thể xem sản phẩm và thêm vào giỏ hàng mà không cần đăng nhập. Tài khoản cần thiết ở bước thanh toán để bạn theo dõi đơn hàng."))));
-        INFO.put("privacy", new InfoPage("VỀ KOSIS", "Chính sách bảo mật",
-                "Chúng tôi thu thập những thông tin nào, dùng vào việc gì và bạn kiểm soát chúng ra sao.", List.of(
-                new InfoSection("Thông tin chúng tôi thu thập", "Tài khoản: tên đăng nhập, mật khẩu (được mã hóa một chiều, nhân viên không xem được), họ tên, email, số điện thoại, địa chỉ. Đơn hàng: người nhận, số điện thoại, địa chỉ giao hàng, ghi chú, sản phẩm đã mua, hình thức thanh toán và ảnh bill chuyển khoản bạn tải lên. Ngoài ra: tin nhắn bạn gửi ở trang Liên hệ, email đăng ký nhận bản tin, nội dung đánh giá sản phẩm, yêu cầu trả hàng và danh sách yêu thích khi bạn đã đăng nhập."),
-                new InfoSection("Mục đích sử dụng", "Xử lý, giao và hỗ trợ đơn hàng; xác nhận thanh toán; xuất hóa đơn; xử lý đổi trả, hoàn tiền; trả lời liên hệ; gửi email về đơn hàng và đặt lại mật khẩu. Email bản tin chỉ dùng để gửi thông tin bộ sưu tập mới khi bạn đã đăng ký. Chúng tôi không bán thông tin cá nhân của bạn."),
-                new InfoSection("Chia sẻ với bên thứ ba", "Đơn vị vận chuyển nhận tên, số điện thoại và địa chỉ giao hàng để giao đơn. Với đơn chuyển khoản, mã QR được tạo qua dịch vụ VietQR (img.vietqr.io) nên số tài khoản nhận tiền, số tiền và nội dung chuyển khoản của đơn sẽ được gửi tới dịch vụ này. Email được gửi qua nhà cung cấp dịch vụ thư mà cửa hàng cấu hình. Trang web tải phông chữ từ Google Fonts và biểu tượng từ jsDelivr nên các dịch vụ này có thể nhận địa chỉ IP của bạn. Chúng tôi cũng có thể cung cấp thông tin khi cơ quan nhà nước có thẩm quyền yêu cầu theo quy định pháp luật."),
-                new InfoSection("Cookie và dữ liệu lưu trên trình duyệt", "Website dùng cookie phiên (đăng nhập, giỏ hàng) và cookie bảo mật chống giả mạo biểu mẫu; các cookie này cần thiết để website hoạt động. Một số thiết lập hiển thị có thể được lưu trong bộ nhớ của trình duyệt. Địa chỉ IP được dùng tạm thời để giới hạn số lần đăng nhập/đăng ký bất thường nhằm chống dò mật khẩu và không được lưu lâu dài."),
-                new InfoSection("Lưu trữ và bảo mật", "Mật khẩu được mã hóa, ảnh bill được lưu ở khu vực không công khai và chỉ chủ đơn hoặc nhân viên có quyền mới xem được. Dữ liệu đơn hàng được giữ trong thời gian cần thiết để xử lý đơn, bảo hành, đổi trả và đáp ứng nghĩa vụ kế toán, thuế theo quy định. Không có hệ thống nào an toàn tuyệt đối; nếu phát hiện sự cố liên quan đến dữ liệu của bạn, chúng tôi sẽ thông báo theo quy định."),
-                new InfoSection("Quyền của bạn", "Bạn có thể xem và cập nhật họ tên, email, số điện thoại, địa chỉ tại Tài khoản của tôi; và liên hệ (kể cả để hủy nhận bản tin) để yêu cầu truy cập, chỉnh sửa, hạn chế xử lý hoặc xóa dữ liệu, rút lại sự đồng ý theo quy định pháp luật Việt Nam về bảo vệ dữ liệu cá nhân (Nghị định 13/2023/NĐ-CP). Một số dữ liệu của đơn hàng đã phát sinh có thể phải được giữ lại theo luật. Gửi yêu cầu qua trang Liên hệ."),
-                new InfoSection("Lưu ý", "Chính sách này mô tả cách hệ thống đang hoạt động, nhưng chưa được luật sư rà soát. Cửa hàng cần kiểm tra và bổ sung thông tin pháp nhân, địa chỉ, đầu mối xử lý dữ liệu trước khi chính thức vận hành."))));
-        INFO.put("terms", new InfoPage("VỀ KOSIS", "Điều khoản & điều kiện",
-                "Những quy định khi mua sắm tại KOSIS.", List.of(
-                new InfoSection("Chấp nhận điều khoản", "Khi tạo tài khoản hoặc đặt hàng tại KOSIS, bạn đồng ý với các điều khoản này, Chính sách bảo mật và chính sách Đổi trả & hoàn tiền. Bạn cần cung cấp thông tin chính xác và chịu trách nhiệm về các hoạt động diễn ra trong tài khoản của mình, kể cả việc giữ bí mật mật khẩu."),
-                new InfoSection("Đặt hàng và xác nhận", "Việc gửi đơn là đề nghị mua hàng. Đơn chỉ được xem là đã chấp nhận khi nhân viên xác nhận: với chuyển khoản là sau khi kiểm tra bill và tiền đã về tài khoản; với thanh toán khi nhận hàng (COD) là sau khi cửa hàng kiểm tra tiền cọc đã về tài khoản và xác nhận đơn. Chúng tôi có thể từ chối hoặc hủy đơn (ví dụ hết hàng, thông tin giao hàng không hợp lệ, không xác nhận được thanh toán, nghi ngờ gian lận) và sẽ thông báo lý do; nếu bạn đã chuyển khoản, cửa hàng sẽ liên hệ để hoàn tiền. Bạn có thể tự hủy đơn khi đơn còn đang chờ xác nhận."),
-                new InfoSection("Giá bán và thanh toán", "Giá hiển thị bằng đồng Việt Nam (₫). Phí vận chuyển và mã giảm giá được tính và hiển thị ở giỏ hàng, trang thanh toán trước khi bạn đặt hàng. Mã giảm giá có điều kiện, thời hạn và số lượt dùng riêng, không quy đổi thành tiền mặt. Nếu có sai sót rõ ràng về giá, chúng tôi có thể điều chỉnh hoặc hủy đơn trước khi xác nhận và thông báo cho bạn. Với chuyển khoản, bạn cần nhập đúng số tiền và nội dung được hướng dẫn."),
-                new InfoSection("Giao hàng và nhận hàng", "Thời gian giao hàng chỉ là ước tính. Bạn cần cung cấp đúng số điện thoại, địa chỉ và nghe máy khi đơn vị vận chuyển liên hệ. Khi hàng đã giao tới, bạn xác nhận \"Tôi đã nhận được hàng\" ở mục Đơn hàng của tôi; nếu sau số ngày quy định bạn không phản hồi, hệ thống tự chuyển đơn sang đã giao thành công. Việc nhiều lần từ chối nhận hàng sẽ được ghi nhận và cửa hàng có thể cân nhắc khi xử lý các đơn sau."),
-                new InfoSection("Đổi trả và hoàn tiền", "Việc đổi trả tuân theo chính sách Đổi trả & hoàn tiền: gửi yêu cầu trong thời hạn quy định kể từ khi nhận hàng, sản phẩm chưa sử dụng và còn nguyên tem mác, trừ trường hợp sản phẩm lỗi do cửa hàng."),
-                new InfoSection("Hành vi bị cấm", "Bạn không được dùng website để gian lận thanh toán (như tải bill giả), dò mật khẩu hoặc truy cập trái phép tài khoản khác, tạo tài khoản hàng loạt, gây quá tải hệ thống hoặc đăng đánh giá giả mạo, xúc phạm. Chúng tôi có quyền khóa tài khoản và từ chối đơn khi phát hiện vi phạm."),
-                new InfoSection("Nội dung và quyền sở hữu trí tuệ", "Hình ảnh, nội dung và thương hiệu trên website thuộc quyền của KOSIS hoặc bên cấp phép, không được sao chép hay dùng cho mục đích thương mại khi chưa được đồng ý bằng văn bản. Đánh giá bạn gửi có thể được hiển thị công khai trên trang sản phẩm."),
-                new InfoSection("Giới hạn trách nhiệm và thay đổi điều khoản", "Trong phạm vi pháp luật cho phép, KOSIS không chịu trách nhiệm cho thiệt hại gián tiếp phát sinh từ việc gián đoạn website ngoài khả năng kiểm soát của chúng tôi; điều này không làm mất các quyền của người tiêu dùng theo luật. Chúng tôi có thể cập nhật điều khoản; đơn đã xác nhận trước đó áp dụng điều khoản tại thời điểm đặt hàng. Tranh chấp được ưu tiên giải quyết qua thương lượng, nếu không được thì giải quyết tại tòa án có thẩm quyền của Việt Nam."),
-                new InfoSection("Lưu ý", "Điều khoản này mô tả cách cửa hàng đang vận hành nhưng chưa được luật sư rà soát. Cửa hàng cần kiểm tra và bổ sung thông tin pháp nhân, mã số thuế, địa chỉ trước khi chính thức vận hành."))));
-        INFO.put("our-story", new InfoPage("VỀ KOSIS", "Câu chuyện thương hiệu",
-                "Một thương hiệu nhỏ với tầm nhìn dài hạn về những gì chúng ta mặc.", List.of(
-                new InfoSection("Vì sao là KOSIS", "KOSIS bắt đầu từ một ý tưởng giản dị: quần áo nên tinh tế chứ không ồn ào. Chúng tôi thiết kế với bảng màu trung tính và chất liệu tự nhiên để mỗi món đồ đều dễ phối với tủ đồ của bạn."),
-                new InfoSection("Cách chúng tôi làm việc", "Chúng tôi chọn chất liệu cẩn thận, giữ bộ sưu tập nhỏ gọn và hợp tác với những người thợ cùng chia sẻ sự kiên nhẫn đó."),
-                new InfoSection("Chúng tôi hướng tới", "Nhiều thiết kế hơn cho nhiều người hơn, nhưng luôn nghĩ đến việc sở hữu ít hơn mà tốt hơn."))));
+    /** Nội dung các trang thông tin, dựng theo ngôn ngữ của request (messages.properties / messages_en.properties). */
+    private static InfoPage infoPage(String slug) {
+        switch (slug) {
+            case "shipping":
+                return new InfoPage(I18n.t("info.shipping.eyebrow", "HỖ TRỢ KHÁCH HÀNG"),
+                        I18n.t("info.shipping.title", "Thông tin vận chuyển"),
+                        I18n.t("info.shipping.lede", "Đơn hàng KOSIS đến tay bạn như thế nào và khi nào."),
+                        List.of(
+                    new InfoSection(I18n.t("info.shipping.s1.h", "Thời gian giao hàng"),
+                            I18n.t("info.shipping.s1.b", "Đơn hàng được chuẩn bị trong 1\u20132 ngày làm việc. Giao hàng tiêu chuẩn mất 2\u20134 ngày làm việc trên toàn quốc.")),
+                    new InfoSection(I18n.t("info.shipping.s2.h", "Phí vận chuyển"),
+                            I18n.t("info.shipping.s2.b", "Phí vận chuyển và mức đơn hàng được miễn phí vận chuyển hiển thị ở giỏ hàng và trang thanh toán trước khi bạn đặt hàng.")),
+                    new InfoSection(I18n.t("info.shipping.s3.h", "Theo dõi đơn hàng"),
+                            I18n.t("info.shipping.s3.b", "Khi bưu kiện rời kho, chúng tôi sẽ liên hệ theo số điện thoại bạn cung cấp lúc thanh toán."))));
+            case "returns":
+                return new InfoPage(I18n.t("info.returns.eyebrow", "HỖ TRỢ KHÁCH HÀNG"),
+                        I18n.t("info.returns.title", "Đổi trả & hoàn tiền"),
+                        I18n.t("info.returns.lede", "Đổi ý? Chúng tôi giúp bạn việc đó thật đơn giản."),
+                        List.of(
+                    new InfoSection(I18n.t("info.returns.s1.h", "Đổi trả trong @@RETURN_DAYS@@ ngày"),
+                            I18n.t("info.returns.s1.b", "Sản phẩm chưa sử dụng, còn nguyên tem mác có thể trả trong vòng @@RETURN_DAYS@@ ngày kể từ khi nhận hàng. Bạn gửi yêu cầu ngay tại mục Đơn hàng của tôi (đơn đã giao thành công), cửa hàng sẽ duyệt và hướng dẫn gửi hàng về.")),
+                    new InfoSection(I18n.t("info.returns.s2.h", "Sản phẩm lỗi"),
+                            I18n.t("info.returns.s2.b", "Nếu sản phẩm bị hư hỏng hoặc lỗi, hãy liên hệ kèm hình ảnh, chúng tôi sẽ đổi sản phẩm mới miễn phí.")),
+                    new InfoSection(I18n.t("info.returns.s3.h", "Hoàn tiền"),
+                            I18n.t("info.returns.s3.b", "Khoản hoàn tiền được chuyển về phương thức thanh toán ban đầu trong 5\u20137 ngày làm việc."))));
+            case "faq":
+                return new InfoPage(I18n.t("info.faq.eyebrow", "HỖ TRỢ KHÁCH HÀNG"),
+                        I18n.t("info.faq.title", "Câu hỏi thường gặp"),
+                        I18n.t("info.faq.lede", "Giải đáp nhanh những câu hỏi chúng tôi nhận được nhiều nhất."),
+                        List.of(
+                    new InfoSection(I18n.t("info.faq.s1.h", "Tôi thanh toán bằng cách nào?"),
+                            I18n.t("info.faq.s1.b", "Bạn có thể chuyển khoản toàn bộ (quét mã QR ở bước thanh toán và tải ảnh bill lên) hoặc chọn thanh toán khi nhận hàng (COD). Với COD, bạn cần chuyển khoản đặt cọc một phần giá trị đơn trước (số tiền hiển thị ở bước thanh toán), phần còn lại trả cho nhân viên giao hàng khi nhận hàng. Nếu bạn không nhận hàng mà không có lý do chính đáng, tiền cọc sẽ không được hoàn lại.")),
+                    new InfoSection(I18n.t("info.faq.s2.h", "Khi nào đơn chuyển khoản được xác nhận?"),
+                            I18n.t("info.faq.s2.b", "Nhân viên sẽ kiểm tra ảnh bill và xác nhận đơn. Bạn có thể theo dõi trạng thái tại mục Đơn hàng của tôi.")),
+                    new InfoSection(I18n.t("info.faq.s3.h", "Làm sao chọn kích cỡ?"),
+                            I18n.t("info.faq.s3.b", "Trang sản phẩm có liệt kê các kích cỡ còn hàng. Nếu phân vân giữa hai size, bạn nên chọn size lớn hơn với áo khoác.")),
+                    new InfoSection(I18n.t("info.faq.s4.h", "Tôi có cần tài khoản không?"),
+                            I18n.t("info.faq.s4.b", "Bạn có thể xem sản phẩm và thêm vào giỏ hàng mà không cần đăng nhập. Tài khoản cần thiết ở bước thanh toán để bạn theo dõi đơn hàng."))));
+            case "privacy":
+                return new InfoPage(I18n.t("info.privacy.eyebrow", "VỀ KOSIS"),
+                        I18n.t("info.privacy.title", "Chính sách bảo mật"),
+                        I18n.t("info.privacy.lede", "Chúng tôi thu thập những thông tin nào, dùng vào việc gì và bạn kiểm soát chúng ra sao."),
+                        List.of(
+                    new InfoSection(I18n.t("info.privacy.s1.h", "Thông tin chúng tôi thu thập"),
+                            I18n.t("info.privacy.s1.b", "Tài khoản: tên đăng nhập, mật khẩu (được mã hóa một chiều, nhân viên không xem được), họ tên, email, số điện thoại, địa chỉ. Đơn hàng: người nhận, số điện thoại, địa chỉ giao hàng, ghi chú, sản phẩm đã mua, hình thức thanh toán và ảnh bill chuyển khoản bạn tải lên. Ngoài ra: tin nhắn bạn gửi ở trang Liên hệ, email đăng ký nhận bản tin, nội dung đánh giá sản phẩm, yêu cầu trả hàng và danh sách yêu thích khi bạn đã đăng nhập.")),
+                    new InfoSection(I18n.t("info.privacy.s2.h", "Mục đích sử dụng"),
+                            I18n.t("info.privacy.s2.b", "Xử lý, giao và hỗ trợ đơn hàng; xác nhận thanh toán; xuất hóa đơn; xử lý đổi trả, hoàn tiền; trả lời liên hệ; gửi email về đơn hàng và đặt lại mật khẩu. Email bản tin chỉ dùng để gửi thông tin bộ sưu tập mới khi bạn đã đăng ký. Chúng tôi không bán thông tin cá nhân của bạn.")),
+                    new InfoSection(I18n.t("info.privacy.s3.h", "Chia sẻ với bên thứ ba"),
+                            I18n.t("info.privacy.s3.b", "Đơn vị vận chuyển nhận tên, số điện thoại và địa chỉ giao hàng để giao đơn. Với đơn chuyển khoản, mã QR được tạo qua dịch vụ VietQR (img.vietqr.io) nên số tài khoản nhận tiền, số tiền và nội dung chuyển khoản của đơn sẽ được gửi tới dịch vụ này. Email được gửi qua nhà cung cấp dịch vụ thư mà cửa hàng cấu hình. Trang web tải phông chữ từ Google Fonts và biểu tượng từ jsDelivr nên các dịch vụ này có thể nhận địa chỉ IP của bạn. Chúng tôi cũng có thể cung cấp thông tin khi cơ quan nhà nước có thẩm quyền yêu cầu theo quy định pháp luật.")),
+                    new InfoSection(I18n.t("info.privacy.s4.h", "Cookie và dữ liệu lưu trên trình duyệt"),
+                            I18n.t("info.privacy.s4.b", "Website dùng cookie phiên (đăng nhập, giỏ hàng) và cookie bảo mật chống giả mạo biểu mẫu; các cookie này cần thiết để website hoạt động. Một số thiết lập hiển thị có thể được lưu trong bộ nhớ của trình duyệt. Địa chỉ IP được dùng tạm thời để giới hạn số lần đăng nhập/đăng ký bất thường nhằm chống dò mật khẩu và không được lưu lâu dài.")),
+                    new InfoSection(I18n.t("info.privacy.s5.h", "Lưu trữ và bảo mật"),
+                            I18n.t("info.privacy.s5.b", "Mật khẩu được mã hóa, ảnh bill được lưu ở khu vực không công khai và chỉ chủ đơn hoặc nhân viên có quyền mới xem được. Dữ liệu đơn hàng được giữ trong thời gian cần thiết để xử lý đơn, bảo hành, đổi trả và đáp ứng nghĩa vụ kế toán, thuế theo quy định. Không có hệ thống nào an toàn tuyệt đối; nếu phát hiện sự cố liên quan đến dữ liệu của bạn, chúng tôi sẽ thông báo theo quy định.")),
+                    new InfoSection(I18n.t("info.privacy.s6.h", "Quyền của bạn"),
+                            I18n.t("info.privacy.s6.b", "Bạn có thể xem và cập nhật họ tên, email, số điện thoại, địa chỉ tại Tài khoản của tôi; và liên hệ (kể cả để hủy nhận bản tin) để yêu cầu truy cập, chỉnh sửa, hạn chế xử lý hoặc xóa dữ liệu, rút lại sự đồng ý theo quy định pháp luật Việt Nam về bảo vệ dữ liệu cá nhân (Nghị định 13/2023/NĐ-CP). Một số dữ liệu của đơn hàng đã phát sinh có thể phải được giữ lại theo luật. Gửi yêu cầu qua trang Liên hệ.")),
+                    new InfoSection(I18n.t("info.privacy.s7.h", "Lưu ý"),
+                            I18n.t("info.privacy.s7.b", "Chính sách này mô tả cách hệ thống đang hoạt động, nhưng chưa được luật sư rà soát. Cửa hàng cần kiểm tra và bổ sung thông tin pháp nhân, địa chỉ, đầu mối xử lý dữ liệu trước khi chính thức vận hành."))));
+            case "terms":
+                return new InfoPage(I18n.t("info.terms.eyebrow", "VỀ KOSIS"),
+                        I18n.t("info.terms.title", "Điều khoản & điều kiện"),
+                        I18n.t("info.terms.lede", "Những quy định khi mua sắm tại KOSIS."),
+                        List.of(
+                    new InfoSection(I18n.t("info.terms.s1.h", "Chấp nhận điều khoản"),
+                            I18n.t("info.terms.s1.b", "Khi tạo tài khoản hoặc đặt hàng tại KOSIS, bạn đồng ý với các điều khoản này, Chính sách bảo mật và chính sách Đổi trả & hoàn tiền. Bạn cần cung cấp thông tin chính xác và chịu trách nhiệm về các hoạt động diễn ra trong tài khoản của mình, kể cả việc giữ bí mật mật khẩu.")),
+                    new InfoSection(I18n.t("info.terms.s2.h", "Đặt hàng và xác nhận"),
+                            I18n.t("info.terms.s2.b", "Việc gửi đơn là đề nghị mua hàng. Đơn chỉ được xem là đã chấp nhận khi nhân viên xác nhận: với chuyển khoản là sau khi kiểm tra bill và tiền đã về tài khoản; với thanh toán khi nhận hàng (COD) là sau khi cửa hàng kiểm tra tiền cọc đã về tài khoản và xác nhận đơn. Chúng tôi có thể từ chối hoặc hủy đơn (ví dụ hết hàng, thông tin giao hàng không hợp lệ, không xác nhận được thanh toán, nghi ngờ gian lận) và sẽ thông báo lý do; nếu bạn đã chuyển khoản, cửa hàng sẽ liên hệ để hoàn tiền. Bạn có thể tự hủy đơn khi đơn còn đang chờ xác nhận.")),
+                    new InfoSection(I18n.t("info.terms.s3.h", "Giá bán và thanh toán"),
+                            I18n.t("info.terms.s3.b", "Giá hiển thị bằng đồng Việt Nam (₫). Phí vận chuyển và mã giảm giá được tính và hiển thị ở giỏ hàng, trang thanh toán trước khi bạn đặt hàng. Mã giảm giá có điều kiện, thời hạn và số lượt dùng riêng, không quy đổi thành tiền mặt. Nếu có sai sót rõ ràng về giá, chúng tôi có thể điều chỉnh hoặc hủy đơn trước khi xác nhận và thông báo cho bạn. Với chuyển khoản, bạn cần nhập đúng số tiền và nội dung được hướng dẫn.")),
+                    new InfoSection(I18n.t("info.terms.s4.h", "Giao hàng và nhận hàng"),
+                            I18n.t("info.terms.s4.b", "Thời gian giao hàng chỉ là ước tính. Bạn cần cung cấp đúng số điện thoại, địa chỉ và nghe máy khi đơn vị vận chuyển liên hệ. Khi hàng đã giao tới, bạn xác nhận \"Tôi đã nhận được hàng\" ở mục Đơn hàng của tôi; nếu sau số ngày quy định bạn không phản hồi, hệ thống tự chuyển đơn sang đã giao thành công. Việc nhiều lần từ chối nhận hàng sẽ được ghi nhận và cửa hàng có thể cân nhắc khi xử lý các đơn sau.")),
+                    new InfoSection(I18n.t("info.terms.s5.h", "Đổi trả và hoàn tiền"),
+                            I18n.t("info.terms.s5.b", "Việc đổi trả tuân theo chính sách Đổi trả & hoàn tiền: gửi yêu cầu trong thời hạn quy định kể từ khi nhận hàng, sản phẩm chưa sử dụng và còn nguyên tem mác, trừ trường hợp sản phẩm lỗi do cửa hàng.")),
+                    new InfoSection(I18n.t("info.terms.s6.h", "Hành vi bị cấm"),
+                            I18n.t("info.terms.s6.b", "Bạn không được dùng website để gian lận thanh toán (như tải bill giả), dò mật khẩu hoặc truy cập trái phép tài khoản khác, tạo tài khoản hàng loạt, gây quá tải hệ thống hoặc đăng đánh giá giả mạo, xúc phạm. Chúng tôi có quyền khóa tài khoản và từ chối đơn khi phát hiện vi phạm.")),
+                    new InfoSection(I18n.t("info.terms.s7.h", "Nội dung và quyền sở hữu trí tuệ"),
+                            I18n.t("info.terms.s7.b", "Hình ảnh, nội dung và thương hiệu trên website thuộc quyền của KOSIS hoặc bên cấp phép, không được sao chép hay dùng cho mục đích thương mại khi chưa được đồng ý bằng văn bản. Đánh giá bạn gửi có thể được hiển thị công khai trên trang sản phẩm.")),
+                    new InfoSection(I18n.t("info.terms.s8.h", "Giới hạn trách nhiệm và thay đổi điều khoản"),
+                            I18n.t("info.terms.s8.b", "Trong phạm vi pháp luật cho phép, KOSIS không chịu trách nhiệm cho thiệt hại gián tiếp phát sinh từ việc gián đoạn website ngoài khả năng kiểm soát của chúng tôi; điều này không làm mất các quyền của người tiêu dùng theo luật. Chúng tôi có thể cập nhật điều khoản; đơn đã xác nhận trước đó áp dụng điều khoản tại thời điểm đặt hàng. Tranh chấp được ưu tiên giải quyết qua thương lượng, nếu không được thì giải quyết tại tòa án có thẩm quyền của Việt Nam.")),
+                    new InfoSection(I18n.t("info.terms.s9.h", "Lưu ý"),
+                            I18n.t("info.terms.s9.b", "Điều khoản này mô tả cách cửa hàng đang vận hành nhưng chưa được luật sư rà soát. Cửa hàng cần kiểm tra và bổ sung thông tin pháp nhân, mã số thuế, địa chỉ trước khi chính thức vận hành."))));
+            case "our-story":
+                return new InfoPage(I18n.t("info.our-story.eyebrow", "VỀ KOSIS"),
+                        I18n.t("info.our-story.title", "Câu chuyện thương hiệu"),
+                        I18n.t("info.our-story.lede", "Một thương hiệu nhỏ với tầm nhìn dài hạn về những gì chúng ta mặc."),
+                        List.of(
+                    new InfoSection(I18n.t("info.our-story.s1.h", "Vì sao là KOSIS"),
+                            I18n.t("info.our-story.s1.b", "KOSIS bắt đầu từ một ý tưởng giản dị: quần áo nên tinh tế chứ không ồn ào. Chúng tôi thiết kế với bảng màu trung tính và chất liệu tự nhiên để mỗi món đồ đều dễ phối với tủ đồ của bạn.")),
+                    new InfoSection(I18n.t("info.our-story.s2.h", "Cách chúng tôi làm việc"),
+                            I18n.t("info.our-story.s2.b", "Chúng tôi chọn chất liệu cẩn thận, giữ bộ sưu tập nhỏ gọn và hợp tác với những người thợ cùng chia sẻ sự kiên nhẫn đó.")),
+                    new InfoSection(I18n.t("info.our-story.s3.h", "Chúng tôi hướng tới"),
+                            I18n.t("info.our-story.s3.b", "Nhiều thiết kế hơn cho nhiều người hơn, nhưng luôn nghĩ đến việc sở hữu ít hơn mà tốt hơn."))));
+            default:
+                return null;
+        }
     }
 
     @GetMapping("/{slug:shipping|returns|faq|privacy|terms|our-story}")
     public String info(@PathVariable String slug, Model model) {
-        model.addAttribute("page", INFO.get(slug));
+        model.addAttribute("page", infoPage(slug));
         model.addAttribute("activePage", "info");
         return "pages/info";
     }

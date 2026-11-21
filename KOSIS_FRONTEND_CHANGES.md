@@ -1,6 +1,6 @@
 # KOSIS frontend redesign – what changed
 
-**Language: the whole storefront is now Vietnamese** (templates, JS messages, categories, seeded products).
+**Languages: the storefront is available in Vietnamese (default) and English** – see "Multi-language (vi / en)" at the bottom. Categories and seeded products are still stored in Vietnamese.
 Categories are stored in Vietnamese: Áo khoác, Áo, Quần, Giày, Túi, Phụ kiện (use these values when adding products in the dashboard so filters work).
 If you already started the previous English version, the seeder replaces the English KS products once automatically.
 
@@ -45,7 +45,7 @@ Cart, checkout, orders, login/register processing, admin dashboard and all their
 
 ## Update: pagination
 * Listing pages (`/collections`, `/men`, `/women`, `/kids`, `/sale`, `/gifts`, `/search`) now filter, sort and paginate **in the database** (`ProductSpecs` + `ProductListingService`, `ProductRepository` extends `JpaSpecificationExecutor`) instead of `findAll()` + in-memory filtering.
-* URL parameter `?page=N` (1-based; out-of-range values are clamped). Page size: `kosis.listing.page-size` (default 12). Changing category / sort / gender / search resets to page 1.
+* URL parameter `?page=N` (1-based; out-of-range values are clamped). Page size: `kosis.listing.page-size` (default 20 - chia hết cho 5/4/2 cột của lưới). Changing category / sort / gender / search resets to page 1.
 * Not paginated on purpose: home page sections, "related products" on the detail page, wishlist (still `findAll()`).
 
 ## Update: dashboard redesign – Kho hàng / Trả hàng / Khách hàng
@@ -87,3 +87,14 @@ Cart, checkout, orders, login/register processing, admin dashboard and all their
 
 ## Update: sidebar Editorial
 * `dashboard/sidebar.html` + khối sidebar trong `css/dashboard/style.css`: nền kem, chữ serif (Playfair), icon giữ như cũ, menu chia 4 nhóm (Bán hàng / Sản phẩm / Khách hàng / Quản trị), mục đang chọn in nghiêng có vạch vàng bên trái, badge viền vàng. Chân sidebar: "Xem cửa hàng" + thẻ người dùng (chữ cái đầu, tên, vai trò, nút đăng xuất dạng icon). Tên fragment và tham số không đổi nên mọi trang dùng chung; mobile vẫn thu thành thanh cuộn ngang ở trên. Class `.sidebar-profile` không còn dùng.
+
+
+## Multi-language (vi / en)
+* **Switch**: `EN`/`VI` button in the header and a language switch in the footer. Any page accepts `?lang=en` / `?lang=vi`; the choice is kept in the cookie `kosis-lang` (1 year). Default = Vietnamese.
+* **Where the texts live**: `src/main/resources/messages.properties` (Vietnamese) and `messages_en.properties` (English). Same keys in both files (`MessagesBundleTest` fails if one is missing). Messages use `MessageFormat`: parameters `{0}`, `{1}`, a literal apostrophe is written `''`.
+* **Templates**: storefront templates use `#{key}` / `[[#{key}]]`. Page `<html lang>` follows the language. Prices use `1.290.000 ₫` (vi) or `1,290,000 ₫` (en) through the model attribute `numSep`.
+* **Java messages** (flash messages, validation errors, order/return status labels, info pages, some e-mails): `I18n.t("key", "Vietnamese default", args...)` (`config/I18n.java`). Without a request (scheduler, unit tests) it returns the Vietnamese default.
+* **JS**: `main.js` / `kosis-dialog.js` read `window.KOSIS_I18N` (keys `js.*`, injected in `fragments/layout.html`); checkout page strings come from `CO_I18N` in `checkout/index.html`.
+* **Add another language**: copy `messages_en.properties` to `messages_xx.properties`, translate, and allow `xx` in `KosisLocaleResolver` + add a link next to the EN/VI ones.
+* **Not translated (still Vietnamese)**: the whole `/dashboard/**` area (forced to Vietnamese on purpose), product names/descriptions/categories/colours coming from the database, e-mails sent when staff change an order (order confirmed/shipped...), carrier names, legal pages are translated but are drafts like the Vietnamese ones.
+* Written without being able to compile with Maven here: please run `mvn test` and click through the site once in both languages.

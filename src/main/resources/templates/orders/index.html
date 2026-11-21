@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
-<head th:replace="~{fragments/layout :: head('Đơn hàng của tôi | KOSIS', 'checkout')}"></head>
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head(#{title.orders}, 'checkout')}"></head>
 <body>
 <th:block th:replace="~{fragments/layout :: header}"></th:block>
 <main id="main">
@@ -8,18 +8,18 @@
     <div class="container container--content">
         <div hidden data-flash="success" th:if="${orderMessage != null}" th:text="${orderMessage}"></div>
         <div hidden data-flash="error" th:if="${orderError != null}" th:text="${orderError}"></div>
-        <div class="cp-head"><h1>Đơn hàng của tôi</h1><span class="cp-count" th:text="${countAll} + (${countAll == 1} ? ' đơn hàng' : ' đơn hàng')">3 orders</span></div>
-        <nav class="mo-tabs" aria-label="Lọc đơn hàng">
-            <a th:href="@{/don-hang-cua-toi}" th:classappend="${tab == 'all'} ? ' active'">Tất cả <span class="n" th:text="${countAll}">0</span></a>
-            <a th:href="@{/don-hang-cua-toi(tab='waiting')}" th:classappend="${tab == 'waiting'} ? ' active'">Chờ xử lý <span class="n" th:text="${countWaiting}">0</span></a>
-            <a th:href="@{/don-hang-cua-toi(tab='confirmed')}" th:classappend="${tab == 'confirmed'} ? ' active'">Đã xác nhận <span class="n" th:text="${countConfirmed}">0</span></a>
-            <a th:href="@{/don-hang-cua-toi(tab='rejected')}" th:classappend="${tab == 'rejected'} ? ' active'">Đã hủy / từ chối <span class="n" th:text="${countRejected}">0</span></a>
+        <div class="cp-head"><h1>[[#{common.my.orders}]]</h1><span class="cp-count" th:text="#{orders.count(${countAll})}">3 orders</span></div>
+        <nav class="mo-tabs" aria-label="Lọc đơn hàng" th:aria-label="#{orders.filter.orders}">
+            <a th:href="@{/don-hang-cua-toi}" th:classappend="${tab == 'all'} ? ' active'">[[#{common.all}]] <span class="n" th:text="${countAll}">0</span></a>
+            <a th:href="@{/don-hang-cua-toi(tab='waiting')}" th:classappend="${tab == 'waiting'} ? ' active'">[[#{orders.pending}]] <span class="n" th:text="${countWaiting}">0</span></a>
+            <a th:href="@{/don-hang-cua-toi(tab='confirmed')}" th:classappend="${tab == 'confirmed'} ? ' active'">[[#{orders.confirmed}]] <span class="n" th:text="${countConfirmed}">0</span></a>
+            <a th:href="@{/don-hang-cua-toi(tab='rejected')}" th:classappend="${tab == 'rejected'} ? ' active'">[[#{orders.cancelled.declined}]] <span class="n" th:text="${countRejected}">0</span></a>
         </nav>
         <div class="cp-empty" th:if="${#lists.isEmpty(orders)}">
             <div class="ico"><i class="bi bi-receipt"></i></div>
-            <h2 th:text="${countAll == 0} ? 'Chưa có đơn hàng' : 'Không có đơn hàng trong mục này'">No orders yet</h2>
-            <p th:text="${countAll == 0} ? 'Hãy chọn vài món bạn thích và đặt đơn đầu tiên.' : 'Hãy thử mục khác để xem các đơn hàng còn lại.'">Hint</p>
-            <a th:href="@{/collections}" class="cp-btn-main"><i class="bi bi-bag"></i> Tiếp tục mua sắm</a>
+            <h2 th:text="${countAll == 0} ? #{orders.empty.none} : #{orders.empty.filter}">No orders yet</h2>
+            <p th:text="${countAll == 0} ? #{orders.empty.hint.none} : #{orders.empty.hint.filter}">Hint</p>
+            <a th:href="@{/collections}" class="cp-btn-main"><i class="bi bi-bag"></i> [[#{common.continue.shopping}]]</a>
         </div>
         <div class="mo-list" th:unless="${#lists.isEmpty(orders)}">
             <article class="mo-card" th:each="o : ${orders}" th:classappend="${o.shipping or o.arrived} ? ' in-transit' : ''">
@@ -37,14 +37,14 @@
                     <img th:src="@{${#strings.isEmpty(it.image) ? '/images/products/placeholder.svg' : it.image}}" th:alt="${it.productName}" onerror="this.onerror=null;this.src='/images/products/placeholder.svg'">
                     <div>
                         <div class="mi-name" th:text="${it.productName}">Product</div>
-                        <div class="mi-qty" th:text="(${#strings.isEmpty(it.variantText)} ? '' : ${it.variantText} + ' · ') + 'SL ' + ${it.quantity} + ' × ' + ${#numbers.formatInteger(it.unitPrice, 0, 'POINT')} + ' ₫'">Qty 1</div>
+                        <div class="mi-qty" th:text="(${#strings.isEmpty(it.variantText)} ? '' : ${it.variantText} + ' · ') + 'SL ' + ${it.quantity} + ' × ' + ${#numbers.formatInteger(it.unitPrice, 0, numSep)} + ' ₫'">Qty 1</div>
                         <!-- Đơn đã giao thành công: dẫn thẳng tới form đánh giá của sản phẩm -->
                         <a class="mi-review" th:if="${o.confirmed and o.delivered and it.productId != null}"
                            th:href="@{'/san-pham/' + ${it.productId} + '#danh-gia'}"
                            style="display:inline-block;margin-top:6px;font-size:13px;text-decoration:underline">
-                            <i class="bi bi-star"></i> Đánh giá sản phẩm</a>
+                            <i class="bi bi-star"></i> [[#{orders.review.products}]]</a>
                     </div>
-                    <div class="mi-total" th:text="${#numbers.formatInteger(it.lineTotal, 0, 'POINT')} + ' ₫'">1.290.000 ₫</div>
+                    <div class="mi-total" th:text="${#numbers.formatInteger(it.lineTotal, 0, numSep)} + ' ₫'">1.290.000 ₫</div>
                 </div>
                 </div>
                 <div class="mo-ship" th:if="${o.confirmed}">
@@ -52,67 +52,66 @@
                     <p class="mo-ship-state"><i class="bi bi-truck"></i> <b th:text="${o.shippingLabel}">Đang chuẩn bị hàng</b></p>
                     <th:block th:replace="~{fragments/shipping :: info(${o})}"></th:block>
                     <div class="mo-ship-confirm" th:if="${o.customerCanConfirm}">
-                        <p th:if="${o.arrived}">Vận chuyển báo đơn đã giao tới bạn. Nếu bạn đã nhận được hàng, hãy bấm xác nhận.
-                            Nếu không phản hồi, đơn sẽ tự hoàn tất vào <b th:text="${o.autoDeadlineText(autoDays)}">08/11/2026</b>.</p>
-                        <p th:if="${o.shipping}">Khi nhận được hàng, bạn bấm xác nhận bên dưới để chúng tôi hoàn tất đơn.</p>
+                        <p th:if="${o.arrived}">[[#{orders.the.carrier.reports.that.your}]] <b th:text="${o.autoDeadlineText(autoDays)}">08/11/2026</b>.</p>
+                        <p th:if="${o.shipping}">[[#{orders.when.you.receive.your.order}]]</p>
                         <form th:action="@{/don-hang-cua-toi/{id}/da-nhan-hang(id=${o.id})}" method="post"
-                              data-confirm="Bạn xác nhận đã nhận được hàng của đơn này?" data-confirm-ok="Tôi đã nhận hàng">
-                            <button type="submit" class="cp-btn-main"><i class="bi bi-box2-heart"></i> Tôi đã nhận được hàng</button>
+                              data-confirm="Bạn xác nhận đã nhận được hàng của đơn này?" th:data-confirm="#{orders.confirm.that.you.have.received}" data-confirm-ok="Tôi đã nhận hàng" th:data-confirm-ok="#{orders.i.have.received.it}">
+                            <button type="submit" class="cp-btn-main"><i class="bi bi-box2-heart"></i> [[#{orders.i.have.received.my.order}]]</button>
                         </form>
                     </div>
                 </div>
                 <!-- Trả hàng / hoàn tiền (chỉ đơn đã giao thành công) -->
                 <div class="mo-return" th:if="${o.confirmed and o.delivered}" th:with="rr=${returns.get(o.id)}">
                     <th:block th:if="${rr != null}">
-                        <p class="mo-return-state"><i class="bi bi-arrow-return-left"></i> Yêu cầu trả hàng:
+                        <p class="mo-return-state"><i class="bi bi-arrow-return-left"></i> [[#{orders.return.request}]]
                             <b th:text="${rr.statusLabel}">Chờ cửa hàng duyệt</b></p>
-                        <p class="mo-return-note" th:text="'Lý do của bạn: ' + ${rr.reason}">Lý do</p>
-                        <p class="mo-return-note" th:if="${rr.staffNote != null}" th:text="'Phản hồi của cửa hàng: ' + ${rr.staffNote}">Phản hồi</p>
-                        <p class="mo-return-note" th:if="${rr.refunded}" th:text="'Đã hoàn ' + ${#numbers.formatInteger(rr.refundAmount, 0, 'POINT')} + ' ₫ về phương thức thanh toán ban đầu.'">Đã hoàn</p>
+                        <p class="mo-return-note" th:text="#{orders.return.your.reason(${rr.reason})}">Lý do</p>
+                        <p class="mo-return-note" th:if="${rr.staffNote != null}" th:text="#{orders.return.store.reply(${rr.staffNote})}">Phản hồi</p>
+                        <p class="mo-return-note" th:if="${rr.refunded}" th:text="#{orders.return.refunded(${#numbers.formatInteger(rr.refundAmount, 0, numSep)})}">Đã hoàn</p>
                     </th:block>
                     <th:block th:if="${rr == null and o.canRequestReturn(returnDays)}">
                         <details class="mo-return-form">
-                            <summary class="mo-toggle"><i class="bi bi-arrow-return-left"></i> Yêu cầu trả hàng / hoàn tiền</summary>
+                            <summary class="mo-toggle"><i class="bi bi-arrow-return-left"></i> [[#{orders.return.refund.request}]]</summary>
                             <form th:action="@{/don-hang-cua-toi/{id}/tra-hang(id=${o.id})}" method="post"
-                                  data-confirm="Gửi yêu cầu trả hàng cho đơn này?" data-confirm-ok="Gửi yêu cầu">
-                                <p>Còn hạn gửi yêu cầu đến <b th:text="${o.returnDeadlineText(returnDays)}">12/11/2026</b>. Sản phẩm cần còn nguyên tem mác, chưa sử dụng.</p>
+                                  data-confirm="Gửi yêu cầu trả hàng cho đơn này?" th:data-confirm="#{orders.submit.a.return.request.for}" data-confirm-ok="Gửi yêu cầu" th:data-confirm-ok="#{orders.submit.request}">
+                                <p>[[#{orders.you.can.submit.a.request}]] <b th:text="${o.returnDeadlineText(returnDays)}">12/11/2026</b>[[#{orders.items.must.be.unused.with}]]</p>
                                 <textarea name="reason" rows="3" maxlength="500" required minlength="5"
-                                          placeholder="Vì sao bạn muốn trả hàng? (sai size, lỗi sản phẩm, không như mô tả...)"></textarea>
-                                <button type="submit" class="mo-cancel-btn"><i class="bi bi-send"></i> Gửi yêu cầu</button>
+                                          placeholder="Vì sao bạn muốn trả hàng? (sai size, lỗi sản phẩm, không như mô tả...)" th:placeholder="#{orders.why.do.you.want.to}"></textarea>
+                                <button type="submit" class="mo-cancel-btn"><i class="bi bi-send"></i> [[#{orders.submit.request}]]</button>
                             </form>
                         </details>
                     </th:block>
-                    <p class="mo-return-note" th:if="${rr == null and !o.canRequestReturn(returnDays)}">Đã quá hạn đổi trả (<span th:text="${o.effectiveReturnDays(returnDays)}">7</span> ngày kể từ khi nhận hàng).</p>
+                    <p class="mo-return-note" th:if="${rr == null and !o.canRequestReturn(returnDays)}">[[#{orders.the.return.window.has.passed}]]<span th:text="${o.effectiveReturnDays(returnDays)}">7</span> [[#{orders.days.since.delivery}]]</p>
                 </div>
-                <div class="mo-reject" th:if="${o.rejected}"><i class="bi bi-exclamation-triangle-fill"></i><span><b th:text="${o.cancelledByCustomer} ? 'Ghi chú:' : 'Lý do:'">Lý do:</b> <span th:text="${o.rejectReason}">Reason</span></span></div>
+                <div class="mo-reject" th:if="${o.rejected}"><i class="bi bi-exclamation-triangle-fill"></i><span><b th:text="${o.cancelledByCustomer} ? #{common.note.colon} : #{misc.reason}">Lý do:</b> <span th:text="${o.rejectReason}">Reason</span></span></div>
                 <div class="mo-wait" th:if="${o.awaitingReview}"><i class="bi bi-hourglass-split"></i>
-                    <span th:text="${o.hasTransfer} ? (${o.codDeposit} ? 'Nhân viên đang kiểm tra ảnh bill tiền cọc của bạn.' : 'Nhân viên đang kiểm tra ảnh bill và khoản thanh toán của bạn.') : 'Nhân viên sẽ xác nhận đơn hàng và gọi theo số điện thoại bạn cung cấp.'">Waiting</span></div>
+                    <span th:text="${o.hasTransfer} ? (${o.codDeposit} ? #{orders.review.deposit} : #{orders.review.payment}) : #{orders.review.confirm}">Waiting</span></div>
                 <div class="mo-cancel" th:if="${o.customerCanCancel}">
                     <form th:action="@{/don-hang-cua-toi/{id}/huy(id=${o.id})}" method="post"
-                          th:attr="data-confirm=${o.hasTransfer} ? 'Bạn muốn huỷ đơn này? Nếu đã chuyển khoản, cửa hàng sẽ liên hệ để xử lý khoản tiền đã chuyển.' : 'Bạn muốn huỷ đơn này?'"
-                          data-confirm-ok="Huỷ đơn" data-confirm-danger>
-                        <button type="submit" class="mo-cancel-btn"><i class="bi bi-x-circle"></i> Huỷ đơn hàng</button>
+                          th:attr="data-confirm=${o.hasTransfer} ? #{orders.cancel.confirm.transfer} : #{orders.cancel.confirm}"
+                          data-confirm-ok="Huỷ đơn" th:data-confirm-ok="#{orders.cancel.order.2}" data-confirm-danger>
+                        <button type="submit" class="mo-cancel-btn"><i class="bi bi-x-circle"></i> [[#{orders.cancel.order}]]</button>
                     </form>
                 </div>
                 <footer class="mo-foot">
                     <details class="mo-details">
-                        <summary class="mo-toggle">Xem chi tiết</summary>
+                        <summary class="mo-toggle">[[#{common.view.details}]]</summary>
                         <dl class="order-meta mo-detail">
-                            <div><dt>Người nhận</dt><dd th:text="${o.receiverName} + ' · ' + ${o.phone}">Name</dd></div>
-                            <div><dt>Thanh toán</dt><dd th:text="${o.paymentLabel}">COD</dd></div>
-                            <div class="full"><dt>Địa chỉ giao hàng</dt><dd th:text="${o.address}">Address</dd></div>
-                            <div class="full" th:if="${o.note != null}"><dt>Ghi chú</dt><dd th:text="${o.note}">Note</dd></div>
-                            <div th:if="${o.reviewedAt != null}"><dt>Duyệt lúc</dt><dd th:text="${o.reviewedAtText}">29/10/2026 15:00</dd></div>
-                            <div th:if="${o.hasSlip}"><dt>Ảnh bill</dt><dd><a th:href="@{/thanh-toan/slip/{id}(id=${o.id})}" target="_blank" rel="noopener">Xem ảnh bill đã tải lên</a></dd></div>
+                            <div><dt>[[#{common.recipient}]]</dt><dd th:text="${o.receiverName} + ' · ' + ${o.phone}">Name</dd></div>
+                            <div><dt>[[#{common.payment}]]</dt><dd th:text="${o.paymentLabel}">COD</dd></div>
+                            <div class="full"><dt>[[#{common.delivery.address}]]</dt><dd th:text="${o.address}">Address</dd></div>
+                            <div class="full" th:if="${o.note != null}"><dt>[[#{common.note}]]</dt><dd th:text="${o.note}">Note</dd></div>
+                            <div th:if="${o.reviewedAt != null}"><dt>[[#{orders.approved.at}]]</dt><dd th:text="${o.reviewedAtText}">29/10/2026 15:00</dd></div>
+                            <div th:if="${o.hasSlip}"><dt>[[#{common.payment.slip}]]</dt><dd><a th:href="@{/thanh-toan/slip/{id}(id=${o.id})}" target="_blank" rel="noopener">[[#{common.view.uploaded.slip}]]</a></dd></div>
                         </dl>
                     </details>
-                    <a class="mo-toggle" th:href="@{/thanh-toan/hoa-don/{id}(id=${o.id})}"><i class="bi bi-receipt"></i> Xem hóa đơn</a>
+                    <a class="mo-toggle" th:href="@{/thanh-toan/hoa-don/{id}(id=${o.id})}"><i class="bi bi-receipt"></i> [[#{common.view.invoice}]]</a>
                     <div class="mo-sum">
-                        <div class="mo-total"><span>Tổng cộng</span><b th:text="${#numbers.formatInteger(o.totalAmount, 0, 'POINT')} + ' ₫'">2.670.000 ₫</b></div>
+                        <div class="mo-total"><span>[[#{common.total}]]</span><b th:text="${#numbers.formatInteger(o.totalAmount, 0, numSep)} + ' ₫'">2.670.000 ₫</b></div>
                         <!-- Đơn COD có đặt cọc: tách rõ phần đã cọc và phần còn lại thu khi nhận hàng -->
                         <p class="mo-split" th:if="${o.codDeposit}">
-                            Đã đặt cọc <b th:text="${#numbers.formatInteger(o.payNow, 0, 'POINT')} + ' ₫'">357.000 ₫</b>
-                            · Còn lại thu khi nhận hàng <b th:text="${#numbers.formatInteger(o.codDue, 0, 'POINT')} + ' ₫'">833.000 ₫</b>
+                            [[#{common.deposit.paid}]] <b th:text="${#numbers.formatInteger(o.payNow, 0, numSep)} + ' ₫'">357.000 ₫</b>
+                            · [[#{orders.balance.due.on.delivery}]] <b th:text="${#numbers.formatInteger(o.codDue, 0, numSep)} + ' ₫'">833.000 ₫</b>
                         </p>
                     </div>
                 </footer>

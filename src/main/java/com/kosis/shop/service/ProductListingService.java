@@ -37,8 +37,8 @@ public class ProductListingService {
     @PersistenceContext
     private EntityManager em;
 
-    @Value("${kosis.listing.page-size:12}")
-    private int pageSize = 12;
+    @Value("${kosis.listing.page-size:20}")
+    private int pageSize = 20;
 
     /** Cài đặt do ADMIN chỉnh trên /dashboard/cai-dat (ghi đè giá trị trong properties). Không có (test) thì dùng pageSize. */
     @Autowired(required = false)

@@ -1,5 +1,6 @@
 package com.kosis.shop.entity;
 
+import com.kosis.shop.config.I18n;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -178,8 +179,8 @@ public class Order {
 
     @Transient
     public String getPaymentLabel() {
-        if (PAYMENT_BANK.equals(paymentMethod)) return "Chuyển khoản ngân hàng";
-        return isCodDeposit() ? "Thanh toán khi nhận hàng (COD) + đặt cọc" : "Thanh toán khi nhận hàng (COD)";
+        if (PAYMENT_BANK.equals(paymentMethod)) return I18n.t("order.payment.bank", "Chuyển khoản ngân hàng");
+        return isCodDeposit() ? I18n.t("order.payment.cod.deposit", "Thanh toán khi nhận hàng (COD) + đặt cọc") : I18n.t("order.payment.cod", "Thanh toán khi nhận hàng (COD)");
     }
 
     /** Đơn COD có đặt cọc trước bằng chuyển khoản? */
@@ -209,10 +210,10 @@ public class Order {
 
     @Transient
     public String getStatusLabel() {
-        if (STATUS_PENDING.equals(status)) return "Chờ xác nhận";
-        if (STATUS_PAYMENT_REVIEW.equals(status)) return "Chờ kiểm tra thanh toán";
-        if (STATUS_CONFIRMED.equals(status)) return "Đã xác nhận";
-        if (STATUS_REJECTED.equals(status)) return isCancelledByCustomer() ? "Đã hủy" : "Bị từ chối";
+        if (STATUS_PENDING.equals(status)) return I18n.t("order.status.pending", "Chờ xác nhận");
+        if (STATUS_PAYMENT_REVIEW.equals(status)) return I18n.t("order.status.payment.review", "Chờ kiểm tra thanh toán");
+        if (STATUS_CONFIRMED.equals(status)) return I18n.t("order.status.confirmed", "Đã xác nhận");
+        if (STATUS_REJECTED.equals(status)) return isCancelledByCustomer() ? I18n.t("order.status.cancelled", "Đã hủy") : I18n.t("order.status.declined", "Bị từ chối");
         return status;
     }
 
@@ -253,8 +254,8 @@ public class Order {
     /** Tên người xử lý để hiển thị (khách tự huỷ thì ghi rõ thay vì hiện mã @customer) */
     @Transient
     public String getReviewedByLabel() {
-        if (CANCELLED_BY_CUSTOMER.equals(reviewedBy)) return "Khách hàng (tự huỷ đơn)";
-        if (CONFIRMED_BY_BANK.equals(reviewedBy)) return "Hệ thống (tự đối soát chuyển khoản)";
+        if (CANCELLED_BY_CUSTOMER.equals(reviewedBy)) return I18n.t("order.reviewed.by.customer", "Khách hàng (tự huỷ đơn)");
+        if (CONFIRMED_BY_BANK.equals(reviewedBy)) return I18n.t("order.reviewed.by.bank", "Hệ thống (tự đối soát chuyển khoản)");
         return reviewedBy == null ? "" : reviewedBy;
     }
 
@@ -405,12 +406,12 @@ public class Order {
     @Transient
     public String getShippingLabel() {
         return switch (getShippingStatus()) {
-            case SHIP_SHIPPING -> "Đang vận chuyển";
-            case SHIP_ARRIVED -> "Đã tới nơi - chờ khách xác nhận";
-            case SHIP_DELIVERED -> "Đã giao thành công";
-            case SHIP_RETURNED -> "Giao không thành công";
-            case SHIP_REFUSED -> "Khách không nhận hàng";
-            default -> "Đang chuẩn bị hàng";
+            case SHIP_SHIPPING -> I18n.t("order.ship.shipping", "Đang vận chuyển");
+            case SHIP_ARRIVED -> I18n.t("order.ship.arrived", "Đã tới nơi - chờ khách xác nhận");
+            case SHIP_DELIVERED -> I18n.t("order.ship.delivered", "Đã giao thành công");
+            case SHIP_RETURNED -> I18n.t("order.ship.returned", "Giao không thành công");
+            case SHIP_REFUSED -> I18n.t("order.ship.refused", "Khách không nhận hàng");
+            default -> I18n.t("order.ship.preparing", "Đang chuẩn bị hàng");
         };
     }
 
@@ -436,9 +437,9 @@ public class Order {
     @Transient
     public String getDeliveredByLabel() {
         if (deliveredBy == null || deliveredBy.isBlank()) return "";
-        if ("@customer".equals(deliveredBy)) return "Khách xác nhận đã nhận hàng";
-        if ("@auto".equals(deliveredBy)) return "Hệ thống tự hoàn tất (khách không phản hồi)";
-        return "Nhân viên " + deliveredBy;
+        if ("@customer".equals(deliveredBy)) return I18n.t("order.delivered.by.customer", "Khách xác nhận đã nhận hàng");
+        if ("@auto".equals(deliveredBy)) return I18n.t("order.delivered.by.auto", "Hệ thống tự hoàn tất (khách không phản hồi)");
+        return I18n.t("order.delivered.by.staff", "Nhân viên {0}", deliveredBy);
     }
 
     @Transient

@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.Product;
 import com.kosis.shop.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +72,7 @@ public class ProductController {
                          Principal principal, RedirectAttributes ra) {
         try {
             reviewService.submit(id, principal.getName(), rating, comment);
-            ra.addFlashAttribute("reviewMessage", "Cảm ơn bạn đã đánh giá sản phẩm!");
+            ra.addFlashAttribute("reviewMessage", I18n.t("product.review.thanks", "Cảm ơn bạn đã đánh giá sản phẩm!"));
         } catch (IllegalStateException e) {
             ra.addFlashAttribute("reviewError", e.getMessage());
         }

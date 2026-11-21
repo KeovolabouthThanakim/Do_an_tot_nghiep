@@ -219,7 +219,7 @@ public class SettingsService {
                             "kosis.returns.window-days", "7", 1, 60, "ngày"),
                     Def.num(Type.INT, LISTING_PAGE_SIZE, "Số sản phẩm mỗi trang",
                             "Ở trang danh sách và tìm kiếm của cửa hàng.",
-                            "kosis.listing.page-size", "12", 4, 48, "sản phẩm"))));
+                            "kosis.listing.page-size", "20", 4, 48, "sản phẩm"))));
 
     private static final Map<String, Def> DEFS;
 

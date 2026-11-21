@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,10 +36,10 @@ public class SlipStorageService {
 
     private String detectExtension(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng tải lên ảnh bill chuyển khoản.");
+            throw new IllegalArgumentException(I18n.t("slip.required", "Vui lòng tải lên ảnh bill chuyển khoản."));
         }
         if (file.getSize() > MAX_BYTES) {
-            throw new IllegalArgumentException("Ảnh bill quá lớn (tối đa 5MB).");
+            throw new IllegalArgumentException(I18n.t("slip.too.big", "Ảnh bill quá lớn (tối đa 5MB)."));
         }
         byte[] h = new byte[12];
         int n;
@@ -55,7 +56,7 @@ public class SlipStorageService {
                 && h[8] == 'W' && h[9] == 'E' && h[10] == 'B' && h[11] == 'P') {
             return ".webp";
         }
-        throw new IllegalArgumentException("Ảnh bill chỉ chấp nhận file JPG, PNG hoặc WEBP.");
+        throw new IllegalArgumentException(I18n.t("slip.bad.type", "Ảnh bill chỉ chấp nhận file JPG, PNG hoặc WEBP."));
     }
 
     /** Đường dẫn file thật trên đĩa; null nếu tên không hợp lệ hoặc file không tồn tại */

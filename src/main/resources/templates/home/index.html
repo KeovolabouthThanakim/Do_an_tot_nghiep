@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
-<head th:replace="~{fragments/layout :: head('KOSIS | Thời trang cao cấp', 'home')}"></head>
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head th:replace="~{fragments/layout :: head(#{title.home}, 'home')}"></head>
 <body>
 <th:block th:replace="~{fragments/layout :: header}"></th:block>
 
 <main id="main">
 
     <!-- ===== 1. HERO ===== -->
-    <section class="hero" aria-label="Chiến dịch Thu Đông 2026">
+    <section class="hero" aria-label="Chiến dịch Thu Đông 2026" th:aria-label="#{home.autumn.winter.2026.campaign}">
         <picture class="hero__bg">
-            <img th:src="@{/images/hero/hero-fashion-campaign.jpg}" alt="Người mẫu mặc áo khoác kẻ caro và đeo hoa tai vòng vàng" fetchpriority="high">
+            <img th:src="@{/images/hero/hero-fashion-campaign.jpg}" alt="Người mẫu mặc áo khoác kẻ caro và đeo hoa tai vòng vàng" th:alt="#{home.model.wearing.a.checked.jacket}" fetchpriority="high">
         </picture>
         <div class="hero__shade"></div>
         <div class="hero__inner">
-            <h1 class="hero__title">Khám phá<br>bộ sưu tập <em>thời trang</em><br>độc quyền</h1>
+            <h1 class="hero__title">[[#{home.discover}]]<br>[[#{home.an.exclusive}]] <em>[[#{home.fashion}]]</em><br>[[#{home.collection}]]</h1>
             <div class="hero__cta">
-                <a class="btn btn--light" th:href="@{/collections}">Mua sắm ngay</a>
-                <a class="btn-circle" th:href="@{/collections}" aria-label="Xem tất cả bộ sưu tập"><i class="bi bi-arrow-up-right"></i></a>
+                <a class="btn btn--light" th:href="@{/collections}">[[#{home.shop.now}]]</a>
+                <a class="btn-circle" th:href="@{/collections}" aria-label="Xem tất cả bộ sưu tập" th:aria-label="#{home.view.all.collections}"><i class="bi bi-arrow-up-right"></i></a>
             </div>
             <div class="hero__progress" aria-hidden="true">
                 <span class="hero__track"><span class="hero__fill"></span></span>
-                <span>Thu / Đông 2026</span>
+                <span>[[#{home.autumn.winter.2026}]]</span>
             </div>
         </div>
     </section>
@@ -29,32 +29,32 @@
     <section class="seasons" aria-labelledby="seasons-title">
         <div class="container container--content">
             <header class="seasons__head reveal">
-                <div class="tabs" role="tablist" aria-label="Dành cho">
-                    <button class="tab is-on" role="tab" type="button" aria-selected="true" data-tab="men">Dành cho Nam</button>
-                    <button class="tab" role="tab" type="button" aria-selected="false" data-tab="women">Nữ</button>
-                    <button class="tab" role="tab" type="button" aria-selected="false" data-tab="kids">Trẻ em</button>
+                <div class="tabs" role="tablist" aria-label="Dành cho" th:aria-label="#{common.for}">
+                    <button class="tab is-on" role="tab" type="button" aria-selected="true" data-tab="men">[[#{home.for.men}]]</button>
+                    <button class="tab" role="tab" type="button" aria-selected="false" data-tab="women">[[#{common.women}]]</button>
+                    <button class="tab" role="tab" type="button" aria-selected="false" data-tab="kids">[[#{common.kids}]]</button>
                 </div>
                 <div class="seasons__title">
                     <p class="eyebrow">KOSIS SEASONS</p>
-                    <h2 class="display" id="seasons-title">Chi tiết từ chất liệu thân thiện môi trường</h2>
+                    <h2 class="display" id="seasons-title">[[#{home.details.from.eco.friendly.materials}]]</h2>
                 </div>
                 <div class="select" data-select>
-                    <button class="select__btn" type="button" aria-haspopup="true" aria-expanded="false" data-select-toggle>Bộ sưu tập 2026 <i class="bi bi-chevron-down"></i></button>
+                    <button class="select__btn" type="button" aria-haspopup="true" aria-expanded="false" data-select-toggle>[[#{home.2026.collection}]] <i class="bi bi-chevron-down"></i></button>
                     <div class="select__menu">
-                        <a th:href="@{/collections}">Tất cả sản phẩm</a>
+                        <a th:href="@{/collections}">[[#{common.all.products}]]</a>
                         <a th:each="c : ${collectionCategories}" th:href="@{/collections(category=${c.name})}" th:text="${c.name}">Outerwear</a>
                     </div>
                 </div>
             </header>
 
             <div class="reveal" data-panel="men" role="tabpanel">
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsMen}, '/images/collections/model-mens-editorial.jpg', '/images/collections/model-utility-look.jpg', '/images/collections/Urban-Minimalist-in-Black.jpg', '/men', 'Nam')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsMen}, '/images/collections/model-mens-editorial.jpg', '/images/collections/model-utility-look.jpg', '/images/collections/Urban-Minimalist-in-Black.jpg', '/men', #{common.men})}"></div>
             </div>
             <div class="reveal" data-panel="women" role="tabpanel" hidden>
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsWomen}, '/images/collections/model-womens-editorial.jpg', '/images/collections/model-beige-coat-street.jpg', '/images/collections/model-womens-bag-look.jpg', '/women', 'Nữ')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsWomen}, '/images/collections/model-womens-editorial.jpg', '/images/collections/model-beige-coat-street.jpg', '/images/collections/model-womens-bag-look.jpg', '/women', #{common.women})}"></div>
             </div>
             <div class="reveal" data-panel="kids" role="tabpanel" hidden>
-                <div th:replace="~{home/mosaic :: mosaic(${seasonsKids}, '/images/collections/kids-fashion-look.jpg', null, null, '/kids', 'Trẻ em')}"></div>
+                <div th:replace="~{home/mosaic :: mosaic(${seasonsKids}, '/images/collections/kids-fashion-look.jpg', null, null, '/kids', #{common.kids})}"></div>
             </div>
         </div>
     </section>
@@ -64,16 +64,16 @@
         <div class="container container--content">
             <div class="arrivals__head reveal">
                 <div>
-                    <p class="eyebrow">VỪA CẬP BẾN</p>
-                    <h2 class="display" id="arrivals-title">Mùa mới, phong cách mới</h2>
+                    <p class="eyebrow">[[#{home.just.arrived}]]</p>
+                    <h2 class="display" id="arrivals-title">[[#{home.new.season.new.style}]]</h2>
                 </div>
                 <div class="arrows">
-                    <a class="link-underline" th:href="@{/collections(sort='newest')}" style="align-self:center;margin-right:12px">Xem tất cả</a>
-                    <button class="arrow" type="button" aria-label="Sản phẩm trước" data-rail-prev><i class="bi bi-arrow-left"></i></button>
-                    <button class="arrow" type="button" aria-label="Sản phẩm tiếp theo" data-rail-next><i class="bi bi-arrow-right"></i></button>
+                    <a class="link-underline" th:href="@{/collections(sort='newest')}" style="align-self:center;margin-right:12px">[[#{home.view.all}]]</a>
+                    <button class="arrow" type="button" aria-label="Sản phẩm trước" th:aria-label="#{home.previous.products}" data-rail-prev><i class="bi bi-arrow-left"></i></button>
+                    <button class="arrow" type="button" aria-label="Sản phẩm tiếp theo" th:aria-label="#{home.next.products}" data-rail-next><i class="bi bi-arrow-right"></i></button>
                 </div>
             </div>
-            <div class="rail reveal" data-rail tabindex="0" aria-label="Hàng mới về">
+            <div class="rail reveal" data-rail tabindex="0" aria-label="Hàng mới về" th:aria-label="#{common.new.arrivals}">
                 <th:block th:each="p : ${newArrivals}">
                     <th:block th:replace="~{fragments/layout :: productCard(${p}, 'arrival')}"></th:block>
                 </th:block>
@@ -86,37 +86,37 @@
         <div class="container container--content">
             <header class="editorial__head reveal">
                 <p class="eyebrow">KOSIS SEASONS</p>
-                <h2 class="display" id="editorial-title">Thiết kế tương lai lấy cảm hứng từ công nghệ</h2>
+                <h2 class="display" id="editorial-title">[[#{home.future.forward.design.inspired.by}]]</h2>
             </header>
             <div class="editorial__grid">
-                <a class="ed-photo reveal" th:href="@{/kids}" aria-label="Mua đồ trẻ em">
-                    <img th:src="@{/images/collections/model-blue-jacket-look.jpg}" alt="Người mẫu nhí mặc áo nỉ khóa kéo màu xanh và quần ống rộng" loading="lazy">
-                    <span class="btn btn--dark btn--sm">Đồ trẻ em <i class="bi bi-arrow-up-right"></i></span>
+                <a class="ed-photo reveal" th:href="@{/kids}" aria-label="Mua đồ trẻ em" th:aria-label="#{home.shop.kids}">
+                    <img th:src="@{/images/collections/model-blue-jacket-look.jpg}" alt="Người mẫu nhí mặc áo nỉ khóa kéo màu xanh và quần ống rộng" th:alt="#{home.child.model.wearing.a.blue}" loading="lazy">
+                    <span class="btn btn--dark btn--sm">[[#{home.kids}]] <i class="bi bi-arrow-up-right"></i></span>
                 </a>
                 <div class="ed-dark reveal" style="--d:.1s" data-editorial>
-                    <div class="ed-toggle" role="group" aria-label="Bộ sưu tập">
-                        <button type="button" class="is-on" data-ed="women" aria-pressed="true">Nữ</button>
-                        <button type="button" data-ed="men" aria-pressed="false">Nam</button>
+                    <div class="ed-toggle" role="group" aria-label="Bộ sưu tập" th:aria-label="#{common.collections}">
+                        <button type="button" class="is-on" data-ed="women" aria-pressed="true">[[#{common.women}]]</button>
+                        <button type="button" data-ed="men" aria-pressed="false">[[#{common.men}]]</button>
                     </div>
-                    <h3>Bộ sưu tập hoài niệm dành cho <span data-ed-word>nữ</span></h3>
+                    <h3>[[#{home.a.nostalgic.collection.for}]] <span data-ed-word>[[#{home.women}]]</span></h3>
                     <div class="ed-dark__row">
                         <span class="avatars" aria-hidden="true">
                             <img th:src="@{/images/collections/model-womens-editorial.jpg}" alt="" style="object-position:top">
                             <img th:src="@{/images/collections/model-mens-editorial.jpg}" alt="" style="object-position:top">
                             <img th:src="@{/images/collections/model-beige-coat-street.jpg}" alt="" style="object-position:top">
                         </span>
-                        <span>Free size đến XL</span>
+                        <span>[[#{home.free.size.to.xl}]]</span>
                     </div>
-                    <p>Những thiết kế vượt thời gian cho thế giới hiện đại. Form dáng thoải mái trong chất liệu mềm mại, chân thật.</p>
-                    <a class="btn btn--light" th:href="@{/women}" data-ed-link>Mua ngay <i class="bi bi-arrow-up-right"></i></a>
+                    <p>[[#{home.timeless.designs.for.the.modern}]]</p>
+                    <a class="btn btn--light" th:href="@{/women}" data-ed-link>[[#{common.shop.now}]] <i class="bi bi-arrow-up-right"></i></a>
                 </div>
                 <div class="ed-light reveal" style="--d:.2s">
                     <span class="ed-light__script">Kosis Seasons</span>
-                    <small>26 – 29 tháng 11, 2026</small>
+                    <small>[[#{home.november.26.29.2026}]]</small>
                     <small>KOSIS Atelier</small>
                     <div class="ed-light__btns">
-                        <a class="btn btn--dark btn--sm" th:href="@{/collections}">Mua ngay <i class="bi bi-arrow-up-right"></i></a>
-                        <a class="btn btn--outline btn--sm" th:href="@{/register}">Đăng ký</a>
+                        <a class="btn btn--dark btn--sm" th:href="@{/collections}">[[#{common.shop.now}]] <i class="bi bi-arrow-up-right"></i></a>
+                        <a class="btn btn--outline btn--sm" th:href="@{/register}">[[#{common.sign.up}]]</a>
                     </div>
                 </div>
             </div>
@@ -127,23 +127,23 @@
     <section class="section brands" id="brands" aria-labelledby="brands-title">
         <div class="container container--content">
             <header class="brands__head reveal">
-                <p class="eyebrow">THỜI TRANG THẾ HỆ MỚI</p>
-                <h2 class="display" id="brands-title">HỢP TÁC CÙNG CÁC THƯƠNG HIỆU NỔI TIẾNG</h2>
+                <p class="eyebrow">[[#{common.next.generation.fashion}]]</p>
+                <h2 class="display" id="brands-title">[[#{home.collaborating.with.famous.brands}]]</h2>
             </header>
             <div class="brands__grid reveal">
                 <div class="brand-cell">
-                    <small>Từ 2024</small>
+                    <small>[[#{home.since.2024}]]</small>
                     <div class="brand-cell__logo">
                         <svg viewBox="0 0 220 60" role="img" aria-label="ZARA"><text x="110" y="46" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="56" font-weight="500" letter-spacing="-3" fill="currentColor">ZARA</text></svg>
                     </div>
-                    <a class="link-underline" th:href="@{/about#brands}">Xem chi tiết <i class="bi bi-arrow-up-right"></i></a>
+                    <a class="link-underline" th:href="@{/about#brands}">[[#{common.view.details}]] <i class="bi bi-arrow-up-right"></i></a>
                 </div>
                 <div class="brand-cell">
-                    <small>Từ 2025</small>
+                    <small>[[#{home.since.2025}]]</small>
                     <div class="brand-cell__logo">
                         <svg viewBox="0 0 220 60" role="img" aria-label="adidas"><text x="110" y="46" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-3" fill="currentColor">adidas</text></svg>
                     </div>
-                    <a class="link-underline" th:href="@{/about#brands}">Xem chi tiết <i class="bi bi-arrow-up-right"></i></a>
+                    <a class="link-underline" th:href="@{/about#brands}">[[#{common.view.details}]] <i class="bi bi-arrow-up-right"></i></a>
                 </div>
             </div>
         </div>
@@ -152,7 +152,7 @@
     <!-- ===== 6. FULL-WIDTH CAMPAIGN ===== -->
     <section class="campaign" aria-labelledby="campaign-title">
         <div class="campaign__bg" aria-hidden="true"><img th:src="@{/images/collections/womens-fashion-portrait.jpg}" alt=""></div>
-        <div class="campaign__photo"><img th:src="@{/images/collections/womens-fashion-portrait.jpg}" alt="Người mẫu mặc blazer màu kem và áo cổ lọ gân" loading="lazy"></div>
+        <div class="campaign__photo"><img th:src="@{/images/collections/womens-fashion-portrait.jpg}" alt="Người mẫu mặc blazer màu kem và áo cổ lọ gân" th:alt="#{home.model.wearing.a.cream.blazer}" loading="lazy"></div>
         <div class="campaign__inner reveal">
             <div class="social-proof">
                 <span class="avatars" aria-hidden="true">
@@ -160,10 +160,10 @@
                     <img th:src="@{/images/collections/model-womens-bag-look.jpg}" alt="" style="object-position:top">
                     <img th:src="@{/images/collections/model-black-hoodie.jpg}" alt="" style="object-position:top">
                 </span>
-                <span>+97k khách hàng hài lòng</span>
+                <span>[[#{home.97k.happy.customers}]]</span>
             </div>
-            <h2 id="campaign-title">Lựa chọn của những người sáng tạo</h2>
-            <a class="btn btn--dark" th:href="@{/collections}">Khám phá cửa hàng <i class="bi bi-arrow-up-right"></i></a>
+            <h2 id="campaign-title">[[#{home.the.choice.of.creators}]]</h2>
+            <a class="btn btn--dark" th:href="@{/collections}">[[#{home.explore.the.store}]] <i class="bi bi-arrow-up-right"></i></a>
         </div>
     </section>
 

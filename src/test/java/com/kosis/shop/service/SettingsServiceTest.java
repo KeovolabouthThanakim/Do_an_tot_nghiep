@@ -74,8 +74,8 @@ class SettingsServiceTest {
 
     @Test
     void fallsBackToBuiltInDefaultWhenPropertyIsMissing() {
-        // không khai báo kosis.listing.page-size trong env -> dùng giá trị dự phòng 12
-        assertEquals(12, service.getInt(SettingsService.LISTING_PAGE_SIZE));
+        // không khai báo kosis.listing.page-size trong env -> dùng giá trị dự phòng 20
+        assertEquals(20, service.getInt(SettingsService.LISTING_PAGE_SIZE));
     }
 
     @Test

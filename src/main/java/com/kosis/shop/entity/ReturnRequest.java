@@ -1,5 +1,6 @@
 package com.kosis.shop.entity;
 
+import com.kosis.shop.config.I18n;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -77,10 +78,10 @@ public class ReturnRequest {
     @Transient
     public String getStatusLabel() {
         return switch (status) {
-            case REQUESTED -> "Chờ cửa hàng duyệt";
-            case APPROVED -> "Đã duyệt - chờ nhận hàng trả";
-            case REJECTED -> "Bị từ chối";
-            case REFUNDED -> "Đã hoàn tiền";
+            case REQUESTED -> I18n.t("return.status.requested", "Chờ cửa hàng duyệt");
+            case APPROVED -> I18n.t("return.status.approved", "Đã duyệt - chờ nhận hàng trả");
+            case REJECTED -> I18n.t("order.status.declined", "Bị từ chối");
+            case REFUNDED -> I18n.t("return.status.refunded", "Đã hoàn tiền");
             default -> status;
         };
     }

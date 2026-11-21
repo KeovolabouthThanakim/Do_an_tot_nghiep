@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.User;
 import com.kosis.shop.repository.UserRepository;
 import com.kosis.shop.service.EmailService;
@@ -49,8 +50,7 @@ public class PasswordController {
         resetService.requestReset(identifier);
         // Luôn trả lời giống nhau dù có tài khoản hay không
         model.addAttribute("successMessage",
-                "Nếu thông tin khớp với một tài khoản, chúng tôi đã gửi email hướng dẫn đặt lại mật khẩu. "
-                        + "Link có hiệu lực 30 phút. Hãy kiểm tra cả hộp thư rác.");
+                I18n.t("password.forgot.sent", "Nếu thông tin khớp với một tài khoản, chúng tôi đã gửi email hướng dẫn đặt lại mật khẩu. Link có hiệu lực 30 phút. Hãy kiểm tra cả hộp thư rác."));
         return "auth/forgot-password";
     }
 
@@ -60,7 +60,7 @@ public class PasswordController {
     public String resetPage(@RequestParam(defaultValue = "") String token, Model model) {
         if (!resetService.isValid(token)) {
             model.addAttribute("invalid", true);
-            model.addAttribute("errorMessage", "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link mới.");
+            model.addAttribute("errorMessage", I18n.t("password.link.invalid", "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link mới."));
         } else {
             model.addAttribute("token", token);
         }
@@ -80,7 +80,7 @@ public class PasswordController {
         }
         if (!resetService.resetPassword(token, password)) {
             model.addAttribute("invalid", true);
-            model.addAttribute("errorMessage", "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link mới.");
+            model.addAttribute("errorMessage", I18n.t("password.link.invalid", "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link mới."));
             return "auth/reset-password";
         }
         return "redirect:/login?passwordReset=true";
@@ -97,7 +97,7 @@ public class PasswordController {
         if (u == null) return "redirect:/login";
 
         if (!passwordEncoder.matches(currentPassword, u.getPassword())) {
-            ra.addFlashAttribute("passwordError", "Mật khẩu hiện tại không đúng.");
+            ra.addFlashAttribute("passwordError", I18n.t("password.current.wrong", "Mật khẩu hiện tại không đúng."));
             return "redirect:/account";
         }
         String error = validateNew(newPassword, confirmPassword);
@@ -106,25 +106,24 @@ public class PasswordController {
             return "redirect:/account";
         }
         if (passwordEncoder.matches(newPassword, u.getPassword())) {
-            ra.addFlashAttribute("passwordError", "Mật khẩu mới phải khác mật khẩu hiện tại.");
+            ra.addFlashAttribute("passwordError", I18n.t("password.new.same", "Mật khẩu mới phải khác mật khẩu hiện tại."));
             return "redirect:/account";
         }
         u.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(u);
         if (u.getEmail() != null && !u.getEmail().isBlank()) {
-            emailService.send(u.getEmail(), "KOSIS - Mật khẩu đã được thay đổi",
-                    "Mật khẩu của tài khoản \"" + u.getUsername() + "\" vừa được đổi.\n"
-                            + "Nếu không phải bạn thực hiện, hãy liên hệ cửa hàng ngay.\n\nKOSIS");
+            emailService.send(u.getEmail(), I18n.t("password.changed.mail.subject", "KOSIS - Mật khẩu đã được thay đổi"),
+                    I18n.t("password.changed.mail.body", "Mật khẩu của tài khoản \"{0}\" vừa được đổi.\nNếu không phải bạn thực hiện, hãy liên hệ cửa hàng ngay.\n\nKOSIS", u.getUsername()));
         }
-        ra.addFlashAttribute("passwordMessage", "Đã đổi mật khẩu.");
+        ra.addFlashAttribute("passwordMessage", I18n.t("password.changed", "Đã đổi mật khẩu."));
         return "redirect:/account";
     }
 
     /** null = hợp lệ */
     private static String validateNew(String password, String confirm) {
-        if (password.length() < MIN_LEN) return "Mật khẩu phải có ít nhất " + MIN_LEN + " ký tự.";
-        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_LEN) return "Mật khẩu quá dài (tối đa " + MAX_LEN + " ký tự).";
-        if (!password.equals(confirm)) return "Mật khẩu nhập lại không khớp.";
+        if (password.length() < MIN_LEN) return I18n.t("password.min.length", "Mật khẩu phải có ít nhất {0} ký tự.", MIN_LEN);
+        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_LEN) return I18n.t("password.too.long", "Mật khẩu quá dài (tối đa {0} ký tự).", MAX_LEN);
+        if (!password.equals(confirm)) return I18n.t("password.mismatch", "Mật khẩu nhập lại không khớp.");
         return null;
     }
 }

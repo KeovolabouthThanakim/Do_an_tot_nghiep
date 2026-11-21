@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Yêu thích | KOSIS', 'shop')}"></head>
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(#{title.wishlist}, 'shop')}"></head>
 <body>
 <th:block th:replace="~{fragments/layout :: header}"></th:block>
 <main id="main">
     <div class="container container--content">
         <div class="page-head wl-head">
-            <div><p class="eyebrow">SẢN PHẨM ĐÃ LƯU</p><h1 class="display">Yêu thích</h1></div>
+            <div><p class="eyebrow">[[#{wishlist.saved.items}]]</p><h1 class="display">[[#{common.wishlist}]]</h1></div>
             <span class="count" data-wishlist-total></span>
         </div>
         <div class="empty" data-wishlist-empty hidden>
             <i class="bi bi-heart"></i>
-            <h2>Danh sách yêu thích đang trống</h2>
-            <p>Nhấn vào biểu tượng trái tim trên sản phẩm để lưu tại đây. Đăng nhập để danh sách được lưu theo tài khoản và dùng được trên mọi thiết bị.</p>
-            <a class="btn btn--dark" th:href="@{/collections}">Khám phá bộ sưu tập</a>
+            <h2>[[#{wishlist.your.wishlist.is.empty}]]</h2>
+            <p>[[#{wishlist.tap.the.heart.icon.on}]]</p>
+            <a class="btn btn--dark" th:href="@{/collections}">[[#{common.explore.the.collection}]]</a>
         </div>
         <div class="grid" data-wishlist-grid>
             <th:block th:each="p : ${products}">

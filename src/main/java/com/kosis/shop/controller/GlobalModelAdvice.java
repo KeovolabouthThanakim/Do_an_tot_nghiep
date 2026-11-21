@@ -90,6 +90,12 @@ public class GlobalModelAdvice {
         return menuLinkService.visibleLinks();
     }
 
+    /** Dấu phân cách hàng nghìn khi in giá trong template: tiếng Việt 1.290.000 ₫, tiếng Anh 1,290,000 ₫ (dùng trong #numbers.formatInteger) */
+    @ModelAttribute("numSep")
+    public String numSep() {
+        return com.kosis.shop.config.I18n.isEnglish() ? "COMMA" : "POINT";
+    }
+
     @ModelAttribute("cartCount")
     public int cartCount(HttpServletRequest request) {
         return Cart.countIn(request.getSession(false));

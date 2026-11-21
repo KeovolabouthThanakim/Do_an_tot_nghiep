@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.Order;
 import com.kosis.shop.entity.Review;
 import com.kosis.shop.repository.OrderRepository;
@@ -37,17 +38,17 @@ public class ReviewService {
     @Transactional
     public Review submit(Long productId, String username, int rating, String comment) {
         if (!productRepository.existsById(productId)) {
-            throw new IllegalStateException("Không tìm thấy sản phẩm.");
+            throw new IllegalStateException(I18n.t("review.product.not.found", "Không tìm thấy sản phẩm."));
         }
         if (!hasPurchased(username, productId)) {
-            throw new IllegalStateException("Bạn chỉ có thể đánh giá sản phẩm sau khi đã nhận hàng.");
+            throw new IllegalStateException(I18n.t("review.after.receipt", "Bạn chỉ có thể đánh giá sản phẩm sau khi đã nhận hàng."));
         }
         if (rating < 1 || rating > 5) {
-            throw new IllegalStateException("Vui lòng chọn số sao từ 1 đến 5.");
+            throw new IllegalStateException(I18n.t("review.stars.range", "Vui lòng chọn số sao từ 1 đến 5."));
         }
         String text = comment == null ? "" : comment.trim();
         if (text.length() > Review.MAX_COMMENT) {
-            throw new IllegalStateException("Nhận xét quá dài (tối đa " + Review.MAX_COMMENT + " ký tự).");
+            throw new IllegalStateException(I18n.t("review.comment.long", "Nhận xét quá dài (tối đa {0} ký tự).", Review.MAX_COMMENT));
         }
         Review r = reviewRepository.findByProductIdAndUsername(productId, username).orElse(null);
         if (r == null) {
@@ -83,7 +84,7 @@ public class ReviewService {
 
     @Transactional
     public void setHidden(Long reviewId, boolean hidden) {
-        Review r = reviewRepository.findById(reviewId).orElseThrow(() -> new IllegalStateException("Không tìm thấy đánh giá."));
+        Review r = reviewRepository.findById(reviewId).orElseThrow(() -> new IllegalStateException(I18n.t("review.not.found", "Không tìm thấy đánh giá.")));
         r.setHidden(hidden);
         reviewRepository.save(r);
     }

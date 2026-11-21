@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <body>
 <!-- ============================================================
      FRAGMENT: asymmetric editorial product grid (one tab of "KOSIS SEASONS")
@@ -8,16 +8,16 @@
      ============================================================ -->
 <div class="mosaic" th:fragment="mosaic(list, m1, m2, m3, link, label)" th:classappend="${#lists.size(list) <= 8} ? 'mosaic--short'">
     <a class="look m1" th:href="@{${link}}" th:if="${m1 != null}">
-        <img th:src="@{${m1}}" th:alt="${label} + ' - phong cách'" loading="lazy">
-        <span class="look__cap">Xem cả set đồ <i class="bi bi-arrow-up-right"></i></span>
+        <img th:src="@{${m1}}" th:alt="#{home.mosaic.alt(${label})}" loading="lazy">
+        <span class="look__cap">[[#{home.shop.the.full.look}]] <i class="bi bi-arrow-up-right"></i></span>
     </a>
     <a class="look m2" th:href="@{${link}}" th:if="${m2 != null and #lists.size(list) > 8}">
-        <img th:src="@{${m2}}" th:alt="${label} + ' - phong cách'" loading="lazy">
-        <span class="look__cap">Xem cả set đồ <i class="bi bi-arrow-up-right"></i></span>
+        <img th:src="@{${m2}}" th:alt="#{home.mosaic.alt(${label})}" loading="lazy">
+        <span class="look__cap">[[#{home.shop.the.full.look}]] <i class="bi bi-arrow-up-right"></i></span>
     </a>
     <a class="look m3" th:href="@{${link}}" th:if="${m3 != null and #lists.size(list) > 8}">
-        <img th:src="@{${m3}}" th:alt="${label} + ' - phong cách'" loading="lazy">
-        <span class="look__cap">Xem cả set đồ <i class="bi bi-arrow-up-right"></i></span>
+        <img th:src="@{${m3}}" th:alt="#{home.mosaic.alt(${label})}" loading="lazy">
+        <span class="look__cap">[[#{home.shop.the.full.look}]] <i class="bi bi-arrow-up-right"></i></span>
     </a>
     <th:block th:each="p, st : ${list}">
         <th:block th:if="${st.count <= 12}">

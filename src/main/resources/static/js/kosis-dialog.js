@@ -83,6 +83,8 @@
     setTimeout(next, 200);
   }
 
+  function kt(key, fb) { var k = window.KOSIS_I18N || {}; return k[key] != null ? k[key] : fb; }
+
   function next() {
     if (current || !queue.length) return;
     build();
@@ -90,12 +92,12 @@
     var o = job.opts;
     root.className = 'kd kd--info';
     iconEl.innerHTML = ICONS.confirm;
-    titleEl.textContent = o.title || 'Xác nhận';
+    titleEl.textContent = o.title || kt('confirmTitle', 'Xác nhận');
     msgEl.textContent = job.message;
     actionsEl.textContent = '';
     var primary;
-    actionsEl.appendChild(button(o.cancelText || 'Huỷ', 'kd__btn--ghost', function () { finish(false); }));
-    primary = button(o.okText || 'Xác nhận', o.danger ? 'kd__btn--danger' : '', function () { finish(true); });
+    actionsEl.appendChild(button(o.cancelText || kt('cancel', 'Huỷ'), 'kd__btn--ghost', function () { finish(false); }));
+    primary = button(o.okText || kt('confirmTitle', 'Xác nhận'), o.danger ? 'kd__btn--danger' : '', function () { finish(true); });
     actionsEl.appendChild(primary);
     root.hidden = false; document.body.classList.add('kd-lock');
     void root.offsetWidth; root.classList.add('is-open');

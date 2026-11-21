@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.cart.Cart;
 import com.kosis.shop.cart.CartLine;
 import com.kosis.shop.cart.CartView;
@@ -41,8 +42,8 @@ public class CartService {
     }
 
     private static String sizeText(String size, String color) {
-        String s = size == null || size.isEmpty() ? "" : "size " + size;
-        String c = color == null || color.isEmpty() ? "" : "màu " + color;
+        String s = size == null || size.isEmpty() ? "" : I18n.t("cart.text.size", "size {0}", size);
+        String c = color == null || color.isEmpty() ? "" : I18n.t("cart.text.color", "màu {0}", color);
         String both = s.isEmpty() ? c : (c.isEmpty() ? s : s + ", " + c);
         return both.isEmpty() ? "" : " (" + both + ")";
     }
@@ -52,9 +53,9 @@ public class CartService {
 
     private Checked check(long productId, String size, String color) {
         Product p = productRepository.findListedById(productId)   // sản phẩm chờ nhập hàng = chưa bán
-                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không còn tồn tại."));
+                .orElseThrow(() -> new IllegalArgumentException(I18n.t("cart.product.gone", "Sản phẩm không còn tồn tại.")));
         if (p.getStock() <= 0) {
-            throw new IllegalArgumentException("Sản phẩm \"" + p.getName() + "\" đã hết hàng.");
+            throw new IllegalArgumentException(I18n.t("cart.product.soldout", "Sản phẩm \"{0}\" đã hết hàng.", p.getName()));
         }
         size = normSize(size);
         // Màu: sản phẩm có màu mà khách không chọn -> lấy màu đầu tiên CÒN HÀNG; màu phải nằm trong danh sách của sản phẩm
@@ -67,7 +68,7 @@ public class CartService {
         } else {
             Product.ColorOption found = p.findColor(color);
             if (found == null) {
-                throw new IllegalArgumentException("Màu " + color + " không có cho sản phẩm này.");
+                throw new IllegalArgumentException(I18n.t("cart.color.unavailable", "Màu {0} không có cho sản phẩm này.", color));
             }
             color = found.getName();      // dùng đúng tên màu đã lưu của sản phẩm
         }
@@ -77,13 +78,13 @@ public class CartService {
                 size = firstAvailableSize(p, color);
             }
             if (!p.getSizeList().contains(size)) {
-                throw new IllegalArgumentException("Size " + size + " không có cho sản phẩm này.");
+                throw new IllegalArgumentException(I18n.t("cart.size.not.available", "Size {0} không có cho sản phẩm này.", size));
             }
         } else {
             size = "";
         }
         if (p.getStockOf(size, color) <= 0) {
-            throw new IllegalArgumentException("Sản phẩm \"" + p.getName() + "\"" + sizeText(size, color) + " đã hết hàng.");
+            throw new IllegalArgumentException(I18n.t("cart.product.variant.soldout", "Sản phẩm \"{0}\"{1} đã hết hàng.", p.getName(), sizeText(size, color)));
         }
         return new Checked(p, size, color);
     }
@@ -133,7 +134,7 @@ public class CartService {
         int allowed = allowedFor(p, cart, productId, size, color);
         int current = cart.quantityOf(productId, size, color);
         if (current >= allowed) {
-            throw new IllegalArgumentException("Bạn đã có " + current + " sản phẩm này" + sizeText(size, color) + " trong giỏ - đã đạt số lượng tối đa (còn " + p.getStockOf(size, color) + " trong kho).");
+            throw new IllegalArgumentException(I18n.t("cart.max.reached", "Bạn đã có {0} sản phẩm này{1} trong giỏ - đã đạt số lượng tối đa (còn {2} trong kho).", current, sizeText(size, color), p.getStockOf(size, color)));
         }
         int add = Math.min(Math.max(1, quantity), allowed - current);
         cart.set(productId, size, color, current + add);
@@ -154,7 +155,7 @@ public class CartService {
         int allowed = allowedFor(p, cart, productId, sz, col);
         int current = cart.quantityOf(productId, sz, col);
         if (allowed <= 0) {
-            throw new IllegalArgumentException("Sản phẩm này" + sizeText(sz, col) + " đã đạt số lượng tối đa trong giỏ (còn " + p.getStockOf(sz, col) + " trong kho).");
+            throw new IllegalArgumentException(I18n.t("cart.max.reached.2", "Sản phẩm này{0} đã đạt số lượng tối đa trong giỏ (còn {1} trong kho).", sizeText(sz, col), p.getStockOf(sz, col)));
         }
         int want = Math.min(Math.max(1, quantity), allowed);
         if (current < want) {

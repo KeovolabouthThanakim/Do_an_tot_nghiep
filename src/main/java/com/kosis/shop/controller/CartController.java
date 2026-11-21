@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.cart.Cart;
 import com.kosis.shop.cart.CartView;
 import com.kosis.shop.service.CartService;
@@ -47,7 +48,7 @@ public class CartController {
                                                         HttpSession session) {
         try {
             int count = cartService.add(session, id, size, color, quantity);
-            return ResponseEntity.ok(Map.of("ok", true, "count", count, "message", "Đã thêm vào giỏ hàng"));
+            return ResponseEntity.ok(Map.of("ok", true, "count", count, "message", I18n.t("cart.added", "Đã thêm vào giỏ hàng")));
         } catch (CartService.SizeRequiredException e) {
             // Chưa chọn size -> báo lỗi + gửi kèm đường dẫn để JS chuyển khách sang trang chi tiết chọn size
             return ResponseEntity.badRequest().body(Map.of("ok", false, "message", e.getMessage(),
@@ -72,7 +73,7 @@ public class CartController {
                 return "redirect:/gio-hang";
             }
             cartService.add(session, id, size, color, quantity);
-            ra.addFlashAttribute("cartMessage", "Đã thêm vào giỏ hàng");
+            ra.addFlashAttribute("cartMessage", I18n.t("cart.added", "Đã thêm vào giỏ hàng"));
         } catch (CartService.SizeRequiredException e) {
             ra.addFlashAttribute("cartError", e.getMessage());
             return "redirect:/san-pham/" + id;      // sang trang chi tiết để chọn size
@@ -94,12 +95,12 @@ public class CartController {
         cartService.setQuantity(session, id, size, color, quantity);
         int now = Cart.of(session).quantityOf(id, size.trim().toUpperCase(), color.trim());
         if (quantity <= 0) {
-            ra.addFlashAttribute("cartMessage", "Đã xoá sản phẩm khỏi giỏ hàng.");
+            ra.addFlashAttribute("cartMessage", I18n.t("cart.removed", "Đã xoá sản phẩm khỏi giỏ hàng."));
         } else if (now < quantity) {
             // số lượng bị giới hạn theo tồn kho -> báo để khách không tưởng là bấm không ăn
             ra.addFlashAttribute("cartNotice", now > 0
-                    ? "Chỉ còn " + now + " sản phẩm có thể đặt, số lượng đã được điều chỉnh thành " + now + "."
-                    : "Sản phẩm này hiện không còn đủ hàng.");
+                    ? I18n.t("cart.limited", "Chỉ còn {0} sản phẩm có thể đặt, số lượng đã được điều chỉnh thành {0}.", now)
+                    : I18n.t("cart.not.enough", "Sản phẩm này hiện không còn đủ hàng."));
         }
         return "redirect:/gio-hang";
     }
@@ -116,8 +117,8 @@ public class CartController {
         cartService.changeSize(session, id, size, color, newSize);
         int after = Cart.of(session).quantityOf(id, sz, color.trim());
         if (!size.equals(newSize)) {
-            if (after > before) ra.addFlashAttribute("cartMessage", "Đã đổi sang size " + newSize + ".");
-            else ra.addFlashAttribute("cartError", "Không thể đổi sang size " + newSize + " (size này đã hết hàng hoặc không có).");
+            if (after > before) ra.addFlashAttribute("cartMessage", I18n.t("cart.size.changed", "Đã đổi sang size {0}.", newSize));
+            else ra.addFlashAttribute("cartError", I18n.t("cart.size.unavailable", "Không thể đổi sang size {0} (size này đã hết hàng hoặc không có).", newSize));
         }
         return "redirect:/gio-hang";
     }
@@ -129,7 +130,7 @@ public class CartController {
                          @RequestParam(defaultValue = "") String color,
                          HttpSession session, RedirectAttributes ra) {
         cartService.remove(session, id, size, color);
-        ra.addFlashAttribute("cartMessage", "Đã xoá sản phẩm khỏi giỏ hàng.");
+        ra.addFlashAttribute("cartMessage", I18n.t("cart.removed", "Đã xoá sản phẩm khỏi giỏ hàng."));
         return "redirect:/gio-hang";
     }
 
@@ -137,7 +138,7 @@ public class CartController {
     public String clear(HttpSession session, RedirectAttributes ra) {
         boolean had = !Cart.of(session).isEmpty();
         cartService.clear(session);
-        if (had) ra.addFlashAttribute("cartMessage", "Đã xoá toàn bộ sản phẩm trong giỏ hàng.");
+        if (had) ra.addFlashAttribute("cartMessage", I18n.t("cart.cleared", "Đã xoá toàn bộ sản phẩm trong giỏ hàng."));
         return "redirect:/gio-hang";
     }
 

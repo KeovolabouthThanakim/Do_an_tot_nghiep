@@ -1,5 +1,6 @@
 package com.kosis.shop.service;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.entity.Voucher;
 import com.kosis.shop.repository.VoucherRepository;
 import org.springframework.stereotype.Service;
@@ -73,9 +74,9 @@ public class VoucherService {
     /** Kiểm tra mã có dùng được cho đơn có tạm tính [subtotal] không (không cộng lượt dùng) */
     public Voucher validate(String code, long subtotal) {
         String c = Voucher.normalize(code);
-        if (c.isEmpty()) throw new IllegalStateException("Vui lòng nhập mã giảm giá.");
+        if (c.isEmpty()) throw new IllegalStateException(I18n.t("voucher.enter.code", "Vui lòng nhập mã giảm giá."));
         Voucher v = voucherRepository.findByCode(c)
-                .orElseThrow(() -> new IllegalStateException("Mã giảm giá \"" + c + "\" không tồn tại."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("voucher.not.exist", "Mã giảm giá \"{0}\" không tồn tại.", c)));
         check(v, subtotal);
         return v;
     }
@@ -85,7 +86,7 @@ public class VoucherService {
     public Voucher redeem(String code, long subtotal) {
         String c = Voucher.normalize(code);
         Voucher v = voucherRepository.findByCodeForUpdate(c)
-                .orElseThrow(() -> new IllegalStateException("Mã giảm giá \"" + c + "\" không tồn tại."));
+                .orElseThrow(() -> new IllegalStateException(I18n.t("voucher.not.exist", "Mã giảm giá \"{0}\" không tồn tại.", c)));
         check(v, subtotal);
         v.setUsedCount(v.getUsedCount() + 1);
         return voucherRepository.save(v);
@@ -104,18 +105,18 @@ public class VoucherService {
     }
 
     private static void check(Voucher v, long subtotal) {
-        if (!v.isActive()) throw new IllegalStateException("Mã giảm giá này đã bị tắt.");
-        if (v.isExpired()) throw new IllegalStateException("Mã giảm giá này đã hết hạn.");
-        if (v.isExhausted()) throw new IllegalStateException("Mã giảm giá này đã hết lượt sử dụng.");
+        if (!v.isActive()) throw new IllegalStateException(I18n.t("voucher.disabled", "Mã giảm giá này đã bị tắt."));
+        if (v.isExpired()) throw new IllegalStateException(I18n.t("voucher.expired", "Mã giảm giá này đã hết hạn."));
+        if (v.isExhausted()) throw new IllegalStateException(I18n.t("voucher.exhausted", "Mã giảm giá này đã hết lượt sử dụng."));
         if (v.getMinOrder() > 0 && subtotal < v.getMinOrder()) {
-            throw new IllegalStateException("Mã này áp dụng cho đơn từ " + money(v.getMinOrder()) + " (tạm tính hiện tại " + money(subtotal) + ").");
+            throw new IllegalStateException(I18n.t("voucher.min.order", "Mã này áp dụng cho đơn từ {0} (tạm tính hiện tại {1}).", money(v.getMinOrder()), money(subtotal)));
         }
-        if (v.discountFor(subtotal) <= 0) throw new IllegalStateException("Mã giảm giá này không áp dụng được cho đơn hiện tại.");
+        if (v.discountFor(subtotal) <= 0) throw new IllegalStateException(I18n.t("voucher.not.applicable", "Mã giảm giá này không áp dụng được cho đơn hiện tại."));
     }
 
     static String money(long v) {
         DecimalFormatSymbols sym = new DecimalFormatSymbols(Locale.ROOT);
-        sym.setGroupingSeparator('.');
+        sym.setGroupingSeparator(I18n.isEnglish() ? ',' : '.');
         return new DecimalFormat("#,##0", sym).format(v) + " ₫";
     }
 }

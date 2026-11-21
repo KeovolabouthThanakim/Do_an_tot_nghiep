@@ -1,5 +1,6 @@
 package com.kosis.shop.controller;
 
+import com.kosis.shop.config.I18n;
 import com.kosis.shop.cart.Cart;
 import com.kosis.shop.cart.CartView;
 import com.kosis.shop.config.BankProperties;
@@ -117,7 +118,7 @@ public class CheckoutController {
                 voucherService.validate(form.getVoucherCode(), cart.getSubtotal());
             } catch (IllegalStateException e) {
                 return renderCheckout(model, cart, form, e.getMessage()
-                        + " Hãy sửa hoặc xoá mã giảm giá rồi đặt hàng lại" + (needsSlip(form) ? " (vui lòng chọn lại ảnh bill)." : "."),
+                        + " " + I18n.t("checkout.voucher.fix", "Hãy sửa hoặc xoá mã giảm giá rồi đặt hàng lại") + (needsSlip(form) ? " " + I18n.t("checkout.reselect.slip", "(vui lòng chọn lại ảnh bill)") + "." : "."),
                         principal.getName());
             }
         }
@@ -129,9 +130,9 @@ public class CheckoutController {
                 slipName = slipStorage.save(slipFile);
             }
         } catch (IllegalArgumentException e) {
-            return renderCheckout(model, cart, form, e.getMessage() + " (vui lòng chọn lại ảnh bill)", principal.getName());
+            return renderCheckout(model, cart, form, e.getMessage() + " " + I18n.t("checkout.reselect.slip", "(vui lòng chọn lại ảnh bill)"), principal.getName());
         } catch (IOException e) {
-            return renderCheckout(model, cart, form, "Không lưu được ảnh bill, vui lòng thử lại.", principal.getName());
+            return renderCheckout(model, cart, form, I18n.t("checkout.slip.save.failed", "Không lưu được ảnh bill, vui lòng thử lại."), principal.getName());
         }
 
         try {
@@ -143,7 +144,7 @@ public class CheckoutController {
             // Hết hàng / hết tồn kho giữa chừng -> bỏ ảnh bill vừa lưu, hiện lại trang thanh toán kèm lý do
             slipStorage.deleteQuietly(slipName);
             return renderCheckout(model, cartService.view(session), form,
-                    e.getMessage() + (slipName != null ? " (vui lòng chọn lại ảnh bill)" : ""), principal.getName());
+                    e.getMessage() + (slipName != null ? " " + I18n.t("checkout.reselect.slip", "(vui lòng chọn lại ảnh bill)") : ""), principal.getName());
         } catch (RuntimeException e) {
             slipStorage.deleteQuietly(slipName);
             throw e;
@@ -233,7 +234,7 @@ public class CheckoutController {
                 Voucher v = voucherService.validate(code, subtotal);
                 discount = v.discountFor(subtotal);
                 applied = v.getCode();
-                model.addAttribute("voucherMessage", "Đã áp dụng mã " + applied + (v.getDescription() == null ? "" : " – " + v.getDescription()));
+                model.addAttribute("voucherMessage", I18n.t("checkout.voucher.applied", "Đã áp dụng mã {0}", applied) + (v.getDescription() == null ? "" : " – " + v.getDescription()));
             } catch (IllegalStateException e) {
                 model.addAttribute("voucherError", e.getMessage());
             }
@@ -257,11 +258,11 @@ public class CheckoutController {
     /** Giỏ trống hoặc còn hàng hết -> quay lại giỏ hàng; trả null nếu hợp lệ */
     private String guardCart(CartView cart, RedirectAttributes ra) {
         if (cart.isEmpty()) {
-            ra.addFlashAttribute("cartError", "Giỏ hàng đang trống, hãy chọn sản phẩm trước khi thanh toán.");
+            ra.addFlashAttribute("cartError", I18n.t("checkout.cart.empty", "Giỏ hàng đang trống, hãy chọn sản phẩm trước khi thanh toán."));
             return "redirect:/gio-hang";
         }
         if (cart.isHasUnavailable() || cart.getTotalQuantity() == 0) {
-            ra.addFlashAttribute("cartError", "Trong giỏ có sản phẩm đã hết hàng. Vui lòng xoá sản phẩm đó trước khi thanh toán.");
+            ra.addFlashAttribute("cartError", I18n.t("checkout.cart.soldout", "Trong giỏ có sản phẩm đã hết hàng. Vui lòng xoá sản phẩm đó trước khi thanh toán."));
             return "redirect:/gio-hang";
         }
         return null;
@@ -269,24 +270,24 @@ public class CheckoutController {
 
     private String validate(CheckoutForm f) {
         if (isBlank(f.getReceiverName()) || f.getReceiverName().trim().length() < 2) {
-            return "Vui lòng nhập họ tên người nhận.";
+            return I18n.t("checkout.error.name", "Vui lòng nhập họ tên người nhận.");
         }
         String phone = f.getPhone() == null ? "" : f.getPhone().replaceAll("[\\s.-]", "");
         if (!PHONE.matcher(phone).matches()) {
-            return "Số điện thoại không hợp lệ (VD: 0901234567).";
+            return I18n.t("checkout.error.phone", "Số điện thoại không hợp lệ (VD: 0901234567).");
         }
         f.setPhone(phone);
         if (isBlank(f.getAddress()) || f.getAddress().trim().length() < 8) {
-            return "Vui lòng nhập địa chỉ giao hàng đầy đủ (số nhà, đường, phường/xã, quận/huyện, tỉnh/thành).";
+            return I18n.t("checkout.error.address", "Vui lòng nhập địa chỉ giao hàng đầy đủ (số nhà, đường, phường/xã, quận/huyện, tỉnh/thành).");
         }
         if (f.getAddress().trim().length() > 255) {
-            return "Địa chỉ quá dài (tối đa 255 ký tự).";
+            return I18n.t("checkout.error.address.long", "Địa chỉ quá dài (tối đa 255 ký tự).");
         }
         if (f.getNote() != null && f.getNote().length() > 500) {
-            return "Ghi chú quá dài (tối đa 500 ký tự).";
+            return I18n.t("checkout.error.note.long", "Ghi chú quá dài (tối đa 500 ký tự).");
         }
         if (!Order.PAYMENT_COD.equals(f.getPaymentMethod()) && !Order.PAYMENT_BANK.equals(f.getPaymentMethod())) {
-            return "Vui lòng chọn phương thức thanh toán.";
+            return I18n.t("checkout.error.payment", "Vui lòng chọn phương thức thanh toán.");
         }
         return null;
     }
